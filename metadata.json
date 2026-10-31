@@ -1,0 +1,6 @@
+{
+  "name": "Carrera Pedestre 10 KM - ECEME",
+  "description": "Plataforma de inscripción oficial para la Carrera Pedestre 10 KM del Ejército de Bolivia - ECEME.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
