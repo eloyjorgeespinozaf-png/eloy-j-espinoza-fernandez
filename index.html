@@ -544,16 +544,19 @@
         </button>
       </div>
 
-      <!-- Banner de Estado de Sincronización en Tiempo Real -->
-      <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 flex items-center justify-between text-xs text-emerald-200 shadow-lg">
+      <!-- Banner de Estado de Sincronización y Persistencia Permanente -->
+      <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-emerald-200 shadow-lg">
         <div class="flex items-center gap-2.5">
-          <span class="relative flex h-2.5 w-2.5">
+          <span class="relative flex h-2.5 w-2.5 shrink-0">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
           </span>
-          <span class="font-semibold text-[11px] sm:text-xs">Sincronización en Tiempo Real Activa</span>
+          <div>
+            <span class="font-bold text-[11px] sm:text-xs block">Almacenamiento Permanente en Disco y Tiempo Real</span>
+            <span class="text-[10px] text-emerald-300/80 block">Las imágenes insertadas se guardan en el servidor y memoria local persistente.</span>
+          </div>
         </div>
-        <span class="text-[10px] bg-emerald-900/80 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/40">MÓVIL + PC</span>
+        <span class="text-[10px] bg-emerald-900/90 text-emerald-200 font-bold px-2 py-0.5 rounded border border-emerald-500/40 uppercase whitespace-nowrap">DISCO + MÓVIL + PC</span>
       </div>
 
       <!-- SECCIÓN 1: IMAGEN DE FONDO -->
@@ -1188,6 +1191,134 @@
       let currentOverlayDarkness = 70;
       let currentIconSource = DEFAULT_ICON_SVG;
 
+      // =========================================================================
+      // MOTOR DE PERSISTENCIA PERMANENTE EN EL NAVEGADOR: INDEXED-DB
+      // Supera el límite de 5MB de localStorage; almacena imágenes HD en cel y PC
+      // =========================================================================
+      const EcemeDB = {
+        dbName: 'ECEME_10KM_STORAGE',
+        storeName: 'visual_assets',
+        db: null,
+
+        async init() {
+          if (!window.indexedDB) return null;
+          if (this.db) return this.db;
+          return new Promise((resolve) => {
+            const req = indexedDB.open(this.dbName, 1);
+            req.onupgradeneeded = (e) => {
+              const db = e.target.result;
+              if (!db.objectStoreNames.contains(this.storeName)) {
+                db.createObjectStore(this.storeName);
+              }
+            };
+            req.onsuccess = (e) => {
+              this.db = e.target.result;
+              resolve(this.db);
+            };
+            req.onerror = () => resolve(null);
+          });
+        },
+
+        async set(key, value) {
+          try {
+            const db = await this.init();
+            if (!db) return false;
+            return new Promise((resolve) => {
+              const tx = db.transaction([this.storeName], 'readwrite');
+              const store = tx.objectStore(this.storeName);
+              const req = store.put(value, key);
+              req.onsuccess = () => resolve(true);
+              req.onerror = () => resolve(false);
+            });
+          } catch (e) {
+            return false;
+          }
+        },
+
+        async get(key) {
+          try {
+            const db = await this.init();
+            if (!db) return null;
+            return new Promise((resolve) => {
+              const tx = db.transaction([this.storeName], 'readonly');
+              const store = tx.objectStore(this.storeName);
+              const req = store.get(key);
+              req.onsuccess = () => resolve(req.result || null);
+              req.onerror = () => resolve(null);
+            });
+          } catch (e) {
+            return null;
+          }
+        },
+
+        async clear() {
+          try {
+            const db = await this.init();
+            if (!db) return;
+            const tx = db.transaction([this.storeName], 'readwrite');
+            tx.objectStore(this.storeName).clear();
+          } catch (e) {}
+        }
+      };
+
+      // Inicializar IndexedDB en segundo plano
+      EcemeDB.init();
+
+      // =========================================================================
+      // OPTIMIZADOR DE IMÁGENES (MÓVIL Y COMPUTADORA)
+      // Comprime fotos pesadas de cámaras de celulares (10MB+) a una resolución
+      // Full HD nítida y ultraligera (<300KB) para que se guarden al instante
+      // =========================================================================
+      const optimizarImagenParaAlmacenamiento = async (file, maxDim = 1920, quality = 0.88, forcePng = false) => {
+        if (!file) return "";
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const rawDataUrl = e.target.result;
+            // Si es SVG, preservar directamente como texto vectorial
+            if (file.type === 'image/svg+xml' || (typeof rawDataUrl === 'string' && rawDataUrl.startsWith('data:image/svg+xml'))) {
+              return resolve(rawDataUrl);
+            }
+
+            const img = new Image();
+            img.onload = () => {
+              let width = img.width;
+              let height = img.height;
+
+              if (width > maxDim || height > maxDim) {
+                if (width > height) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                } else {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
+              }
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+
+              if (!forcePng && (file.type === 'image/jpeg' || file.type === 'image/jpg')) {
+                ctx.fillStyle = '#0b140a';
+                ctx.fillRect(0, 0, width, height);
+              }
+
+              ctx.drawImage(img, 0, 0, width, height);
+
+              const outputMime = forcePng ? 'image/png' : (file.type === 'image/png' ? 'image/png' : 'image/jpeg');
+              const finalDataUrl = canvas.toDataURL(outputMime, quality);
+              resolve(finalDataUrl);
+            };
+            img.onerror = () => resolve(rawDataUrl);
+            img.src = rawDataUrl;
+          };
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(file);
+        });
+      };
+
       // 3. Funciones API Globales expuestas en `window`
       /**
        * Aplica una imagen de fondo a la webapp (optimizada para móviles y computadoras)
@@ -1247,7 +1378,7 @@
       /**
        * Aplica un lote completo de configuraciones visuales recibidas desde el servidor o la nube
        */
-      window.applyAllVisualSettings = function(data, saveLocal = true) {
+      window.applyAllVisualSettings = async function(data, saveLocal = true) {
         if (!data) return;
         if (data.bgSource) {
           window.setBackgroundImage(data.bgSource, data.bgOpacity || 45, data.bgBlur || 0);
@@ -1262,18 +1393,34 @@
         if (data.iconUrl && iconUrlInput) iconUrlInput.value = data.iconUrl;
 
         if (saveLocal) {
+          const payload = {
+            bgSource: currentBgSource,
+            bgOpacity: currentBgOpacity,
+            bgBlur: currentBgBlur,
+            overlayDarkness: currentOverlayDarkness,
+            iconSource: currentIconSource,
+            bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
+            iconUrl: iconUrlInput ? iconUrlInput.value.trim() : '',
+            updatedAt: data.updatedAt || Date.now()
+          };
+
+          // 1. Guardar permanentemente en IndexedDB (sin límite de tamaño)
+          await EcemeDB.set('eceme_visual_settings', payload);
+
+          // 2. Guardar en localStorage de forma segura
           try {
-            localStorage.setItem('eceme_visual_settings', JSON.stringify({
-              bgSource: currentBgSource,
-              bgOpacity: currentBgOpacity,
-              bgBlur: currentBgBlur,
-              overlayDarkness: currentOverlayDarkness,
-              iconSource: currentIconSource,
-              bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
-              iconUrl: iconUrlInput ? iconUrlInput.value.trim() : '',
-              updatedAt: data.updatedAt || Date.now()
-            }));
-          } catch (e) {}
+            // Evitar guardar strings gigantes en localStorage para prevenir QuotaExceeded
+            const safeLocal = { ...payload };
+            if (safeLocal.bgSource && safeLocal.bgSource.length > 200000) {
+              safeLocal.bgSource = 'indexeddb';
+            }
+            if (safeLocal.iconSource && safeLocal.iconSource.length > 200000) {
+              safeLocal.iconSource = 'indexeddb';
+            }
+            localStorage.setItem('eceme_visual_settings', JSON.stringify(safeLocal));
+          } catch (e) {
+            // Si localStorage falla, IndexedDB ya tiene los datos permanentemente
+          }
         }
       };
 
@@ -1281,7 +1428,11 @@
        * Restaura el fondo y el escudo original de la ECEME
        */
       window.resetVisualSettings = async function() {
-        localStorage.removeItem('eceme_visual_settings');
+        try {
+          localStorage.removeItem('eceme_visual_settings');
+          await EcemeDB.clear();
+        } catch (e) {}
+
         window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
         window.setOverlayDarkness(70);
         window.setAppIcon(DEFAULT_ICON_SVG);
@@ -1307,32 +1458,47 @@
         } catch (e) {}
       };
 
-      // 4. Carga inicial: Primero caché local (0 flicker), luego servidor en la nube
+      // 4. Carga inicial permanente: Primero IndexedDB + localStorage (0 flicker), luego servidor en disco
       const cargarConfiguracionInicial = async () => {
-        // A. Carga ultrarrápida desde localStorage si existe
+        let loadedFromLocal = false;
+
+        // A. Carga ultrarrápida desde IndexedDB permanente
         try {
-          const raw = localStorage.getItem('eceme_visual_settings');
-          if (raw) {
-            const localData = JSON.parse(raw);
-            window.applyAllVisualSettings(localData, false);
-          } else {
-            window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
-            window.setOverlayDarkness(70);
-            window.setAppIcon(DEFAULT_ICON_SVG);
+          const idbData = await EcemeDB.get('eceme_visual_settings');
+          if (idbData && idbData.bgSource && idbData.bgSource !== 'indexeddb') {
+            await window.applyAllVisualSettings(idbData, false);
+            loadedFromLocal = true;
           }
-        } catch (e) {
-          window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
-          window.setOverlayDarkness(70);
+        } catch (e) {}
+
+        // B. Si IndexedDB no tenía datos, consultar localStorage
+        if (!loadedFromLocal) {
+          try {
+            const raw = localStorage.getItem('eceme_visual_settings');
+            if (raw) {
+              const localData = JSON.parse(raw);
+              if (localData && localData.bgSource && localData.bgSource !== 'indexeddb') {
+                await window.applyAllVisualSettings(localData, false);
+                loadedFromLocal = true;
+              }
+            }
+          } catch (e) {}
+        }
+
+        // C. Si no había caché, aplicar valores por defecto antes de conectar con el servidor
+        if (!loadedFromLocal) {
+          window.setBackgroundImage(PRESET_BACKGROUNDS.tactico, 50, 1);
+          window.setOverlayDarkness(65);
           window.setAppIcon(DEFAULT_ICON_SVG);
         }
 
-        // B. Consulta al servidor para obtener la versión oficial sincronizada
+        // D. Consulta al servidor para obtener la versión oficial sincronizada en disco
         try {
           const res = await fetch('/api/visual-settings', { cache: 'no-store' });
           if (res.ok) {
             const serverData = await res.json();
             if (serverData && serverData.bgSource) {
-              window.applyAllVisualSettings(serverData, true);
+              await window.applyAllVisualSettings(serverData, true);
             }
           }
         } catch (err) {
@@ -1344,7 +1510,7 @@
               if (gasRes.ok) {
                 const gasData = await gasRes.json();
                 if (gasData && gasData.bgSource) {
-                  window.applyAllVisualSettings(gasData, true);
+                  await window.applyAllVisualSettings(gasData, true);
                 }
               }
             } catch (gasErr) {}
@@ -1354,7 +1520,7 @@
       cargarConfiguracionInicial();
 
       // 5. SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO (Server-Sent Events)
-      // Permite que cualquier celular, tablet o PC conectado vea las actualizaciones al instante sin recargar
+      // Permite que cualquier celular, tablet o PC conectado reciba y guarde los cambios en disco
       const iniciarSincronizacionEnTiempoReal = () => {
         if (!window.EventSource) return;
 
@@ -1378,7 +1544,6 @@
 
             eventSource.onerror = () => {
               if (eventSource) eventSource.close();
-              // Reintentar reconexión cada 5 segundos
               setTimeout(conectarSSE, 5000);
             };
           } catch (e) {
@@ -1388,7 +1553,7 @@
 
         conectarSSE();
 
-        // Polling de respaldo cuando la pantalla del móvil vuelve a estar visible
+        // Polling de respaldo cuando la pantalla del móvil vuelve a estar activa
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
             fetch('/api/visual-settings', { cache: 'no-store' })
@@ -1400,7 +1565,7 @@
           }
         });
 
-        // Polling periódico ligero cada 10s para redes móviles inestables
+        // Polling periódico ligero cada 10s para redes móviles con desconexiones
         setInterval(() => {
           fetch('/api/visual-settings', { cache: 'no-store' })
             .then((r) => r.json())
@@ -1467,17 +1632,17 @@
         });
       }
 
-      // Archivo local de fondo (soporte para fotos tomadas con celular o archivos de PC)
+      // Archivo local de fondo con optimización automática para Celular y PC
       if (bgFileInput) {
-        bgFileInput.addEventListener('change', (e) => {
+        bgFileInput.addEventListener('change', async (e) => {
           const file = e.target.files ? e.target.files[0] : null;
           if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              window.setBackgroundImage(event.target.result, currentBgOpacity, currentBgBlur);
+            // Optimizar resolución (Full HD 1920x1080) preservando nitidez y aligerando la carga
+            const optimizedBase64 = await optimizarImagenParaAlmacenamiento(file, 1920, 0.88, false);
+            if (optimizedBase64) {
+              window.setBackgroundImage(optimizedBase64, currentBgOpacity, currentBgBlur);
               if (bgUrlInput) bgUrlInput.value = '';
-            };
-            reader.readAsDataURL(file);
+            }
           }
         });
       }
@@ -1505,17 +1670,17 @@
         });
       });
 
-      // Archivo local de ícono / escudo
+      // Archivo local de ícono / escudo con optimización automática
       if (iconFileInput) {
-        iconFileInput.addEventListener('change', (e) => {
+        iconFileInput.addEventListener('change', async (e) => {
           const file = e.target.files ? e.target.files[0] : null;
           if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              window.setAppIcon(event.target.result);
+            // Optimizar ícono (512x512 con canal alfa PNG transparente)
+            const optimizedIcon = await optimizarImagenParaAlmacenamiento(file, 512, 0.95, true);
+            if (optimizedIcon) {
+              window.setAppIcon(optimizedIcon);
               if (iconUrlInput) iconUrlInput.value = '';
-            };
-            reader.readAsDataURL(file);
+            }
           }
         });
       }
@@ -1531,12 +1696,12 @@
         });
       }
 
-      // 7. Guardar cambios y SINCRONIZAR A TODOS LOS DISPOSITIVOS MÓVILES Y PCS EN TIEMPO REAL
+      // 7. Guardar cambios PERMANENTEMENTE EN DISCO y SINCRONIZAR A TODOS LOS DISPOSITIVOS MÓVILES Y PCS
       if (saveVisualsBtn) {
         saveVisualsBtn.addEventListener('click', async () => {
           const origText = saveVisualsBtn.textContent;
           saveVisualsBtn.disabled = true;
-          saveVisualsBtn.textContent = "Sincronizando...";
+          saveVisualsBtn.textContent = "Guardando en disco permanente...";
 
           const settings = {
             bgSource: currentBgSource,
@@ -1549,13 +1714,13 @@
             updatedAt: Date.now()
           };
 
-          // A. Guardar en localStorage local
-          try {
-            localStorage.setItem('eceme_visual_settings', JSON.stringify(settings));
-          } catch (e) {}
+          // A. Guardar de inmediato en almacenamiento permanente del navegador (IndexedDB)
+          await EcemeDB.set('eceme_visual_settings', settings);
 
-          // B. Enviar al Servidor para distribución en tiempo real a todos los móviles y PCs
+          // B. Enviar al Servidor para guardado permanente como archivo físico en disco y distribución en tiempo real
           let serverSuccess = false;
+          let persistedStaticSettings = null;
+
           try {
             const res = await fetch('/api/visual-settings', {
               method: 'POST',
@@ -1563,13 +1728,29 @@
               body: JSON.stringify(settings)
             });
             if (res.ok) {
+              const resData = await res.json();
               serverSuccess = true;
+              if (resData && resData.settings) {
+                persistedStaticSettings = resData.settings;
+                // Actualizar las fuentes con las URLs estáticas permanentes generadas por el servidor
+                if (persistedStaticSettings.bgSource) {
+                  currentBgSource = persistedStaticSettings.bgSource;
+                }
+                if (persistedStaticSettings.iconSource) {
+                  currentIconSource = persistedStaticSettings.iconSource;
+                }
+                // Actualizar IndexedDB con las URLs estáticas permanentes
+                await EcemeDB.set('eceme_visual_settings', persistedStaticSettings);
+                try {
+                  localStorage.setItem('eceme_visual_settings', JSON.stringify(persistedStaticSettings));
+                } catch (e) {}
+              }
             }
           } catch (err) {
             console.warn('[VisualSync] Aviso al transmitir al servidor:', err);
           }
 
-          // C. Sincronización secundaria en segundo plano con Google Apps Script
+          // C. Sincronización secundaria en segundo plano con Google Apps Script (Cloud)
           if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
             try {
               fetch(GOOGLE_SCRIPT_URL, {
@@ -1578,20 +1759,20 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({
                   action: "save_visuals",
-                  visualSettings: settings
+                  visualSettings: persistedStaticSettings || settings
                 })
               }).catch(() => {});
             } catch (e) {}
           }
 
-          saveVisualsBtn.textContent = serverSuccess ? "✓ ¡En vivo en Celular y PC!" : "✓ ¡Guardado!";
+          saveVisualsBtn.textContent = serverSuccess ? "✓ ¡Permanente en Disco y En Vivo!" : "✓ ¡Guardado Permanente!";
           saveVisualsBtn.classList.replace('bg-gold-500', 'bg-emerald-600');
           setTimeout(() => {
             saveVisualsBtn.disabled = false;
             saveVisualsBtn.textContent = origText;
             saveVisualsBtn.classList.replace('bg-emerald-600', 'bg-gold-500');
             if (visualModal) visualModal.classList.add('hidden');
-          }, 900);
+          }, 1100);
         });
       }
 

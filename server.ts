@@ -15,6 +15,70 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
   const DATA_FILE = path.resolve(__dirname, 'visual-settings.json');
+  const UPLOADS_DIR = path.resolve(__dirname, 'public/uploads');
+
+  // Asegurar que la carpeta de almacenamiento permanente exista
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
+  // Servir imágenes subidas de forma estática y permanente con cabeceras de caché
+  app.use('/uploads', express.static(UPLOADS_DIR, {
+    maxAge: '1d',
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+    }
+  }));
+
+  /**
+   * Decodifica y guarda una imagen Base64 de forma permanente en el disco del servidor.
+   * Retorna la URL estática permanente (ej. /uploads/custom-background.jpg?t=123456789)
+   */
+  const persistBase64Image = (dataUri: string, filenamePrefix: 'custom-background' | 'custom-icon'): string => {
+    if (!dataUri || !dataUri.startsWith('data:image/')) {
+      return dataUri;
+    }
+
+    try {
+      const matches = dataUri.match(/^data:image\/([a-zA-Z0-9+.-]+);base64,(.+)$/);
+      if (!matches) {
+        return dataUri;
+      }
+
+      let ext = matches[1].toLowerCase();
+      if (ext === 'svg+xml') ext = 'svg';
+      else if (ext === 'jpeg') ext = 'jpg';
+      else if (!['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'].includes(ext)) {
+        ext = 'png';
+      }
+
+      const base64Data = matches[2];
+      const buffer = Buffer.from(base64Data, 'base64');
+
+      // Limpiar versiones previas con el mismo prefijo para evitar acumulación
+      try {
+        const existingFiles = fs.readdirSync(UPLOADS_DIR);
+        for (const file of existingFiles) {
+          if (file.startsWith(filenamePrefix)) {
+            try {
+              fs.unlinkSync(path.join(UPLOADS_DIR, file));
+            } catch {}
+          }
+        }
+      } catch {}
+
+      const filename = `${filenamePrefix}.${ext}`;
+      const filePath = path.join(UPLOADS_DIR, filename);
+      fs.writeFileSync(filePath, buffer);
+      console.log(`[Storage] Imagen guardada permanentemente en disco: ${filePath} (${buffer.length} bytes)`);
+
+      return `/uploads/${filename}?t=${Date.now()}`;
+    } catch (err) {
+      console.error(`[Storage] Error al persistir imagen ${filenamePrefix}:`, err);
+      return dataUri;
+    }
+  };
 
   // Función para leer la configuración visual persistida
   const getVisualSettings = () => {
@@ -27,10 +91,10 @@ async function startServer() {
       console.error('Error al leer visual-settings.json:', err);
     }
     return {
-      bgSource: 'default',
-      bgOpacity: 45,
-      bgBlur: 0,
-      overlayDarkness: 70,
+      bgSource: 'tactico',
+      bgOpacity: 50,
+      bgBlur: 1,
+      overlayDarkness: 65,
       iconSource: 'default',
       updatedAt: Date.now()
     };
@@ -46,16 +110,45 @@ async function startServer() {
     res.json(settings);
   });
 
-  // 2. Endpoint POST: Guardar y sincronizar en tiempo real para todos los dispositivos
+  // 2. Endpoint POST: Subir imagen individual y guardarla en disco de inmediato
+  app.post('/api/upload-image', (req, res) => {
+    try {
+      const { image, type } = req.body || {};
+      if (!image || typeof image !== 'string' || !image.startsWith('data:image/')) {
+        return res.status(400).json({ error: 'Formato de imagen inválido o ausente.' });
+      }
+      const prefix = type === 'icon' ? 'custom-icon' : 'custom-background';
+      const staticUrl = persistBase64Image(image, prefix);
+      res.json({ success: true, url: staticUrl });
+    } catch (err) {
+      console.error('Error al subir imagen:', err);
+      res.status(500).json({ error: String(err) });
+    }
+  });
+
+  // 3. Endpoint POST: Guardar configuración visual permanentemente en disco y sincronizar
   app.post('/api/visual-settings', (req, res) => {
     try {
       const incoming = req.body || {};
+      let bgSource = incoming.bgSource || 'default';
+      let iconSource = incoming.iconSource || 'default';
+
+      // Persistir imagen de fondo en disco si es Base64
+      if (typeof bgSource === 'string' && bgSource.startsWith('data:image/')) {
+        bgSource = persistBase64Image(bgSource, 'custom-background');
+      }
+
+      // Persistir ícono en disco si es Base64
+      if (typeof iconSource === 'string' && iconSource.startsWith('data:image/')) {
+        iconSource = persistBase64Image(iconSource, 'custom-icon');
+      }
+
       const settings = {
-        bgSource: incoming.bgSource || 'default',
+        bgSource,
         bgOpacity: typeof incoming.bgOpacity === 'number' ? incoming.bgOpacity : 45,
         bgBlur: typeof incoming.bgBlur === 'number' ? incoming.bgBlur : 0,
         overlayDarkness: typeof incoming.overlayDarkness === 'number' ? incoming.overlayDarkness : 70,
-        iconSource: incoming.iconSource || 'default',
+        iconSource,
         bgUrl: incoming.bgUrl || '',
         iconUrl: incoming.iconUrl || '',
         updatedAt: Date.now()
@@ -75,7 +168,7 @@ async function startServer() {
 
       res.json({
         success: true,
-        message: 'Configuración visual actualizada y transmitida a todos los dispositivos.',
+        message: 'Configuración visual guardada permanentemente en disco y transmitida a todos los dispositivos.',
         settings
       });
     } catch (err) {
