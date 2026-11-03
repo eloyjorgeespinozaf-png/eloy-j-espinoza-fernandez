@@ -160,48 +160,54 @@
 
               <!-- Nombres y Apellidos -->
               <div>
-                <label for="nombresApellidos" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5">
-                  Nombres y Apellidos <span class="text-gold-400">*</span>
+                <label for="nombresApellidos" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
+                  <span>Nombres y Apellidos <span class="text-gold-400">*</span></span>
+                  <span class="text-[10px] text-gold-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-gold-500/30">SOLO MAYÚSCULAS</span>
                 </label>
                 <input
                   type="text"
                   id="nombresApellidos"
                   name="nombresApellidos"
                   required
-                  placeholder="Ingrese sus nombres y apellidos completos"
-                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors"
+                  placeholder="INGRESE SUS NOMBRES Y APELLIDOS COMPLETOS"
+                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase font-medium"
+                  style="text-transform: uppercase;"
                 />
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
 
               <!-- Cédula de Identidad -->
               <div>
-                <label for="cedulaIdentidad" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5">
-                  Cédula de Identidad <span class="text-gold-400">*</span>
+                <label for="cedulaIdentidad" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
+                  <span>Cédula de Identidad <span class="text-gold-400">*</span></span>
+                  <span class="text-[10px] text-gold-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-gold-500/30">SOLO MAYÚSCULAS</span>
                 </label>
                 <input
                   type="text"
                   id="cedulaIdentidad"
                   name="cedulaIdentidad"
                   required
-                  placeholder="Ej. 1234567 CB"
-                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors"
+                  placeholder="EJ. 1234567 CB"
+                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase font-medium"
+                  style="text-transform: uppercase;"
                 />
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
 
               <!-- Unidad / Repartición -->
               <div>
-                <label for="unidadReparticion" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5">
-                  Unidad / Repartición <span class="text-gold-400">*</span>
+                <label for="unidadReparticion" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
+                  <span>Unidad / Repartición <span class="text-gold-400">*</span></span>
+                  <span class="text-[10px] text-gold-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-gold-500/30">SOLO MAYÚSCULAS</span>
                 </label>
                 <input
                   type="text"
                   id="unidadReparticion"
                   name="unidadReparticion"
                   required
-                  placeholder="Ej. ECEME / Regimiento / Particular"
-                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors"
+                  placeholder="EJ. ECEME / REGIMIENTO / PARTICULAR"
+                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase font-medium"
+                  style="text-transform: uppercase;"
                 />
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
@@ -217,7 +223,8 @@
                   name="numeroCelular"
                   required
                   placeholder="Ej. 71234567"
-                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors"
+                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase"
+                  style="text-transform: uppercase;"
                 />
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
@@ -675,6 +682,33 @@
       }
 
       // =========================================================================
+      // FORZADO EXCLUSIVO DE MAYÚSCULAS EN EL FORMULARIO DE INSCRIPCIÓN
+      // Convierte en tiempo real cualquier texto ingresado o pegado a MAYÚSCULAS
+      // manteniendo la posición exacta del cursor.
+      // =========================================================================
+      const camposMayusculas = form ? form.querySelectorAll('input[type="text"], input[type="search"], input[type="tel"]') : [];
+      camposMayusculas.forEach((campo) => {
+        const forzarMayusculas = () => {
+          const start = campo.selectionStart;
+          const end = campo.selectionEnd;
+          const original = campo.value;
+          const mayus = original.toUpperCase();
+          if (original !== mayus) {
+            campo.value = mayus;
+            if (start !== null && end !== null) {
+              campo.setSelectionRange(start, end);
+            }
+          }
+        };
+
+        campo.addEventListener('input', forzarMayusculas);
+        campo.addEventListener('change', forzarMayusculas);
+        campo.addEventListener('paste', () => {
+          setTimeout(forzarMayusculas, 10);
+        });
+      });
+
+      // =========================================================================
       // ⚠️ CONFIGURACIÓN GOOGLE APPS SCRIPT (GAS):
       // URL DE LA APLICACIÓN WEB PUBLICADA
       // =========================================================================
@@ -683,7 +717,7 @@
       const btnFinalizar = document.getElementById('finalizeBtn');
       const vistaExito = document.getElementById('finalizeNotification');
       const newInscriptionBtn = document.getElementById('newInscriptionBtn');
-      const comprobanteInput = document.getElementById('comprobante');
+      const comprobanteInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
 
       // Función auxiliar para convertir y optimizar imagen a Base64
       async function procesarComprobanteArchivo(file) {
@@ -729,7 +763,8 @@
 
       // Función unificada de transmisión a Google Apps Script
       async function transmitirRegistroAScript(dorsal) {
-        const file = comprobanteInput && comprobanteInput.files ? comprobanteInput.files[0] : null;
+        const fileInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
+        const file = fileInput && fileInput.files ? fileInput.files[0] : null;
         let fileData = { base64: "", nombre: "" };
         if (file) {
           try {
@@ -739,11 +774,11 @@
           }
         }
 
-        const nombres = document.getElementById('nombresApellidos') ? document.getElementById('nombresApellidos').value.trim() : '';
-        const ci = document.getElementById('cedulaIdentidad') ? document.getElementById('cedulaIdentidad').value.trim() : '';
-        const celular = document.getElementById('numeroCelular') ? document.getElementById('numeroCelular').value.trim() : '';
-        const unidad = document.getElementById('unidadReparticion') ? document.getElementById('unidadReparticion').value.trim() : '';
-        const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value.trim() : '';
+        const nombres = document.getElementById('nombresApellidos') ? document.getElementById('nombresApellidos').value.trim().toUpperCase() : '';
+        const ci = document.getElementById('cedulaIdentidad') ? document.getElementById('cedulaIdentidad').value.trim().toUpperCase() : '';
+        const celular = document.getElementById('numeroCelular') ? document.getElementById('numeroCelular').value.trim().toUpperCase() : '';
+        const unidad = document.getElementById('unidadReparticion') ? document.getElementById('unidadReparticion').value.trim().toUpperCase() : '';
+        const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value.trim().toUpperCase() : '';
 
         const payload = {
           nombres: nombres,
