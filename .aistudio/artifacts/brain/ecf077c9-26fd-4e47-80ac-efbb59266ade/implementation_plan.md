@@ -120,3 +120,43 @@ Registro oficial de las 13 categorías (A hasta M), asignación de colores táct
 4. **Sincronización en Tiempo Real**:
    - Las imágenes se difunden mediante Server-Sent Events (SSE) a cualquier celular o PC conectado.
    - Se actualiza automáticamente el fondo, el ícono de cabecera, el dorsal de carrera y el favicon de la pestaña.
+
+---
+
+## 6. Fondo Oficial Integrado: Afiche de la Carrera Pedestre 10 KM ECEME
+
+### Configuración de Contraste y Calibración Visual:
+1. **Recurso Implementado**:
+   - Archivo: `/public/assets/aistudio/WhatsApp_Image_2026-11-02_at_22.28.07_3916c1b9.jpeg`
+   - Alias canónico: `/fondo-oficial.jpeg`
+2. **Capa de Imagen (`#appBackgroundLayer`)**:
+   - Posicionamiento: `bg-cover bg-top sm:bg-center bg-no-repeat`
+   - Opacidad: `0.38`
+   - Filtro: `saturate(1.15) contrast(1.08)`
+3. **Capa de Contraste Militar (`#appOverlayLayer`)**:
+   - Gradiente radial: `radial-gradient(circle at 50% 20%, rgba(20, 35, 18, 0.50) 0%, rgba(11, 20, 10, 0.85) 60%, rgba(6, 11, 5, 0.96) 100%)`
+   - Opacidad del overlay: `0.70`
+   - Propósito: Ilumina sutilmente los corredores y mariscales en el centro mientras mantiene una oscuridad táctica profunda en los bordes y bajo los textos para garantizar legibilidad 100% nítida.
+4. **Armonización de Cabecera**:
+   - Subtítulo oficial: `MARISCALES DE BOLIVIA · COCHABAMBA`.
+   - Organización: `ESCUELA DE COMANDO Y ESTADO MAYOR DEL EJÉRCITO (ECEME)`.
+   - Puntos de inscripción oficiales: `Condominio Bolivia (Av. Ramón Rivero) · ECEME (Calama y Tumusla)`.
+
+---
+
+## 7. Escudo Oficial ECEME Integrado: Marco de Alto Contraste
+
+### Configuración e Integración Visual:
+1. **Recurso Implementado**:
+   - Archivo: `/public/assets/aistudio/ECEME_ESC_cad34ddd.png`
+   - Alias canónico: `/escudo-eceme.png` y `/uploads/custom-icon.png`
+2. **Cabecera Institucional (`#appHeaderIconWrapper` y `#appHeaderIconImg`)**:
+   - Dimensiones: `h-20 w-20 sm:h-24 sm:w-24` (formato prominente y distinguido).
+   - Marco de Contraste: `border-2 border-gold-400 bg-army-950/95 ring-4 ring-gold-500/30`.
+   - Sombra 3D: `shadow-[0_8px_25px_rgba(0,0,0,0.7)]`.
+   - Filtro del Escudo: `filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] contrast-110`.
+   - Los laureles dorados, la espada plateada y el libro abierto contrastan con gran profundidad sobre el fondo militar oscuro.
+3. **Marbete / Dorsal de Carrera (`#dorsalIconImg`)**:
+   - Escudo integrado en la parte superior del marbete de carrera con sombra suave sobre el fondo blanco.
+4. **Pestaña y Acceso Directo Móvil**:
+   - Actualizado en `<link rel="icon">`, `<link rel="apple-touch-icon">` y `<link rel="shortcut icon">`.

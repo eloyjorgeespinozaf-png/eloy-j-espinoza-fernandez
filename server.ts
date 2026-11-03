@@ -97,11 +97,11 @@ async function startServer() {
       console.error('Error al leer visual-settings.json:', err);
     }
     return {
-      bgSource: 'tactico',
-      bgOpacity: 50,
-      bgBlur: 1,
-      overlayDarkness: 65,
-      iconSource: 'default',
+      bgSource: '/fondo-oficial.jpeg',
+      bgOpacity: 40,
+      bgBlur: 0,
+      overlayDarkness: 70,
+      iconSource: '/assets/aistudio/ECEME_ESC_cad34ddd.png',
       requiresAuth: true,
       updatedAt: Date.now()
     };
