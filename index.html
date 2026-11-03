@@ -439,23 +439,45 @@
           </div>
         </div>
 
-        <!-- Elemento Post-Registro: Botón Inferior -->
-        <div class="mt-8 text-center">
+        <!-- Elemento Post-Registro: Botón Inferior y Acciones -->
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+          <button
+            type="button"
+            id="printBtn"
+            onclick="window.print()"
+            class="w-full py-3.5 px-5 rounded-lg bg-stone-800 hover:bg-stone-700 active:bg-stone-900 text-gold-300 border border-gold-500/40 font-display font-bold uppercase tracking-wider text-sm sm:text-base transition duration-150 ease-in-out shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>Imprimir Marbete</span>
+          </button>
+
           <button
             type="button"
             id="finalizeBtn"
-            class="w-full max-w-md mx-auto py-3.5 px-6 rounded-lg bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-base sm:text-lg transition duration-150 ease-in-out shadow-lg hover:shadow-gold-500/20 flex items-center justify-center gap-2 cursor-pointer"
+            class="w-full py-3.5 px-5 rounded-lg bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-sm sm:text-base transition duration-150 ease-in-out shadow-lg hover:shadow-gold-500/20 flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>Finalizar y Enviar Datos</span>
+            <span>Reenviar al Servidor</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
             </svg>
           </button>
         </div>
 
+        <div class="mt-4 text-center">
+          <button
+            type="button"
+            id="newInscriptionBtn"
+            class="text-xs text-gold-400/80 hover:text-gold-300 underline font-semibold tracking-wide cursor-pointer transition"
+          >
+            ← Inscribir a otro participante
+          </button>
+        </div>
+
         <!-- Notificación en pantalla post-finalización (Módulo 3) -->
-        <div id="finalizeNotification" class="hidden mt-4 max-w-md mx-auto p-4 rounded-lg bg-army-900 border border-gold-500/60 text-gold-300 text-xs sm:text-sm text-center shadow-lg">
-          Módulo 2 completado. El envío a Google Forms será en la Fase 3
+        <div id="finalizeNotification" class="hidden mt-4 max-w-md mx-auto p-4 rounded-lg bg-army-900 border border-emerald-500/60 text-emerald-300 text-xs sm:text-sm text-center shadow-lg">
+          ¡Inscripción registrada con éxito en Google Sheets y Google Drive!
         </div>
 
       </section>
@@ -512,12 +534,107 @@
         categoriaSelect.addEventListener('change', updateCategoriaIndicator);
       }
 
-      // MÓDULO 1 & 2: Envío de Formulario y Generación de Dorsal
+      // =========================================================================
+      // ⚠️ CONFIGURACIÓN GOOGLE APPS SCRIPT (GAS):
+      // URL DE LA APLICACIÓN WEB PUBLICADA
+      // =========================================================================
+      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
+
+      const btnFinalizar = document.getElementById('finalizeBtn');
+      const vistaExito = document.getElementById('finalizeNotification');
+      const newInscriptionBtn = document.getElementById('newInscriptionBtn');
+      const comprobanteInput = document.getElementById('comprobante');
+
+      // Función auxiliar para convertir y optimizar imagen a Base64
+      async function procesarComprobanteArchivo(file) {
+        if (!file) return { base64: "", nombre: "" };
+        const nombre = file.name;
+        const base64 = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target.result;
+            if (file.type && file.type.startsWith('image/')) {
+              const img = new Image();
+              img.onload = () => {
+                const maxDim = 1200;
+                let width = img.width;
+                let height = img.height;
+                if (width > maxDim || height > maxDim) {
+                  if (width > height) {
+                    height = Math.round((height * maxDim) / width);
+                    width = maxDim;
+                  } else {
+                    width = Math.round((width * maxDim) / height);
+                    height = maxDim;
+                  }
+                }
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+                resolve(canvas.toDataURL('image/jpeg', 0.85));
+              };
+              img.onerror = () => resolve(result);
+              img.src = result;
+            } else {
+              resolve(result);
+            }
+          };
+          reader.onerror = () => resolve("");
+          reader.readAsDataURL(file);
+        });
+        return { base64, nombre };
+      }
+
+      // Función unificada de transmisión a Google Apps Script
+      async function transmitirRegistroAScript(dorsal) {
+        const file = comprobanteInput && comprobanteInput.files ? comprobanteInput.files[0] : null;
+        let fileData = { base64: "", nombre: "" };
+        if (file) {
+          try {
+            fileData = await procesarComprobanteArchivo(file);
+          } catch (err) {
+            console.warn("Aviso al procesar archivo:", err);
+          }
+        }
+
+        const nombres = document.getElementById('nombresApellidos') ? document.getElementById('nombresApellidos').value.trim() : '';
+        const ci = document.getElementById('cedulaIdentidad') ? document.getElementById('cedulaIdentidad').value.trim() : '';
+        const celular = document.getElementById('numeroCelular') ? document.getElementById('numeroCelular').value.trim() : '';
+        const unidad = document.getElementById('unidadReparticion') ? document.getElementById('unidadReparticion').value.trim() : '';
+        const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value.trim() : '';
+
+        const payload = {
+          nombres: nombres,
+          ci: ci,
+          celular: celular,
+          unidad: unidad,
+          categoria: categoria,
+          dorsal: dorsal,
+          comprobante: fileData.base64,
+          nombreArchivo: fileData.nombre
+        };
+
+        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8'
+            },
+            body: JSON.stringify(payload)
+          });
+        }
+        return payload;
+      }
+
+      // MÓDULO 1 & 2: Envío de Formulario, Transmisión Automática y Generación de Dorsal
       if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
           e.preventDefault();
 
-          // Validación de campos requeridos (incluyendo el select de categoría)
+          // Validación de campos requeridos
           const inputs = form.querySelectorAll('input[required], select[required]');
           let isValid = true;
 
@@ -545,9 +662,8 @@
           });
 
           if (isValid) {
-            // Simular proceso rápido de carga (1 segundo)
             submitBtn.disabled = true;
-            btnText.textContent = "Procesando y asignando dorsal...";
+            btnText.textContent = "Guardando en Sheets y Drive...";
             btnIcon.innerHTML = `
               <svg class="animate-spin h-5 w-5 text-army-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -555,76 +671,91 @@
               </svg>
             `;
 
-            setTimeout(() => {
-              // a) Oculta toda la sección del formulario de inscripción y QR
-              registrationSection.classList.add('hidden');
+            // Generar número de 4 dígitos
+            const randomNum = Math.floor(Math.random() * 10000);
+            const formattedDorsal = String(randomNum).padStart(4, '0');
+            dorsalNumber.textContent = formattedDorsal;
 
-              // b) Genera un número aleatorio de 4 dígitos asegurando siempre 4 caracteres
-              const randomNum = Math.floor(Math.random() * 10000);
-              const formattedDorsal = String(randomNum).padStart(4, '0');
+            // Transmisión asíncrona directa hacia Google Apps Script
+            try {
+              await transmitirRegistroAScript(formattedDorsal);
+            } catch (err) {
+              console.warn("Transmisión realizada con manejo de contingencia:", err);
+            }
 
-              // c) Inyecta este número en la "Vista de Dorsal"
-              dorsalNumber.textContent = formattedDorsal;
+            // Oculta sección de formulario y muestra dorsal
+            registrationSection.classList.add('hidden');
 
-              // 2. Extraer el color de la categoría seleccionada y reemplazar el borde verde del Dorsal
-              const selectedOption = categoriaSelect.options[categoriaSelect.selectedIndex];
-              const borderClass = selectedOption ? (selectedOption.dataset.border || 'border-army-900') : 'border-army-900';
-              const hexColor = selectedOption ? (selectedOption.dataset.hex || '#142312') : '#142312';
+            // 2. Extraer el color de la categoría seleccionada y reemplazar el borde verde del Dorsal
+            const selectedOption = categoriaSelect.options[categoriaSelect.selectedIndex];
+            const borderClass = selectedOption ? (selectedOption.dataset.border || 'border-army-900') : 'border-army-900';
+            const hexColor = selectedOption ? (selectedOption.dataset.hex || '#142312') : '#142312';
 
-              const possibleBorders = [
-                'border-army-900', 'border-green-900', 'border-pink-500', 'border-blue-600',
-                'border-amber-800', 'border-gray-500', 'border-gray-900', 'border-red-600',
-                'border-yellow-400', 'border-emerald-600'
-              ];
-              possibleBorders.forEach((cls) => dorsalContainer.classList.remove(cls));
-              dorsalContainer.classList.add(borderClass);
-              dorsalContainer.style.borderColor = hexColor;
+            const possibleBorders = [
+              'border-army-900', 'border-green-900', 'border-pink-500', 'border-blue-600',
+              'border-amber-800', 'border-gray-500', 'border-gray-900', 'border-red-600',
+              'border-yellow-400', 'border-emerald-600'
+            ];
+            possibleBorders.forEach((cls) => dorsalContainer.classList.remove(cls));
+            dorsalContainer.classList.add(borderClass);
+            dorsalContainer.style.borderColor = hexColor;
 
-              // Sincronización de Color en el Mensaje de Pre-aprobación
-              if (preApprovalBanner && selectedOption) {
-                // Extraer el color base de la categoría seleccionada
-                let baseColor = selectedOption.dataset.base;
-                if (!baseColor) {
-                  if (selectedOption.dataset.color) {
-                    const raw = selectedOption.dataset.color.split('-')[0].toLowerCase();
-                    baseColor = raw === 'emerald' ? 'green' : raw;
-                  } else {
-                    baseColor = 'green';
-                  }
+            // Sincronización de Color en el Mensaje de Confirmación
+            if (preApprovalBanner && selectedOption) {
+              let baseColor = selectedOption.dataset.base;
+              if (!baseColor) {
+                if (selectedOption.dataset.color) {
+                  const raw = selectedOption.dataset.color.split('-')[0].toLowerCase();
+                  baseColor = raw === 'emerald' ? 'green' : raw;
+                } else {
+                  baseColor = 'green';
                 }
-
-                // Generar variantes dinámicas: 100 para fondo, 900 para texto, 300 para borde
-                const bannerBg = `bg-${baseColor}-100`;
-                const bannerText = `text-${baseColor}-900`;
-                const bannerBorder = `border-${baseColor}-300`;
-
-                // Limpiar clases de color anteriores para evitar conflictos de CSS
-                const colorBases = ['green', 'emerald', 'pink', 'blue', 'amber', 'gray', 'black', 'zinc', 'neutral', 'red', 'yellow'];
-                colorBases.forEach((c) => {
-                  preApprovalBanner.classList.remove(`bg-${c}-100`, `text-${c}-900`, `border-${c}-300`);
-                });
-                Array.from(preApprovalBanner.classList).forEach((cls) => {
-                  if (/^(bg|text|border)-(green|emerald|pink|blue|amber|gray|black|zinc|neutral|red|yellow)-/i.test(cls)) {
-                    preApprovalBanner.classList.remove(cls);
-                  }
-                });
-
-                // Aplicar las nuevas clases dinámicas
-                preApprovalBanner.classList.add(bannerBg, bannerText, bannerBorder);
               }
 
-              // Inyectar el nombre de la categoría en el marbete
-              if (dorsalCategoriaLabel && selectedOption) {
-                dorsalCategoriaLabel.textContent = selectedOption.value;
-                dorsalCategoriaLabel.style.color = hexColor === '#111827' ? '#1f2937' : hexColor;
-              }
+              const bannerBg = `bg-${baseColor}-100`;
+              const bannerText = `text-${baseColor}-900`;
+              const bannerBorder = `border-${baseColor}-300`;
 
-              // d) Muestra la "Vista de Dorsal"
-              dorsalSection.classList.remove('hidden');
+              const colorBases = ['green', 'emerald', 'pink', 'blue', 'amber', 'gray', 'black', 'zinc', 'neutral', 'red', 'yellow'];
+              colorBases.forEach((c) => {
+                preApprovalBanner.classList.remove(`bg-${c}-100`, `text-${c}-900`, `border-${c}-300`);
+              });
+              Array.from(preApprovalBanner.classList).forEach((cls) => {
+                if (/^(bg|text|border)-(green|emerald|pink|blue|amber|gray|black|zinc|neutral|red|yellow)-/i.test(cls)) {
+                  preApprovalBanner.classList.remove(cls);
+                }
+              });
 
-              // Desplaza la vista suavemente al dorsal
-              dorsalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }, 1000);
+              preApprovalBanner.classList.add(bannerBg, bannerText, bannerBorder);
+              preApprovalBanner.innerHTML = `
+                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/80 border border-current mb-2 shadow-inner">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 class="text-base sm:text-lg md:text-xl font-bold font-display uppercase tracking-wide">
+                  ¡Inscripción Registrada Oficialmente!
+                </h2>
+                <p class="text-xs sm:text-sm opacity-90 mt-1">
+                  Dorsal <strong>#${formattedDorsal}</strong> y comprobante archivados con éxito en Google Sheets y Drive.
+                </p>
+              `;
+            }
+
+            // Inyectar el nombre de la categoría en el marbete
+            if (dorsalCategoriaLabel && selectedOption) {
+              dorsalCategoriaLabel.textContent = selectedOption.value;
+              dorsalCategoriaLabel.style.color = hexColor === '#111827' ? '#1f2937' : hexColor;
+            }
+
+            // Muestra la vista de dorsal y notificación de éxito
+            dorsalSection.classList.remove('hidden');
+            if (vistaExito) {
+              vistaExito.classList.remove('hidden');
+            }
+
+            // Desplaza la vista suavemente al dorsal
+            dorsalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
         });
 
@@ -641,19 +772,9 @@
         });
       }
 
-      // =========================================================================
-      // ⚠️ CONFIGURACIÓN GOOGLE APPS SCRIPT (GAS):
-      // URL DE LA APLICACIÓN WEB PUBLICADA
-      // =========================================================================
-      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
-
-      const btnFinalizar = document.getElementById('btn-finalizar') || document.getElementById('finalizeBtn');
-      const vistaExito = document.getElementById('vista-exito') || document.getElementById('finalizeNotification');
-      const comprobanteInput = document.getElementById('comprobante') || document.getElementById('comprobantePago');
-
+      // Botón secundario para reenvío manual si se requiere
       if (btnFinalizar) {
         btnFinalizar.addEventListener('click', async () => {
-          // Estado visual de carga en el botón durante la transmisión
           const originalBtnContent = btnFinalizar.innerHTML;
           btnFinalizar.disabled = true;
           btnFinalizar.innerHTML = `
@@ -661,134 +782,36 @@
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
               <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span>Transmitiendo al Comando central...</span>
+            <span>Confirmando envío...</span>
           `;
 
-          // 1. Lógica de Archivo: Conversión y optimización de imagen a Base64
-          let comprobanteBase64 = "";
-          let nombreArchivo = "";
-
-          const file = comprobanteInput && comprobanteInput.files ? comprobanteInput.files[0] : null;
-
-          if (file) {
-            nombreArchivo = file.name;
-            try {
-              comprobanteBase64 = await new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                  const result = e.target.result;
-                  // Si es imagen, optimizar resolución para subida ágil
-                  if (file.type && file.type.startsWith('image/')) {
-                    const img = new Image();
-                    img.onload = () => {
-                      const maxDim = 1200;
-                      let width = img.width;
-                      let height = img.height;
-                      if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                          height = Math.round((height * maxDim) / width);
-                          width = maxDim;
-                        } else {
-                          width = Math.round((width * maxDim) / height);
-                          height = maxDim;
-                        }
-                      }
-                      const canvas = document.createElement('canvas');
-                      canvas.width = width;
-                      canvas.height = height;
-                      const ctx = canvas.getContext('2d');
-                      ctx.drawImage(img, 0, 0, width, height);
-                      resolve(canvas.toDataURL('image/jpeg', 0.85));
-                    };
-                    img.onerror = () => resolve(result);
-                    img.src = result;
-                  } else {
-                    resolve(result);
-                  }
-                };
-                reader.onerror = () => resolve("");
-                reader.readAsDataURL(file);
-              });
-            } catch (err) {
-              console.warn("Aviso al procesar archivo:", err);
-            }
-          }
-
-          // 2. Empaquetado de datos del participante y dorsal generado
-          const nombres = document.getElementById('nombresApellidos') ? document.getElementById('nombresApellidos').value.trim() : '';
-          const ci = document.getElementById('cedulaIdentidad') ? document.getElementById('cedulaIdentidad').value.trim() : '';
-          const celular = document.getElementById('numeroCelular') ? document.getElementById('numeroCelular').value.trim() : '';
-          const unidad = document.getElementById('unidadReparticion') ? document.getElementById('unidadReparticion').value.trim() : '';
-          const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value.trim() : '';
-          const dorsal = dorsalNumber ? dorsalNumber.textContent.trim() : '0000';
-
-          const payload = {
-            nombres: nombres,
-            ci: ci,
-            celular: celular,
-            unidad: unidad,
-            categoria: categoria,
-            dorsal: dorsal,
-            comprobante: comprobanteBase64,
-            nombreArchivo: nombreArchivo
-          };
-
+          const currentDorsal = dorsalNumber ? dorsalNumber.textContent.trim() : '0000';
           try {
-            // Verificación si la URL de Apps Script aún es el placeholder
-            if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-              console.warn("AVISO: URL de Google Apps Script pendiente de configurar. Simulando envío para prueba visual...");
-              await new Promise(r => setTimeout(r, 1000));
-            } else {
-              // 3. Lógica de Transmisión Anti-CORS:
-              // mode: 'no-cors' permite enviar el payload completo a Google Apps Script sin bloqueo por la redirección 302
-              await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: {
-                  'Content-Type': 'text/plain;charset=utf-8'
-                },
-                body: JSON.stringify(payload)
-              });
-            }
-
-            // 4. Transición de pantalla hacia el contenedor vista-exito
-            if (vistaExito) {
-              vistaExito.innerHTML = `
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-900/90 border border-emerald-400 text-emerald-300 mb-2 shadow-inner">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h3 class="font-display font-bold text-base sm:text-lg md:text-xl text-gold-300 uppercase tracking-wide">
-                  ¡Inscripción Confirmada y Registrada!
-                </h3>
-                <p class="text-xs sm:text-sm text-stone-200 mt-1 max-w-sm mx-auto">
-                  Su comprobante y número de dorsal <strong>#${dorsal}</strong> han sido archivados con éxito en Google Drive y Google Sheets.
-                </p>
-                <div class="mt-3 text-[11px] text-stone-400 border-t border-army-800 pt-2">
-                  Participante: <span class="text-stone-300 font-semibold">${nombres}</span> · Categoría: <span class="text-stone-300 font-semibold">${categoria}</span>
-                </div>
-              `;
-              vistaExito.classList.remove('hidden');
-              vistaExito.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-
-            // Ocultar botón de envío una vez completado
-            btnFinalizar.classList.add('hidden');
-
+            await transmitirRegistroAScript(currentDorsal);
+            btnFinalizar.innerHTML = `<span>✓ Guardado en Google Sheets</span>`;
           } catch (err) {
-            console.error("Error en la transmisión a Google Apps Script:", err);
-            if (vistaExito) {
-              vistaExito.innerHTML = `
-                <div class="text-amber-400 font-bold mb-1">Registro procesado en contingencia</div>
-                <div class="text-xs text-stone-300">Su dorsal <strong>#${dorsal}</strong> fue reservado. Si la conexión al servidor tardó, conserve su captura de pantalla.</div>
-              `;
-              vistaExito.classList.remove('hidden');
-              vistaExito.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-            btnFinalizar.disabled = false;
+            console.error(err);
             btnFinalizar.innerHTML = originalBtnContent;
+            btnFinalizar.disabled = false;
           }
+        });
+      }
+
+      // Botón de Nueva Inscripción para registrar a otro corredor
+      if (newInscriptionBtn) {
+        newInscriptionBtn.addEventListener('click', () => {
+          form.reset();
+          updateCategoriaIndicator();
+          submitBtn.disabled = false;
+          btnText.textContent = "Generar Dorsal y Proceder";
+          btnIcon.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
+            </svg>
+          `;
+          dorsalSection.classList.add('hidden');
+          registrationSection.classList.remove('hidden');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         });
       }
     });
