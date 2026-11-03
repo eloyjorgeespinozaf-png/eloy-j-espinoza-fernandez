@@ -69,7 +69,25 @@ function doPost(e) {
       data = e.parameter;
     }
 
-    // 2. Extracción de los campos del formulario
+    // 2. Comprobar si es una petición para guardar configuración visual en la nube
+    if (data.action === "save_visuals" && data.visualSettings) {
+      try {
+        var strSettings = typeof data.visualSettings === "string" ? data.visualSettings : JSON.stringify(data.visualSettings);
+        PropertiesService.getScriptProperties().setProperty("eceme_visual_settings", strSettings);
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "success",
+          message: "Configuración visual sincronizada en Google Apps Script",
+          timestamp: new Date()
+        })).setMimeType(ContentService.MimeType.JSON);
+      } catch (errProp) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "error",
+          message: "Error al guardar propiedades: " + errProp.toString()
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // 3. Extracción de los campos del formulario de inscripción
     var nombres = data.nombres || "Sin Nombre";
     var ci = data.ci || "Sin CI";
     var celular = data.celular || "Sin Celular";
@@ -166,9 +184,19 @@ function doPost(e) {
 }
 
 /**
- * Función auxiliar para verificar despliegue en navegador
+ * Función auxiliar para verificar despliegue o consultar configuración visual
  */
 function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
+  if (action === "get_visuals") {
+    var saved = PropertiesService.getScriptProperties().getProperty("eceme_visual_settings");
+    if (saved) {
+      return ContentService.createTextOutput(saved).setMimeType(ContentService.MimeType.JSON);
+    } else {
+      return ContentService.createTextOutput(JSON.stringify({ status: "not_found" })).setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+
   return ContentService.createTextOutput(JSON.stringify({
     status: "online",
     service: "Backend Carrera Pedestre 10KM ECEME",

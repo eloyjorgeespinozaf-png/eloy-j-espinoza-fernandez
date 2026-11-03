@@ -9,7 +9,10 @@
   <meta property="og:description" content="Inscripción oficial y asignación de dorsal para la Carrera Pedestre 10 KM organizada por el Ejército - ECEME." />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#0b140a" />
   <link rel="icon" id="appFavicon" type="image/svg+xml" href="" />
+  <link rel="apple-touch-icon" id="appAppleTouchIcon" href="" />
+  <link rel="shortcut icon" id="appShortcutIcon" href="" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -57,10 +60,10 @@
 </head>
 <body class="relative bg-army-950 text-stone-100 font-sans min-h-screen antialiased flex flex-col selection:bg-gold-500 selection:text-army-950">
 
-  <!-- Capa de Fondo Dinámica (Personalizable: Imagen, Opacidad y Desenfoque) -->
-  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 transition-all duration-700 bg-cover bg-center bg-no-repeat opacity-30" style="background-image: none;"></div>
-  <!-- Overlay Táctico con Gradiente para Legibilidad Absoluta -->
-  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-army-950/85 via-army-950/80 to-army-950/95 transition-opacity duration-500"></div>
+  <!-- Capa de Fondo Dinámica (Personalizable: Imagen, Opacidad y Desenfoque - Responsive Móvil y PC) -->
+  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 transition-all duration-700 bg-cover bg-center bg-no-repeat" style="min-height: 100dvh; background-image: none; opacity: 0.45;"></div>
+  <!-- Overlay Táctico con Gradiente para Legibilidad Absoluta (Ajustable) -->
+  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-army-950 via-army-950 to-army-950 transition-opacity duration-500" style="min-height: 100dvh; opacity: 0.70;"></div>
 
   <!-- Botón Flotante para Personalizar Fondo e Ícono -->
   <button
@@ -431,7 +434,8 @@
           <div class="absolute bottom-3.5 right-3.5 w-3.5 h-3.5 rounded-full bg-army-950 border border-stone-300 shadow-inner" aria-hidden="true"></div>
 
           <!-- Contenido del Dorsal: Parte Superior -->
-          <div class="text-center border-b border-stone-200 pb-2.5">
+          <div class="text-center border-b border-stone-200 pb-2.5 flex items-center justify-center gap-2">
+            <img id="dorsalIconImg" src="" alt="Escudo ECEME" class="w-6 h-6 sm:w-7 sm:h-7 object-contain filter drop-shadow-sm" />
             <span class="font-display font-extrabold text-base sm:text-lg tracking-[0.2em] text-army-900 uppercase">
               EJÉRCITO - ECEME
             </span>
@@ -540,6 +544,18 @@
         </button>
       </div>
 
+      <!-- Banner de Estado de Sincronización en Tiempo Real -->
+      <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 flex items-center justify-between text-xs text-emerald-200 shadow-lg">
+        <div class="flex items-center gap-2.5">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+          </span>
+          <span class="font-semibold text-[11px] sm:text-xs">Sincronización en Tiempo Real Activa</span>
+        </div>
+        <span class="text-[10px] bg-emerald-900/80 text-emerald-300 font-bold px-2 py-0.5 rounded border border-emerald-500/40">MÓVIL + PC</span>
+      </div>
+
       <!-- SECCIÓN 1: IMAGEN DE FONDO -->
       <div class="space-y-4 mb-6">
         <div class="flex items-center justify-between">
@@ -551,11 +567,11 @@
         <!-- Carga de Imagen: Archivo Local o URL -->
         <div class="space-y-2">
           <div>
-            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción A: Subir imagen desde tu dispositivo:</label>
+            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción A: Subir imagen desde tu dispositivo (Celular o PC):</label>
             <input type="file" id="bgFileInput" accept="image/*" class="w-full text-xs text-stone-400 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-army-800 file:text-gold-400 hover:file:bg-army-700 cursor-pointer bg-army-950 p-1.5 rounded-lg border border-army-700" />
           </div>
           <div>
-            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción B: Pegar enlace o URL de imagen:</label>
+            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción B: Pegar enlace o URL directa de imagen:</label>
             <input type="url" id="bgUrlInput" placeholder="https://ejemplo.com/fondo-maraton.jpg" class="w-full text-xs bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-stone-200 placeholder-stone-500 focus:outline-none focus:border-gold-500" />
           </div>
         </div>
@@ -579,14 +595,14 @@
           </div>
         </div>
 
-        <!-- Controles de Opacidad y Desenfoque -->
-        <div class="grid grid-cols-2 gap-3 bg-army-950/70 p-3 rounded-xl border border-army-800">
+        <!-- Controles de Opacidad, Desenfoque y Filtro de Contraste -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-army-950/70 p-3 rounded-xl border border-army-800">
           <div>
             <div class="flex justify-between text-xs text-stone-300 mb-1">
-              <span>Opacidad:</span>
-              <span id="bgOpacityValue" class="text-gold-400 font-bold">30%</span>
+              <span>Opacidad Fondo:</span>
+              <span id="bgOpacityValue" class="text-gold-400 font-bold">45%</span>
             </div>
-            <input type="range" id="bgOpacitySlider" min="5" max="80" value="30" class="w-full accent-gold-500 cursor-pointer" />
+            <input type="range" id="bgOpacitySlider" min="10" max="95" value="45" class="w-full accent-gold-500 cursor-pointer" />
           </div>
           <div>
             <div class="flex justify-between text-xs text-stone-300 mb-1">
@@ -594,6 +610,13 @@
               <span id="bgBlurValue" class="text-gold-400 font-bold">0px</span>
             </div>
             <input type="range" id="bgBlurSlider" min="0" max="15" value="0" class="w-full accent-gold-500 cursor-pointer" />
+          </div>
+          <div>
+            <div class="flex justify-between text-xs text-stone-300 mb-1">
+              <span>Filtro Contraste:</span>
+              <span id="overlayDarknessValue" class="text-gold-400 font-bold">70%</span>
+            </div>
+            <input type="range" id="overlayDarknessSlider" min="15" max="95" value="70" class="w-full accent-gold-500 cursor-pointer" />
           </div>
         </div>
       </div>
@@ -1130,8 +1153,12 @@
 
       // 2. Elementos del DOM para la Capa Visual y el Modal
       const appBackgroundLayer = document.getElementById('appBackgroundLayer');
+      const appOverlayLayer = document.getElementById('appOverlayLayer');
       const appFavicon = document.getElementById('appFavicon');
+      const appAppleTouchIcon = document.getElementById('appAppleTouchIcon');
+      const appShortcutIcon = document.getElementById('appShortcutIcon');
       const appHeaderIconImg = document.getElementById('appHeaderIconImg');
+      const dorsalIconImg = document.getElementById('dorsalIconImg');
 
       const visualModal = document.getElementById('visualModal');
       const openVisualModalBtn = document.getElementById('openVisualModalBtn');
@@ -1143,6 +1170,8 @@
       const bgOpacityValue = document.getElementById('bgOpacityValue');
       const bgBlurSlider = document.getElementById('bgBlurSlider');
       const bgBlurValue = document.getElementById('bgBlurValue');
+      const overlayDarknessSlider = document.getElementById('overlayDarknessSlider');
+      const overlayDarknessValue = document.getElementById('overlayDarknessValue');
 
       const iconFileInput = document.getElementById('iconFileInput');
       const iconUrlInput = document.getElementById('iconUrlInput');
@@ -1154,18 +1183,16 @@
 
       // Estado activo en memoria
       let currentBgSource = PRESET_BACKGROUNDS.maraton;
-      let currentBgOpacity = 30;
+      let currentBgOpacity = 45;
       let currentBgBlur = 0;
+      let currentOverlayDarkness = 70;
       let currentIconSource = DEFAULT_ICON_SVG;
 
       // 3. Funciones API Globales expuestas en `window`
       /**
-       * Aplica una imagen de fondo a la webapp
-       * @param {string} source - URL externa, imagen Base64 o clave de preset ('maraton', 'tactico', 'pista')
-       * @param {number} [opacity=30] - Porcentaje de opacidad (5 a 80)
-       * @param {number} [blur=0] - Desenfoque en píxeles (0 a 15)
+       * Aplica una imagen de fondo a la webapp (optimizada para móviles y computadoras)
        */
-      window.setBackgroundImage = function(source, opacity = 30, blur = 0) {
+      window.setBackgroundImage = function(source, opacity = 45, blur = 0) {
         if (!source || source === 'default') {
           currentBgSource = PRESET_BACKGROUNDS.maraton;
         } else if (PRESET_BACKGROUNDS[source]) {
@@ -1173,7 +1200,7 @@
         } else {
           currentBgSource = source;
         }
-        currentBgOpacity = Math.max(5, Math.min(80, parseInt(opacity, 10) || 30));
+        currentBgOpacity = Math.max(5, Math.min(95, parseInt(opacity, 10) || 45));
         currentBgBlur = Math.max(0, Math.min(15, parseInt(blur, 10) || 0));
 
         if (appBackgroundLayer) {
@@ -1189,57 +1216,209 @@
       };
 
       /**
-       * Aplica un nuevo ícono/escudo a la webapp (Favicon y Cabecera)
-       * @param {string} source - URL externa, Base64 o SVG
+       * Ajusta la intensidad del filtro oscuro para garantizar legibilidad en móviles y pantallas brillantes
+       */
+      window.setOverlayDarkness = function(darkness = 70) {
+        currentOverlayDarkness = Math.max(10, Math.min(95, parseInt(darkness, 10) || 70));
+        if (appOverlayLayer) {
+          appOverlayLayer.style.opacity = (currentOverlayDarkness / 100).toString();
+        }
+        if (overlayDarknessSlider) overlayDarknessSlider.value = currentOverlayDarkness;
+        if (overlayDarknessValue) overlayDarknessValue.textContent = `${currentOverlayDarkness}%`;
+      };
+
+      /**
+       * Aplica el ícono/escudo oficial en toda la webapp:
+       * - Cabecera oficial
+       * - Favicon en pestaña de escritorio
+       * - Acceso directo en pantalla de inicio de Celulares (Apple Touch & Android)
+       * - Marbete / Dorsal digital de carrera
        */
       window.setAppIcon = function(source) {
         currentIconSource = (source && source !== 'default') ? source : DEFAULT_ICON_SVG;
-        if (appFavicon) {
-          appFavicon.href = currentIconSource;
+        if (appFavicon) appFavicon.href = currentIconSource;
+        if (appAppleTouchIcon) appAppleTouchIcon.href = currentIconSource;
+        if (appShortcutIcon) appShortcutIcon.href = currentIconSource;
+        if (appHeaderIconImg) appHeaderIconImg.src = currentIconSource;
+        if (dorsalIconImg) dorsalIconImg.src = currentIconSource;
+        if (iconPreview) iconPreview.src = currentIconSource;
+      };
+
+      /**
+       * Aplica un lote completo de configuraciones visuales recibidas desde el servidor o la nube
+       */
+      window.applyAllVisualSettings = function(data, saveLocal = true) {
+        if (!data) return;
+        if (data.bgSource) {
+          window.setBackgroundImage(data.bgSource, data.bgOpacity || 45, data.bgBlur || 0);
         }
-        if (appHeaderIconImg) {
-          appHeaderIconImg.src = currentIconSource;
+        if (typeof data.overlayDarkness !== 'undefined') {
+          window.setOverlayDarkness(data.overlayDarkness);
         }
-        if (iconPreview) {
-          iconPreview.src = currentIconSource;
+        if (data.iconSource) {
+          window.setAppIcon(data.iconSource);
+        }
+        if (data.bgUrl && bgUrlInput) bgUrlInput.value = data.bgUrl;
+        if (data.iconUrl && iconUrlInput) iconUrlInput.value = data.iconUrl;
+
+        if (saveLocal) {
+          try {
+            localStorage.setItem('eceme_visual_settings', JSON.stringify({
+              bgSource: currentBgSource,
+              bgOpacity: currentBgOpacity,
+              bgBlur: currentBgBlur,
+              overlayDarkness: currentOverlayDarkness,
+              iconSource: currentIconSource,
+              bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
+              iconUrl: iconUrlInput ? iconUrlInput.value.trim() : '',
+              updatedAt: data.updatedAt || Date.now()
+            }));
+          } catch (e) {}
         }
       };
 
       /**
-       * Restaura el fondo y el ícono original de la ECEME
+       * Restaura el fondo y el escudo original de la ECEME
        */
-      window.resetVisualSettings = function() {
+      window.resetVisualSettings = async function() {
         localStorage.removeItem('eceme_visual_settings');
-        window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 30, 0);
+        window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
+        window.setOverlayDarkness(70);
         window.setAppIcon(DEFAULT_ICON_SVG);
         if (bgUrlInput) bgUrlInput.value = '';
         if (bgFileInput) bgFileInput.value = '';
         if (iconUrlInput) iconUrlInput.value = '';
         if (iconFileInput) iconFileInput.value = '';
+
+        try {
+          await fetch('/api/visual-settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              bgSource: 'default',
+              bgOpacity: 45,
+              bgBlur: 0,
+              overlayDarkness: 70,
+              iconSource: 'default',
+              bgUrl: '',
+              iconUrl: ''
+            })
+          });
+        } catch (e) {}
       };
 
-      // 4. Carga inicial desde LocalStorage
-      const cargarConfiguracionVisualGuardada = () => {
+      // 4. Carga inicial: Primero caché local (0 flicker), luego servidor en la nube
+      const cargarConfiguracionInicial = async () => {
+        // A. Carga ultrarrápida desde localStorage si existe
         try {
           const raw = localStorage.getItem('eceme_visual_settings');
           if (raw) {
-            const data = JSON.parse(raw);
-            window.setBackgroundImage(data.bgSource || PRESET_BACKGROUNDS.maraton, data.bgOpacity || 30, data.bgBlur || 0);
-            window.setAppIcon(data.iconSource || DEFAULT_ICON_SVG);
-            if (data.bgUrl && bgUrlInput) bgUrlInput.value = data.bgUrl;
-            if (data.iconUrl && iconUrlInput) iconUrlInput.value = data.iconUrl;
+            const localData = JSON.parse(raw);
+            window.applyAllVisualSettings(localData, false);
           } else {
-            window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 30, 0);
+            window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
+            window.setOverlayDarkness(70);
             window.setAppIcon(DEFAULT_ICON_SVG);
           }
         } catch (e) {
-          window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 30, 0);
+          window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
+          window.setOverlayDarkness(70);
           window.setAppIcon(DEFAULT_ICON_SVG);
         }
-      };
-      cargarConfiguracionVisualGuardada();
 
-      // 5. Controladores de Eventos del Modal y Personalizador
+        // B. Consulta al servidor para obtener la versión oficial sincronizada
+        try {
+          const res = await fetch('/api/visual-settings', { cache: 'no-store' });
+          if (res.ok) {
+            const serverData = await res.json();
+            if (serverData && serverData.bgSource) {
+              window.applyAllVisualSettings(serverData, true);
+            }
+          }
+        } catch (err) {
+          console.log('[VisualSync] Servidor local no disponible, verificando Google Apps Script...');
+          // Contingencia: consultar a Google Apps Script
+          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+            try {
+              const gasRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_visuals`);
+              if (gasRes.ok) {
+                const gasData = await gasRes.json();
+                if (gasData && gasData.bgSource) {
+                  window.applyAllVisualSettings(gasData, true);
+                }
+              }
+            } catch (gasErr) {}
+          }
+        }
+      };
+      cargarConfiguracionInicial();
+
+      // 5. SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO (Server-Sent Events)
+      // Permite que cualquier celular, tablet o PC conectado vea las actualizaciones al instante sin recargar
+      const iniciarSincronizacionEnTiempoReal = () => {
+        if (!window.EventSource) return;
+
+        let eventSource = null;
+        const conectarSSE = () => {
+          try {
+            eventSource = new EventSource('/api/visual-settings/stream');
+
+            eventSource.onmessage = (event) => {
+              try {
+                if (event.data) {
+                  const data = JSON.parse(event.data);
+                  if (data && data.bgSource) {
+                    window.applyAllVisualSettings(data, true);
+                  }
+                }
+              } catch (parseErr) {
+                console.warn('[VisualSync] Mensaje SSE no reconocible:', parseErr);
+              }
+            };
+
+            eventSource.onerror = () => {
+              if (eventSource) eventSource.close();
+              // Reintentar reconexión cada 5 segundos
+              setTimeout(conectarSSE, 5000);
+            };
+          } catch (e) {
+            setTimeout(conectarSSE, 5000);
+          }
+        };
+
+        conectarSSE();
+
+        // Polling de respaldo cuando la pantalla del móvil vuelve a estar visible
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            fetch('/api/visual-settings', { cache: 'no-store' })
+              .then((r) => r.json())
+              .then((data) => {
+                if (data && data.bgSource) window.applyAllVisualSettings(data, true);
+              })
+              .catch(() => {});
+          }
+        });
+
+        // Polling periódico ligero cada 10s para redes móviles inestables
+        setInterval(() => {
+          fetch('/api/visual-settings', { cache: 'no-store' })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data && data.bgSource) {
+                const raw = localStorage.getItem('eceme_visual_settings');
+                const local = raw ? JSON.parse(raw) : {};
+                if (!local.updatedAt || (data.updatedAt && data.updatedAt > local.updatedAt)) {
+                  window.applyAllVisualSettings(data, true);
+                }
+              }
+            })
+            .catch(() => {});
+        }, 10000);
+      };
+      iniciarSincronizacionEnTiempoReal();
+
+      // 6. Controladores de Eventos del Modal y Personalizador
       if (openVisualModalBtn && visualModal) {
         openVisualModalBtn.addEventListener('click', () => {
           visualModal.classList.remove('hidden');
@@ -1279,7 +1458,16 @@
         });
       }
 
-      // Archivo local de fondo
+      if (overlayDarknessSlider && overlayDarknessValue) {
+        overlayDarknessSlider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          overlayDarknessValue.textContent = `${val}%`;
+          if (appOverlayLayer) appOverlayLayer.style.opacity = (val / 100).toString();
+          currentOverlayDarkness = parseInt(val, 10);
+        });
+      }
+
+      // Archivo local de fondo (soporte para fotos tomadas con celular o archivos de PC)
       if (bgFileInput) {
         bgFileInput.addEventListener('change', (e) => {
           const file = e.target.files ? e.target.files[0] : null;
@@ -1343,27 +1531,67 @@
         });
       }
 
-      // Guardar cambios en LocalStorage
+      // 7. Guardar cambios y SINCRONIZAR A TODOS LOS DISPOSITIVOS MÓVILES Y PCS EN TIEMPO REAL
       if (saveVisualsBtn) {
-        saveVisualsBtn.addEventListener('click', () => {
+        saveVisualsBtn.addEventListener('click', async () => {
+          const origText = saveVisualsBtn.textContent;
+          saveVisualsBtn.disabled = true;
+          saveVisualsBtn.textContent = "Sincronizando...";
+
           const settings = {
             bgSource: currentBgSource,
             bgOpacity: currentBgOpacity,
             bgBlur: currentBgBlur,
+            overlayDarkness: currentOverlayDarkness,
             bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
             iconSource: currentIconSource,
-            iconUrl: iconUrlInput ? iconUrlInput.value.trim() : ''
+            iconUrl: iconUrlInput ? iconUrlInput.value.trim() : '',
+            updatedAt: Date.now()
           };
-          localStorage.setItem('eceme_visual_settings', JSON.stringify(settings));
-          
-          const origText = saveVisualsBtn.textContent;
-          saveVisualsBtn.textContent = "✓ ¡Guardado!";
+
+          // A. Guardar en localStorage local
+          try {
+            localStorage.setItem('eceme_visual_settings', JSON.stringify(settings));
+          } catch (e) {}
+
+          // B. Enviar al Servidor para distribución en tiempo real a todos los móviles y PCs
+          let serverSuccess = false;
+          try {
+            const res = await fetch('/api/visual-settings', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(settings)
+            });
+            if (res.ok) {
+              serverSuccess = true;
+            }
+          } catch (err) {
+            console.warn('[VisualSync] Aviso al transmitir al servidor:', err);
+          }
+
+          // C. Sincronización secundaria en segundo plano con Google Apps Script
+          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+            try {
+              fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({
+                  action: "save_visuals",
+                  visualSettings: settings
+                })
+              }).catch(() => {});
+            } catch (e) {}
+          }
+
+          saveVisualsBtn.textContent = serverSuccess ? "✓ ¡En vivo en Celular y PC!" : "✓ ¡Guardado!";
           saveVisualsBtn.classList.replace('bg-gold-500', 'bg-emerald-600');
           setTimeout(() => {
+            saveVisualsBtn.disabled = false;
             saveVisualsBtn.textContent = origText;
             saveVisualsBtn.classList.replace('bg-emerald-600', 'bg-gold-500');
             if (visualModal) visualModal.classList.add('hidden');
-          }, 800);
+          }, 900);
         });
       }
 
