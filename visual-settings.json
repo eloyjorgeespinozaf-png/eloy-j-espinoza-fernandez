@@ -4,7 +4,9 @@
   "bgBlur": 0,
   "overlayDarkness": 70,
   "iconSource": "/assets/aistudio/ECEME_ESC_cad34ddd.png",
+  "qrSource": "/qr-oficial.png",
   "bgUrl": "/fondo-oficial.jpeg",
   "iconUrl": "/assets/aistudio/ECEME_ESC_cad34ddd.png",
-  "updatedAt": 1793703433000
+  "qrUrl": "/qr-oficial.png",
+  "updatedAt": 1793735000000
 }

@@ -126,14 +126,67 @@
               Paso 1: Pago de Inscripción
             </div>
             
-            <!-- Recuadro Gris Placeholder para QR Bancario -->
-            <div class="mx-auto w-56 h-56 sm:w-64 sm:h-64 bg-stone-700/60 border-2 border-dashed border-stone-500 rounded-lg flex flex-col items-center justify-center p-4 text-center transition-colors hover:border-gold-400/70">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-stone-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-              </svg>
-              <span class="text-stone-300 text-sm font-semibold leading-snug">
-                Reemplace esta imagen con su QR Bancario
-              </span>
+            <!-- Recuadro Oficial para QR Bancario Oficial -->
+            <div class="relative mx-auto max-w-xs sm:max-w-sm bg-white rounded-2xl p-4 sm:p-5 shadow-2xl border-2 border-gold-500 transition-all duration-300 hover:shadow-gold-500/20">
+              <div
+                id="bancoQrImageContainer"
+                class="relative w-56 h-56 sm:w-64 sm:h-64 mx-auto flex items-center justify-center bg-white rounded-xl overflow-hidden p-1 cursor-pointer group"
+                title="Haga clic para ampliar el QR en pantalla completa"
+              >
+                <img
+                  id="bancoQrImage"
+                  src="/qr-oficial.png"
+                  alt="Código QR Bancario de Pago - Carrera Pedestre 10 KM ECEME"
+                  class="w-full h-full object-contain select-none transition-transform duration-200 group-hover:scale-105"
+                  loading="eager"
+                />
+                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl pointer-events-none">
+                  <span class="bg-gold-500 text-army-950 font-bold text-xs uppercase px-3 py-1.5 rounded-md shadow-lg flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                    </svg>
+                    Ampliar QR
+                  </span>
+                </div>
+              </div>
+
+              <!-- Pie con estado y botones de acción -->
+              <div class="mt-3 pt-3 border-t border-stone-200 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-left">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 animate-pulse"></span>
+                  <div class="text-[11px] leading-tight text-stone-700">
+                    <strong class="block text-stone-900 font-bold uppercase tracking-wider">QR Habilitado</strong>
+                    <span>Cuenta Oficial ECEME</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    id="zoomQrBtn"
+                    class="text-[11px] font-semibold text-stone-700 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-2.5 py-1.5 rounded-lg transition border border-stone-300 flex items-center gap-1 cursor-pointer"
+                    title="Ver QR en pantalla completa"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>Ver</span>
+                  </button>
+
+                  <a
+                    href="/qr-oficial.png"
+                    download="QR_Pago_ECEME_10K.png"
+                    class="text-[11px] font-bold text-army-950 bg-gold-400 hover:bg-gold-300 active:bg-gold-500 px-3 py-1.5 rounded-lg transition shadow-md flex items-center gap-1.5 cursor-pointer"
+                    title="Descargar imagen QR para pagar en la aplicación de su banco"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Descargar</span>
+                  </a>
+                </div>
+              </div>
             </div>
 
             <!-- Texto de instrucción -->
@@ -944,9 +997,95 @@
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL PARA VER QR BANCARIO EN PANTALLA COMPLETA / ZOOM                    -->
+  <!-- ========================================================================= -->
+  <div id="qrZoomModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md transition-opacity">
+    <div class="relative max-w-sm sm:max-w-md w-full bg-white rounded-3xl p-6 sm:p-7 text-center shadow-2xl border-4 border-gold-500 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Botón cerrar modal de QR -->
+      <button
+        type="button"
+        id="closeQrZoomModalBtn"
+        class="absolute top-4 right-4 text-stone-500 hover:text-stone-900 p-2 rounded-xl hover:bg-stone-100 transition cursor-pointer"
+        aria-label="Cerrar vista de QR"
+      >
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold uppercase tracking-wider mb-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+        QR Oficial de Cobro · ECEME 10K
+      </div>
+
+      <h3 class="text-lg sm:text-xl font-bold font-display uppercase tracking-wide text-army-950">
+        Paso 1: Pago de Inscripción
+      </h3>
+      <p class="text-xs text-stone-600 mt-1 max-w-xs mx-auto">
+        Escanee desde cualquier aplicación bancaria o guarde la imagen para transferir.
+      </p>
+
+      <!-- Contenedor blanco nítido del QR -->
+      <div class="mt-4 p-3 bg-white rounded-2xl border-2 border-stone-200 shadow-inner inline-block mx-auto">
+        <img
+          src="/qr-oficial.png"
+          alt="QR Oficial de Pago Bancario - ECEME 10 KM"
+          class="w-64 h-64 sm:w-72 sm:h-72 object-contain select-none"
+        />
+      </div>
+
+      <!-- Botones de Acción dentro del modal -->
+      <div class="mt-5 flex items-center justify-center gap-3">
+        <a
+          href="/qr-oficial.png"
+          download="QR_Pago_ECEME_10K.png"
+          class="flex-1 py-3 px-4 rounded-xl bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Descargar QR</span>
+        </a>
+        <button
+          type="button"
+          id="closeQrZoomModalBtn2"
+          class="py-3 px-5 rounded-xl bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold uppercase tracking-wider text-xs sm:text-sm transition cursor-pointer"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      // 0. CONTROLADOR MODAL DE QR BANCARIO
+      const qrZoomModal = document.getElementById('qrZoomModal');
+      const bancoQrImageContainer = document.getElementById('bancoQrImageContainer');
+      const zoomQrBtn = document.getElementById('zoomQrBtn');
+      const closeQrZoomModalBtn = document.getElementById('closeQrZoomModalBtn');
+      const closeQrZoomModalBtn2 = document.getElementById('closeQrZoomModalBtn2');
+
+      const openQrModal = () => {
+        if (qrZoomModal) qrZoomModal.classList.remove('hidden');
+      };
+      const closeQrModal = () => {
+        if (qrZoomModal) qrZoomModal.classList.add('hidden');
+      };
+
+      if (bancoQrImageContainer) bancoQrImageContainer.addEventListener('click', openQrModal);
+      if (zoomQrBtn) zoomQrBtn.addEventListener('click', openQrModal);
+      if (closeQrZoomModalBtn) closeQrZoomModalBtn.addEventListener('click', closeQrModal);
+      if (closeQrZoomModalBtn2) closeQrZoomModalBtn2.addEventListener('click', closeQrModal);
+      if (qrZoomModal) {
+        qrZoomModal.addEventListener('click', (e) => {
+          if (e.target === qrZoomModal) closeQrModal();
+        });
+      }
+
       const form = document.getElementById('inscriptionForm');
       const registrationSection = document.getElementById('registrationSection');
       const dorsalSection = document.getElementById('dorsalSection');

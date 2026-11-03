@@ -102,6 +102,7 @@ async function startServer() {
       bgBlur: 0,
       overlayDarkness: 70,
       iconSource: '/assets/aistudio/ECEME_ESC_cad34ddd.png',
+      qrSource: '/qr-oficial.png',
       requiresAuth: true,
       updatedAt: Date.now()
     };
@@ -203,6 +204,11 @@ async function startServer() {
     }
   });
 
+  // Health check endpoints para pre-warming y balanceador de carga
+  app.get(['/health', '/api/health'], (_req, res) => {
+    res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() });
+  });
+
   // 4. Endpoint SSE (Server-Sent Events): Transmisión en tiempo real a Móviles y PCs
   app.get('/api/visual-settings/stream', (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
@@ -212,15 +218,38 @@ async function startServer() {
     res.flushHeaders?.();
 
     // Enviar configuración inicial inmediata al dispositivo recién conectado
-    const currentSettings = getVisualSettings();
-    res.write(`data: ${JSON.stringify(currentSettings)}\n\n`);
+    try {
+      const currentSettings = getVisualSettings();
+      res.write(`data: ${JSON.stringify(currentSettings)}\n\n`);
+    } catch (err) {
+      console.warn('[SSE] Error enviando configuración inicial:', err);
+    }
 
     sseClients.push(res);
 
-    req.on('close', () => {
+    const cleanup = () => {
       sseClients = sseClients.filter((client) => client !== res);
-    });
+    };
+
+    req.on('close', cleanup);
+    req.on('end', cleanup);
+    req.on('error', cleanup);
+    res.on('error', cleanup);
+    res.on('close', cleanup);
   });
+
+  // Heartbeat periódico para mantener vivas las conexiones SSE sin desconexiones abruptas
+  const heartbeatInterval = setInterval(() => {
+    sseClients = sseClients.filter((client) => {
+      try {
+        if (client.writableEnded || client.destroyed) return false;
+        client.write(': ping\n\n');
+        return true;
+      } catch {
+        return false;
+      }
+    });
+  }, 25000);
 
   const isProduction = process.env.NODE_ENV === 'production';
 
@@ -229,8 +258,7 @@ async function startServer() {
     const vite = await createViteServer({
       server: {
         middlewareMode: true,
-        hmr: process.env.DISABLE_HMR !== 'true',
-        watch: process.env.DISABLE_HMR === 'true' ? null : {},
+        hmr: false, // Desactivar HMR en contenedor para prevenir fallos de WebSocket
       },
       appType: 'spa',
     });
@@ -242,9 +270,33 @@ async function startServer() {
     });
   }
 
-  app.listen(Number(PORT), '0.0.0.0', () => {
+  const server = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`[ECEME 10KM] Servidor en línea en http://0.0.0.0:${PORT}`);
   });
+
+  server.on('error', (err: any) => {
+    console.error('[Server Error]', err);
+  });
+
+  const gracefulShutdown = () => {
+    clearInterval(heartbeatInterval);
+    server.close(() => {
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', gracefulShutdown);
+  process.on('SIGINT', gracefulShutdown);
 }
 
+// Prevenir que excepciones no controladas cierren el proceso del servidor
+process.on('uncaughtException', (err) => {
+  console.error('[Process Uncaught Exception]:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Process Unhandled Rejection]:', reason, 'at', promise);
+});
+
 startServer();
+
