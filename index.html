@@ -9,6 +9,7 @@
   <meta property="og:description" content="Inscripción oficial y asignación de dorsal para la Carrera Pedestre 10 KM organizada por el Ejército - ECEME." />
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" id="appFavicon" type="image/svg+xml" href="" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -54,20 +55,36 @@
     };
   </script>
 </head>
-<body class="bg-army-950 text-stone-100 font-sans min-h-screen antialiased flex flex-col selection:bg-gold-500 selection:text-army-950">
+<body class="relative bg-army-950 text-stone-100 font-sans min-h-screen antialiased flex flex-col selection:bg-gold-500 selection:text-army-950">
+
+  <!-- Capa de Fondo Dinámica (Personalizable: Imagen, Opacidad y Desenfoque) -->
+  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 transition-all duration-700 bg-cover bg-center bg-no-repeat opacity-30" style="background-image: none;"></div>
+  <!-- Overlay Táctico con Gradiente para Legibilidad Absoluta -->
+  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-army-950/85 via-army-950/80 to-army-950/95 transition-opacity duration-500"></div>
+
+  <!-- Botón Flotante para Personalizar Fondo e Ícono -->
+  <button
+    id="openVisualModalBtn"
+    type="button"
+    title="Personalizar Imagen de Fondo e Ícono de la WebApp"
+    class="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 bg-army-900/90 hover:bg-army-800 text-gold-400 hover:text-gold-300 border border-gold-500/40 py-1.5 px-3 rounded-full shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1.5 text-xs font-semibold backdrop-blur cursor-pointer"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+    <span class="hidden sm:inline">Fondo e Ícono</span>
+  </button>
 
   <!-- Contenedor Principal (Mobile-First) -->
-  <div class="w-full max-w-2xl mx-auto px-4 py-8 sm:py-12 flex-1 flex flex-col justify-between">
+  <div class="relative z-10 w-full max-w-2xl mx-auto px-4 py-8 sm:py-12 flex-1 flex flex-col justify-between">
     
     <div>
       <!-- 2. SECCIÓN HERO (CABECERA) -->
       <header class="text-center mb-10">
-        <!-- Escudo / Detalle Institucional -->
-        <div class="inline-flex items-center justify-center mb-4">
-          <div class="h-12 w-12 rounded-full border border-gold-500/50 bg-army-900/80 flex items-center justify-center text-gold-400 shadow-inner">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
+        <!-- Escudo / Ícono Institucional Oficial Dinámico -->
+        <div class="inline-flex items-center justify-center mb-4 relative group">
+          <div id="appHeaderIconWrapper" class="h-16 w-16 sm:h-20 sm:w-20 rounded-full border-2 border-gold-500/70 bg-army-900/90 flex items-center justify-center text-gold-400 shadow-2xl overflow-hidden p-1.5 ring-4 ring-black/40 transition-transform duration-300 hover:scale-105">
+            <img id="appHeaderIconImg" src="" alt="Escudo ECEME" class="w-full h-full object-contain filter drop-shadow" />
           </div>
         </div>
 
@@ -492,6 +509,129 @@
 
   </div>
 
+  <!-- MODAL: PERSONALIZADOR DE FONDO E ÍCONO DE LA WEBAPP -->
+  <div id="visualModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300">
+    <div class="bg-army-900 border border-gold-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-stone-100 max-h-[92vh] overflow-y-auto">
+      
+      <!-- Cabecera del Modal -->
+      <div class="flex items-center justify-between pb-3 border-b border-army-800 mb-5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center border border-gold-500/30">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-gold-300 uppercase tracking-wide leading-none">
+              Personalizar Fondo e Ícono
+            </h3>
+            <p class="text-[11px] text-stone-400 mt-0.5">Configura la imagen de fondo y el escudo institucional</p>
+          </div>
+        </div>
+        <button id="closeVisualModalBtn" type="button" class="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-army-800 transition cursor-pointer">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- SECCIÓN 1: IMAGEN DE FONDO -->
+      <div class="space-y-4 mb-6">
+        <div class="flex items-center justify-between">
+          <label class="text-xs uppercase tracking-wider font-bold text-gold-400 flex items-center gap-1.5">
+            <span>1. Imagen de Fondo de la WebApp</span>
+          </label>
+        </div>
+        
+        <!-- Carga de Imagen: Archivo Local o URL -->
+        <div class="space-y-2">
+          <div>
+            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción A: Subir imagen desde tu dispositivo:</label>
+            <input type="file" id="bgFileInput" accept="image/*" class="w-full text-xs text-stone-400 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-army-800 file:text-gold-400 hover:file:bg-army-700 cursor-pointer bg-army-950 p-1.5 rounded-lg border border-army-700" />
+          </div>
+          <div>
+            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción B: Pegar enlace o URL de imagen:</label>
+            <input type="url" id="bgUrlInput" placeholder="https://ejemplo.com/fondo-maraton.jpg" class="w-full text-xs bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-stone-200 placeholder-stone-500 focus:outline-none focus:border-gold-500" />
+          </div>
+        </div>
+
+        <!-- Presets Temáticos Rápidos -->
+        <div>
+          <label class="text-[11px] text-stone-400 mb-1.5 block font-semibold">Fondos temáticos predefinidos (1 clic):</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button type="button" data-bg="maraton" class="preset-bg-btn text-xs py-2 px-2 rounded-lg bg-army-950 border border-army-700 hover:border-gold-500 text-stone-300 transition text-center hover:bg-army-800 cursor-pointer flex flex-col items-center gap-1">
+              <span class="text-base">🏃</span>
+              <span class="font-bold text-[11px]">Maratón 10K</span>
+            </button>
+            <button type="button" data-bg="tactico" class="preset-bg-btn text-xs py-2 px-2 rounded-lg bg-army-950 border border-army-700 hover:border-gold-500 text-stone-300 transition text-center hover:bg-army-800 cursor-pointer flex flex-col items-center gap-1">
+              <span class="text-base">🎖️</span>
+              <span class="font-bold text-[11px]">Militar Táctico</span>
+            </button>
+            <button type="button" data-bg="pista" class="preset-bg-btn text-xs py-2 px-2 rounded-lg bg-army-950 border border-army-700 hover:border-gold-500 text-stone-300 transition text-center hover:bg-army-800 cursor-pointer flex flex-col items-center gap-1">
+              <span class="text-base">🏁</span>
+              <span class="font-bold text-[11px]">Pista Atlética</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Controles de Opacidad y Desenfoque -->
+        <div class="grid grid-cols-2 gap-3 bg-army-950/70 p-3 rounded-xl border border-army-800">
+          <div>
+            <div class="flex justify-between text-xs text-stone-300 mb-1">
+              <span>Opacidad:</span>
+              <span id="bgOpacityValue" class="text-gold-400 font-bold">30%</span>
+            </div>
+            <input type="range" id="bgOpacitySlider" min="5" max="80" value="30" class="w-full accent-gold-500 cursor-pointer" />
+          </div>
+          <div>
+            <div class="flex justify-between text-xs text-stone-300 mb-1">
+              <span>Desenfoque:</span>
+              <span id="bgBlurValue" class="text-gold-400 font-bold">0px</span>
+            </div>
+            <input type="range" id="bgBlurSlider" min="0" max="15" value="0" class="w-full accent-gold-500 cursor-pointer" />
+          </div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN 2: ÍCONO / ESCUDO OFICIAL -->
+      <div class="space-y-4 mb-6 pt-4 border-t border-army-800">
+        <label class="text-xs uppercase tracking-wider font-bold text-gold-400 block">
+          2. Ícono / Escudo Oficial (Favicon y Cabecera)
+        </label>
+        
+        <div class="space-y-2">
+          <div>
+            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Subir imagen de escudo o logotipo:</label>
+            <input type="file" id="iconFileInput" accept="image/*" class="w-full text-xs text-stone-400 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-army-800 file:text-gold-400 hover:file:bg-army-700 cursor-pointer bg-army-950 p-1.5 rounded-lg border border-army-700" />
+          </div>
+          <div>
+            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">O pegar enlace directo a imagen de logo:</label>
+            <input type="url" id="iconUrlInput" placeholder="https://ejemplo.com/escudo-eceme.png" class="w-full text-xs bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-stone-200 placeholder-stone-500 focus:outline-none focus:border-gold-500" />
+          </div>
+        </div>
+
+        <!-- Vista Previa del Ícono -->
+        <div class="flex items-center gap-3 bg-army-950/70 p-3 rounded-xl border border-army-800">
+          <div class="w-12 h-12 rounded-full border-2 border-gold-500/70 bg-army-900 p-1 shrink-0 overflow-hidden flex items-center justify-center shadow-lg">
+            <img id="iconPreview" src="" alt="Vista previa ícono" class="w-full h-full object-contain filter drop-shadow" />
+          </div>
+          <div class="text-xs">
+            <span class="block font-semibold text-stone-200">Vista previa del ícono activo</span>
+            <span class="text-[11px] text-stone-400">Se actualiza en la pestaña del navegador (favicon) y en la cabecera oficial.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOTONES DE ACCIÓN -->
+      <div class="flex items-center justify-between pt-4 border-t border-army-800">
+        <button type="button" id="resetVisualsBtn" class="text-xs text-rose-400 hover:text-rose-300 underline cursor-pointer font-medium">
+          Restaurar originales
+        </button>
+        <button type="button" id="saveVisualsBtn" class="bg-gold-500 hover:bg-gold-400 text-army-950 font-display font-bold uppercase tracking-wider text-xs sm:text-sm py-2 px-5 rounded-lg shadow-lg cursor-pointer transition">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -814,6 +954,391 @@
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
       }
+
+      // =========================================================================
+      // SISTEMA DE PERSONALIZACIÓN DE FONDO E ÍCONO INSTITUCIONAL (ECEME)
+      // =========================================================================
+
+      // 1. Recursos Vectoriales Prediseñados (SVGs de Alta Definición)
+      const DEFAULT_ICON_SVG = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <radialGradient id="gold" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#fff5a6"/>
+      <stop offset="50%" stop-color="#d4af37"/>
+      <stop offset="100%" stop-color="#7a5c10"/>
+    </radialGradient>
+    <radialGradient id="green" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2a4926"/>
+      <stop offset="100%" stop-color="#0b140a"/>
+    </radialGradient>
+    <linearGradient id="flame" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="45%" stop-color="#f97316"/>
+      <stop offset="80%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#fef08a"/>
+    </linearGradient>
+  </defs>
+  <circle cx="100" cy="100" r="95" fill="url(#gold)" stroke="#3f2e08" stroke-width="2"/>
+  <circle cx="100" cy="100" r="88" fill="#142312" stroke="#d4af37" stroke-width="1.5"/>
+  <circle cx="100" cy="100" r="84" fill="url(#green)"/>
+  <path d="M 52 46 A 68 68 0 0 1 148 46" fill="none" stroke="#dc2626" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 55 50 A 64 64 0 0 1 145 50" fill="none" stroke="#facc15" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 58 54 A 60 60 0 0 1 142 54" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round"/>
+  <path d="M 45 155 L 155 45" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M 45 155 L 40 160 M 36 156 L 46 166 M 40 160 L 52 148" stroke="url(#gold)" stroke-width="3"/>
+  <path d="M 155 155 L 45 45" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M 155 155 L 160 160 M 164 156 L 154 166 M 160 160 L 148 148" stroke="url(#gold)" stroke-width="3"/>
+  <path d="M 94 135 L 106 135 L 103 92 L 97 92 Z" fill="url(#gold)" stroke="#523e0c" stroke-width="1"/>
+  <path d="M 90 92 L 110 92 L 105 82 L 95 82 Z" fill="url(#gold)"/>
+  <path d="M 100 48 C 108 62, 116 70, 110 82 C 105 78, 103 74, 100 78 C 97 74, 95 78, 90 82 C 84 70, 92 62, 100 48 Z" fill="url(#flame)"/>
+  <path d="M 52 162 Q 100 176 148 162 L 145 177 Q 100 190 55 177 Z" fill="url(#gold)" stroke="#453106" stroke-width="1"/>
+  <text x="100" y="173" font-family="system-ui, sans-serif" font-weight="900" font-size="11" fill="#0b140a" text-anchor="middle" letter-spacing="1.5">ECEME · 10 KM</text>
+  <g fill="url(#gold)">
+    <ellipse cx="32" cy="100" rx="4" ry="7" transform="rotate(-25 32 100)"/>
+    <ellipse cx="36" cy="80" rx="4" ry="7" transform="rotate(-15 36 80)"/>
+    <ellipse cx="44" cy="62" rx="4" ry="7" transform="rotate(-5 44 62)"/>
+    <ellipse cx="168" cy="100" rx="4" ry="7" transform="rotate(25 168 100)"/>
+    <ellipse cx="164" cy="80" rx="4" ry="7" transform="rotate(15 164 80)"/>
+    <ellipse cx="156" cy="62" rx="4" ry="7" transform="rotate(5 156 62)"/>
+  </g>
+</svg>
+`);
+
+      const PRESET_BACKGROUNDS = {
+        maraton: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b140a"/>
+      <stop offset="50%" stop-color="#142312"/>
+      <stop offset="85%" stop-color="#2a4926"/>
+      <stop offset="100%" stop-color="#d4af37" stop-opacity="0.5"/>
+    </linearGradient>
+    <linearGradient id="mtn1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e341b"/>
+      <stop offset="100%" stop-color="#0b140a"/>
+    </linearGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#142312"/>
+      <stop offset="100%" stop-color="#080e07"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <polygon points="0,520 220,400 480,480 820,320 1140,460 1420,380 1600,450 1600,900 0,900" fill="url(#mtn1)" opacity="0.6"/>
+  <polygon points="0,600 340,480 680,560 980,440 1320,540 1600,490 1600,900 0,900" fill="#142312" opacity="0.8"/>
+  <polygon points="760,620 840,620 1300,900 300,900" fill="url(#road)"/>
+  <line x1="800" y1="620" x2="800" y2="900" stroke="#d4af37" stroke-width="4" stroke-dasharray="30 20" opacity="0.7"/>
+  <g transform="translate(720, 560) scale(0.65)" fill="#d4af37" opacity="0.85">
+    <circle cx="50" cy="20" r="10"/>
+    <path d="M 48 30 L 52 65 L 68 85 L 60 90 L 48 70 L 36 95 L 28 92 L 40 60 Z"/>
+    <path d="M 45 40 L 25 55 L 20 50 L 38 35 Z"/>
+    <path d="M 52 40 L 72 45 L 75 55 L 56 46 Z"/>
+  </g>
+  <g transform="translate(810, 570) scale(0.6)" fill="#e6c352" opacity="0.75">
+    <circle cx="50" cy="20" r="10"/>
+    <path d="M 48 30 L 52 65 L 40 92 L 32 88 L 46 66 L 62 90 L 70 85 L 54 60 Z"/>
+    <path d="M 45 40 L 60 52 L 68 50 L 52 35 Z"/>
+    <path d="M 48 40 L 30 48 L 26 40 L 44 34 Z"/>
+  </g>
+  <g transform="translate(610, 640) scale(1.1)" fill="#d4af37" opacity="0.95">
+    <circle cx="50" cy="20" r="10"/>
+    <path d="M 48 30 L 52 65 L 75 88 L 68 94 L 48 72 L 30 100 L 20 95 L 38 60 Z"/>
+    <path d="M 45 38 L 22 55 L 16 48 L 38 32 Z"/>
+    <path d="M 52 38 L 74 46 L 78 58 L 56 46 Z"/>
+  </g>
+  <g transform="translate(890, 650) scale(1.05)" fill="#e6c352" opacity="0.9">
+    <circle cx="50" cy="20" r="10"/>
+    <path d="M 48 30 L 52 65 L 35 96 L 26 90 L 46 68 L 68 92 L 76 86 L 55 60 Z"/>
+    <path d="M 46 38 L 65 52 L 72 48 L 54 34 Z"/>
+    <path d="M 48 38 L 28 46 L 24 38 L 44 32 Z"/>
+  </g>
+</svg>`),
+        tactico: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <rect width="1600" height="900" fill="#0b140a"/>
+  <g fill="none" stroke="#386333" stroke-width="1.5" opacity="0.35">
+    <path d="M -100,200 Q 300,100 700,300 T 1500,250 T 1800,400"/>
+    <path d="M -100,260 Q 320,160 720,360 T 1520,310 T 1800,460"/>
+    <path d="M -100,320 Q 340,220 740,420 T 1540,370 T 1800,520"/>
+    <path d="M -100,380 Q 360,280 760,480 T 1560,430 T 1800,580"/>
+    <path d="M -100,500 Q 400,600 800,400 T 1600,650"/>
+    <path d="M -100,560 Q 420,660 820,460 T 1600,710"/>
+    <circle cx="800" cy="450" r="250" stroke="#d4af37" stroke-width="1" stroke-dasharray="8 8" opacity="0.25"/>
+    <circle cx="800" cy="450" r="120" stroke="#d4af37" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"/>
+    <line x1="800" y1="150" x2="800" y2="750" stroke="#d4af37" stroke-width="1" opacity="0.2"/>
+    <line x1="500" y1="450" x2="1100" y2="450" stroke="#d4af37" stroke-width="1" opacity="0.2"/>
+  </g>
+  <defs>
+    <pattern id="tacticalGrid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M 80 0 L 0 0 0 80" fill="none" stroke="#2a4926" stroke-width="0.75" opacity="0.3"/>
+      <circle cx="0" cy="0" r="1.5" fill="#d4af37" opacity="0.4"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="900" fill="url(#tacticalGrid)"/>
+</svg>`),
+        pista: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <rect width="1600" height="900" fill="#0b140a"/>
+  <g fill="none" stroke="#d4af37" opacity="0.4">
+    <path d="M -200,900 C 400,900 800,700 1200,400 S 1800,-100 1800,-100" stroke-width="6"/>
+    <path d="M -200,850 C 380,850 770,660 1160,370 S 1760,-120 1760,-120" stroke-width="3" stroke-dasharray="12 12"/>
+    <path d="M -200,800 C 360,800 740,620 1120,340 S 1720,-140 1720,-140" stroke-width="3"/>
+    <path d="M -200,750 C 340,750 710,580 1080,310 S 1680,-160 1680,-160" stroke-width="3" stroke-dasharray="12 12"/>
+    <path d="M -200,700 C 320,700 680,540 1040,280 S 1640,-180 1640,-180" stroke-width="5"/>
+  </g>
+  <text x="320" y="810" font-family="'Barlow Condensed', sans-serif" font-weight="900" font-size="54" fill="#d4af37" opacity="0.35" transform="rotate(-15 320 810)">1</text>
+  <text x="380" y="750" font-family="'Barlow Condensed', sans-serif" font-weight="900" font-size="54" fill="#d4af37" opacity="0.35" transform="rotate(-15 380 750)">2</text>
+  <text x="440" y="690" font-family="'Barlow Condensed', sans-serif" font-weight="900" font-size="54" fill="#d4af37" opacity="0.35" transform="rotate(-15 440 690)">3</text>
+</svg>`)
+      };
+
+      // 2. Elementos del DOM para la Capa Visual y el Modal
+      const appBackgroundLayer = document.getElementById('appBackgroundLayer');
+      const appFavicon = document.getElementById('appFavicon');
+      const appHeaderIconImg = document.getElementById('appHeaderIconImg');
+
+      const visualModal = document.getElementById('visualModal');
+      const openVisualModalBtn = document.getElementById('openVisualModalBtn');
+      const closeVisualModalBtn = document.getElementById('closeVisualModalBtn');
+
+      const bgFileInput = document.getElementById('bgFileInput');
+      const bgUrlInput = document.getElementById('bgUrlInput');
+      const bgOpacitySlider = document.getElementById('bgOpacitySlider');
+      const bgOpacityValue = document.getElementById('bgOpacityValue');
+      const bgBlurSlider = document.getElementById('bgBlurSlider');
+      const bgBlurValue = document.getElementById('bgBlurValue');
+
+      const iconFileInput = document.getElementById('iconFileInput');
+      const iconUrlInput = document.getElementById('iconUrlInput');
+      const iconPreview = document.getElementById('iconPreview');
+
+      const saveVisualsBtn = document.getElementById('saveVisualsBtn');
+      const resetVisualsBtn = document.getElementById('resetVisualsBtn');
+      const presetBgBtns = document.querySelectorAll('.preset-bg-btn');
+
+      // Estado activo en memoria
+      let currentBgSource = PRESET_BACKGROUNDS.maraton;
+      let currentBgOpacity = 30;
+      let currentBgBlur = 0;
+      let currentIconSource = DEFAULT_ICON_SVG;
+
+      // 3. Funciones API Globales expuestas en `window`
+      /**
+       * Aplica una imagen de fondo a la webapp
+       * @param {string} source - URL externa, imagen Base64 o clave de preset ('maraton', 'tactico', 'pista')
+       * @param {number} [opacity=30] - Porcentaje de opacidad (5 a 80)
+       * @param {number} [blur=0] - Desenfoque en píxeles (0 a 15)
+       */
+      window.setBackgroundImage = function(source, opacity = 30, blur = 0) {
+        if (!source || source === 'default') {
+          currentBgSource = PRESET_BACKGROUNDS.maraton;
+        } else if (PRESET_BACKGROUNDS[source]) {
+          currentBgSource = PRESET_BACKGROUNDS[source];
+        } else {
+          currentBgSource = source;
+        }
+        currentBgOpacity = Math.max(5, Math.min(80, parseInt(opacity, 10) || 30));
+        currentBgBlur = Math.max(0, Math.min(15, parseInt(blur, 10) || 0));
+
+        if (appBackgroundLayer) {
+          appBackgroundLayer.style.backgroundImage = `url("${currentBgSource}")`;
+          appBackgroundLayer.style.opacity = (currentBgOpacity / 100).toString();
+          appBackgroundLayer.style.filter = currentBgBlur > 0 ? `blur(${currentBgBlur}px)` : 'none';
+        }
+
+        if (bgOpacitySlider) bgOpacitySlider.value = currentBgOpacity;
+        if (bgOpacityValue) bgOpacityValue.textContent = `${currentBgOpacity}%`;
+        if (bgBlurSlider) bgBlurSlider.value = currentBgBlur;
+        if (bgBlurValue) bgBlurValue.textContent = `${currentBgBlur}px`;
+      };
+
+      /**
+       * Aplica un nuevo ícono/escudo a la webapp (Favicon y Cabecera)
+       * @param {string} source - URL externa, Base64 o SVG
+       */
+      window.setAppIcon = function(source) {
+        currentIconSource = (source && source !== 'default') ? source : DEFAULT_ICON_SVG;
+        if (appFavicon) {
+          appFavicon.href = currentIconSource;
+        }
+        if (appHeaderIconImg) {
+          appHeaderIconImg.src = currentIconSource;
+        }
+        if (iconPreview) {
+          iconPreview.src = currentIconSource;
+        }
+      };
+
+      /**
+       * Restaura el fondo y el ícono original de la ECEME
+       */
+      window.resetVisualSettings = function() {
+        localStorage.removeItem('eceme_visual_settings');
+        window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 30, 0);
+        window.setAppIcon(DEFAULT_ICON_SVG);
+        if (bgUrlInput) bgUrlInput.value = '';
+        if (bgFileInput) bgFileInput.value = '';
+        if (iconUrlInput) iconUrlInput.value = '';
+        if (iconFileInput) iconFileInput.value = '';
+      };
+
+      // 4. Carga inicial desde LocalStorage
+      const cargarConfiguracionVisualGuardada = () => {
+        try {
+          const raw = localStorage.getItem('eceme_visual_settings');
+          if (raw) {
+            const data = JSON.parse(raw);
+            window.setBackgroundImage(data.bgSource || PRESET_BACKGROUNDS.maraton, data.bgOpacity || 30, data.bgBlur || 0);
+            window.setAppIcon(data.iconSource || DEFAULT_ICON_SVG);
+            if (data.bgUrl && bgUrlInput) bgUrlInput.value = data.bgUrl;
+            if (data.iconUrl && iconUrlInput) iconUrlInput.value = data.iconUrl;
+          } else {
+            window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 30, 0);
+            window.setAppIcon(DEFAULT_ICON_SVG);
+          }
+        } catch (e) {
+          window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 30, 0);
+          window.setAppIcon(DEFAULT_ICON_SVG);
+        }
+      };
+      cargarConfiguracionVisualGuardada();
+
+      // 5. Controladores de Eventos del Modal y Personalizador
+      if (openVisualModalBtn && visualModal) {
+        openVisualModalBtn.addEventListener('click', () => {
+          visualModal.classList.remove('hidden');
+        });
+      }
+
+      if (closeVisualModalBtn && visualModal) {
+        closeVisualModalBtn.addEventListener('click', () => {
+          visualModal.classList.add('hidden');
+        });
+      }
+
+      if (visualModal) {
+        visualModal.addEventListener('click', (e) => {
+          if (e.target === visualModal) {
+            visualModal.classList.add('hidden');
+          }
+        });
+      }
+
+      // Deslizadores en tiempo real
+      if (bgOpacitySlider && bgOpacityValue) {
+        bgOpacitySlider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          bgOpacityValue.textContent = `${val}%`;
+          if (appBackgroundLayer) appBackgroundLayer.style.opacity = (val / 100).toString();
+          currentBgOpacity = parseInt(val, 10);
+        });
+      }
+
+      if (bgBlurSlider && bgBlurValue) {
+        bgBlurSlider.addEventListener('input', (e) => {
+          const val = e.target.value;
+          bgBlurValue.textContent = `${val}px`;
+          if (appBackgroundLayer) appBackgroundLayer.style.filter = val > 0 ? `blur(${val}px)` : 'none';
+          currentBgBlur = parseInt(val, 10);
+        });
+      }
+
+      // Archivo local de fondo
+      if (bgFileInput) {
+        bgFileInput.addEventListener('change', (e) => {
+          const file = e.target.files ? e.target.files[0] : null;
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              window.setBackgroundImage(event.target.result, currentBgOpacity, currentBgBlur);
+              if (bgUrlInput) bgUrlInput.value = '';
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      // URL de fondo
+      if (bgUrlInput) {
+        bgUrlInput.addEventListener('input', (e) => {
+          const url = e.target.value.trim();
+          if (url) {
+            window.setBackgroundImage(url, currentBgOpacity, currentBgBlur);
+            if (bgFileInput) bgFileInput.value = '';
+          }
+        });
+      }
+
+      // Botones de presets temáticos
+      presetBgBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const presetKey = btn.dataset.bg;
+          if (PRESET_BACKGROUNDS[presetKey]) {
+            window.setBackgroundImage(PRESET_BACKGROUNDS[presetKey], currentBgOpacity, currentBgBlur);
+            if (bgUrlInput) bgUrlInput.value = '';
+            if (bgFileInput) bgFileInput.value = '';
+          }
+        });
+      });
+
+      // Archivo local de ícono / escudo
+      if (iconFileInput) {
+        iconFileInput.addEventListener('change', (e) => {
+          const file = e.target.files ? e.target.files[0] : null;
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              window.setAppIcon(event.target.result);
+              if (iconUrlInput) iconUrlInput.value = '';
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
+
+      // URL de ícono / escudo
+      if (iconUrlInput) {
+        iconUrlInput.addEventListener('input', (e) => {
+          const url = e.target.value.trim();
+          if (url) {
+            window.setAppIcon(url);
+            if (iconFileInput) iconFileInput.value = '';
+          }
+        });
+      }
+
+      // Guardar cambios en LocalStorage
+      if (saveVisualsBtn) {
+        saveVisualsBtn.addEventListener('click', () => {
+          const settings = {
+            bgSource: currentBgSource,
+            bgOpacity: currentBgOpacity,
+            bgBlur: currentBgBlur,
+            bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
+            iconSource: currentIconSource,
+            iconUrl: iconUrlInput ? iconUrlInput.value.trim() : ''
+          };
+          localStorage.setItem('eceme_visual_settings', JSON.stringify(settings));
+          
+          const origText = saveVisualsBtn.textContent;
+          saveVisualsBtn.textContent = "✓ ¡Guardado!";
+          saveVisualsBtn.classList.replace('bg-gold-500', 'bg-emerald-600');
+          setTimeout(() => {
+            saveVisualsBtn.textContent = origText;
+            saveVisualsBtn.classList.replace('bg-emerald-600', 'bg-gold-500');
+            if (visualModal) visualModal.classList.add('hidden');
+          }, 800);
+        });
+      }
+
+      // Restaurar valores por defecto
+      if (resetVisualsBtn) {
+        resetVisualsBtn.addEventListener('click', () => {
+          window.resetVisualSettings();
+        });
+      }
+
     });
   </script>
 </body>
