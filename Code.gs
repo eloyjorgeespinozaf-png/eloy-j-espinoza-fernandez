@@ -3,6 +3,21 @@
  * SISTEMA DE INSCRIPCIÓN - CARRERA PEDESTRE 10 KM ECEME
  * ARCHIVO BACKEND: Code.gs (Google Apps Script)
  * ============================================================================
+ * CATEGORÍAS OFICIALES REGISTRADAS:
+ * A.- Juvenil Damas y Varones (ROSADO): 14 a 17 años — Mcal. Juana Azurduy de Padilla
+ * B.- Mayores Damas y Varones (AZUL): 18 a 29 años — Mcal. Antonio José de Sucre 1
+ * C.- Master A Damas y Varones (CAFÉ): 30 a 37 años — Mcal. Andrés de Santa Cruz 1
+ * D.- Master B Damas y Varones (GRIS): 38 a 45 años — Mcal. Otto Felipe Braun
+ * E.- Master C Damas y Varones (AMARILLO): 46 años en adelante — Mcal. Esteban Arze
+ * F.- Militar Soldados y Premilitares (NEGRO): Tropa SMO/Premilitar — Mal. Bernardino Bilbao Rioja
+ * G.- Militar y Policial “A” (ROJO): Formación profesional (Cadetes/Alumnos) — Mcal. José Ballivián Segurola
+ * H.- Militar y Policial “B” (AMARILLO): Hasta 15 años de servicio — Mcal. Antonio José de Sucre 2
+ * I.- Militar y Policial “C” (VERDE): A partir de 16 años de servicio — Mcal. Andrés de Santa Cruz 2
+ * J.- Niñas y niños U-4 (CELESTE): hasta los 4 años de edad (80 metros)
+ * K.- Niñas y niños U-6 (NARANJA): hasta los 6 años de edad (200 metros)
+ * L.- Niñas y niños U-8 (MORADO): hasta los 8 años de edad (400 metros)
+ * M.- Niñas y niños U-13 (TURQUESA): hasta los 13 años de edad (1000 metros)
+ * ============================================================================
  * Servicios utilizados:
  * - Google Drive API: Almacenamiento organizado de comprobantes bancarios en Base64.
  * - Google Sheets API: Registro tabular de corredores inscritos y URLs de comprobantes.

@@ -60,23 +60,19 @@
 </head>
 <body class="relative bg-army-950 text-stone-100 font-sans min-h-screen antialiased flex flex-col selection:bg-gold-500 selection:text-army-950">
 
-  <!-- Capa de Fondo Dinámica (Personalizable: Imagen, Opacidad y Desenfoque - Responsive Móvil y PC) -->
-  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 transition-all duration-700 bg-cover bg-center bg-no-repeat" style="min-height: 100dvh; background-image: none; opacity: 0.45;"></div>
-  <!-- Overlay Táctico con Gradiente para Legibilidad Absoluta (Ajustable) -->
-  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-army-950 via-army-950 to-army-950 transition-opacity duration-500" style="min-height: 100dvh; opacity: 0.70;"></div>
+  <!-- Capa de Fondo Institucional Oficial (Permanente e Inmodificable - Responsive Móvil y PC) -->
+  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 bg-cover bg-center bg-no-repeat transition-opacity duration-300" style="min-height: 100dvh; opacity: 0.50; filter: blur(1px);"></div>
+  <!-- Overlay Táctico con Gradiente para Legibilidad Absoluta -->
+  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 bg-gradient-to-b from-army-950 via-army-950/85 to-army-950 transition-opacity duration-300" style="min-height: 100dvh; opacity: 0.65;"></div>
 
-  <!-- Botón Flotante para Personalizar Fondo e Ícono -->
-  <button
-    id="openVisualModalBtn"
-    type="button"
-    title="Personalizar Imagen de Fondo e Ícono de la WebApp"
-    class="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 bg-army-900/90 hover:bg-army-800 text-gold-400 hover:text-gold-300 border border-gold-500/40 py-1.5 px-3 rounded-full shadow-2xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1.5 text-xs font-semibold backdrop-blur cursor-pointer"
-  >
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-    <span class="hidden sm:inline">Fondo e Ícono</span>
-  </button>
+  <!-- Insignia Oficial Institucional (Fija y Permanente - Sin opciones de modificación) -->
+  <div class="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 bg-army-950/85 border border-gold-500/40 py-1.5 px-3 rounded-full shadow-2xl flex items-center gap-2 text-xs font-semibold backdrop-blur select-none pointer-events-none ring-1 ring-black/40">
+    <span class="relative flex h-2 w-2">
+      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold-400 opacity-75"></span>
+      <span class="relative inline-flex rounded-full h-2 w-2 bg-gold-500"></span>
+    </span>
+    <span class="text-gold-300 font-display uppercase tracking-wider text-[11px] sm:text-xs">ECEME · 10 KM OFICIAL</span>
+  </div>
 
   <!-- Contenedor Principal (Mobile-First) -->
   <div class="relative z-10 w-full max-w-2xl mx-auto px-4 py-8 sm:py-12 flex-1 flex flex-col justify-between">
@@ -251,11 +247,102 @@
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Debe adjuntar el comprobante de pago.</span>
               </div>
 
-              <!-- 1. CAMPO DE SELECCIÓN DE CATEGORÍAS (CON INDICADOR DE COLOR EN TIEMPO REAL) -->
+              <!-- 1. CAMPO DE SELECCIÓN DE CATEGORÍAS (CON GUÍA VISUAL Y INDICADOR DE COLOR) -->
               <div>
-                <label for="categoria" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5">
-                  Categoría de Competencia <span class="text-gold-400">*</span>
-                </label>
+                <div class="flex items-center justify-between mb-1.5">
+                  <label for="categoria" class="block text-xs uppercase tracking-wider font-semibold text-stone-300">
+                    Categoría de Competencia <span class="text-gold-400">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    id="toggleCategoriasGuiaBtn"
+                    class="text-[11px] text-gold-400 hover:text-gold-300 underline font-semibold transition cursor-pointer"
+                  >
+                    Ver cuadro de categorías (A - M)
+                  </button>
+                </div>
+
+                <!-- Cuadro Desplegable de Categorías Oficiales y Colores -->
+                <div id="categoriasGuiaBox" class="hidden mb-3 p-3 sm:p-4 rounded-xl bg-army-950/95 border border-gold-500/30 text-xs text-stone-200 shadow-xl space-y-3">
+                  <div class="font-bold text-gold-300 uppercase tracking-wider text-[11px] border-b border-army-800 pb-1 flex justify-between items-center">
+                    <span>Cuadro Oficial de Categorías y Colores Asignados</span>
+                    <span class="text-stone-400 font-normal">13 Categorías (A - M)</span>
+                  </div>
+
+                  <!-- Civiles -->
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gold-400 block mb-1">Categorías Civiles (10 KM)</span>
+                    <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-pink-500/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-pink-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-pink-300">A (Rosado):</strong> Juvenil 14-17 años · Mcal. Juana Azurduy</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-blue-600/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-blue-600 shrink-0"></span>
+                        <div class="truncate"><strong class="text-blue-300">B (Azul):</strong> Mayores 18-29 años · Mcal. Antonio José de Sucre 1</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-amber-800/40">
+                        <span class="w-3.5 h-3.5 rounded-full bg-amber-800 shrink-0"></span>
+                        <div class="truncate"><strong class="text-amber-400">C (Café):</strong> Master A 30-37 años · Mcal. Andrés de Santa Cruz 1</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-gray-500/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-gray-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-gray-300">D (Gris):</strong> Master B 38-45 años · Mcal. Otto Felipe Braun</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-yellow-500/30 sm:col-span-2">
+                        <span class="w-3.5 h-3.5 rounded-full bg-yellow-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-yellow-300">E (Amarillo):</strong> Master C 46 años en adelante · Mcal. Esteban Arze</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Militares y Policiales -->
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gold-400 block mb-1">Categorías Militar y Policial (10 KM)</span>
+                    <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-stone-600">
+                        <span class="w-3.5 h-3.5 rounded-full bg-neutral-900 border border-stone-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-stone-300">F (Negro):</strong> Soldados y Premilitares (Tropa) · Mal. Bilbao Rioja</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-red-600/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-red-600 shrink-0"></span>
+                        <div class="truncate"><strong class="text-red-300">G (Rojo):</strong> Militar/Policial "A" (Formación) · Mcal. Ballivián</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-yellow-400/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-yellow-400 shrink-0"></span>
+                        <div class="truncate"><strong class="text-yellow-300">H (Amarillo):</strong> Militar/Policial "B" (Hasta 15 años serv.) · Mcal. Sucre 2</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-emerald-600/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-emerald-600 shrink-0"></span>
+                        <div class="truncate"><strong class="text-emerald-300">I (Verde):</strong> Militar/Policial "C" (16+ años serv.) · Mcal. Santa Cruz 2</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Infantiles -->
+                  <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gold-400 block mb-1">Categorías Infantiles (Niñas y Niños)</span>
+                    <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-cyan-500/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-cyan-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-cyan-300">J (Celeste):</strong> U-4 (Hasta 4 años) · 80 metros</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-orange-500/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-orange-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-orange-300">K (Naranja):</strong> U-6 (Hasta 6 años) · 200 metros</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-purple-500/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-purple-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-purple-300">L (Morado):</strong> U-8 (Hasta 8 años) · 400 metros</div>
+                      </div>
+                      <div class="flex items-center gap-2 p-1.5 rounded bg-army-900/60 border border-teal-500/30">
+                        <span class="w-3.5 h-3.5 rounded-full bg-teal-500 shrink-0"></span>
+                        <div class="truncate"><strong class="text-teal-300">M (Turquesa):</strong> U-13 (Hasta 13 años) · 1000 metros</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div class="flex items-center gap-3">
                   <div class="relative flex-1">
                     <select
@@ -264,103 +351,175 @@
                       required
                       class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors cursor-pointer appearance-none pr-10"
                     >
-                      <option value="" disabled selected data-color="" data-bg="bg-stone-700" data-border="border-army-900" data-hex="#374151">
+                      <option value="" disabled selected data-color="" data-bg="bg-stone-700" data-border="border-army-900" data-hex="#374151" data-distancia="CARRERA PEDESTRE 10 KM">
                         Seleccione su categoría...
                       </option>
                       
                       <!-- Grupo Civiles -->
-                      <optgroup label="Civiles" class="bg-army-950 text-gold-300 font-bold">
+                      <optgroup label="Categorías Civiles (10 KM)" class="bg-army-950 text-gold-300 font-bold">
                         <option
-                          value="Cat A - Juvenil 14-17 años - Mcal. Juana Azurduy"
+                          value="A.- Categoría Juvenil Damas y Varones (ROSADO): desde los 14 hasta los 17 años - Mcal. Juana Azurduy de Padilla"
                           data-color="pink-500"
                           data-base="pink"
                           data-bg="bg-pink-500"
                           data-border="border-pink-500"
                           data-hex="#ec4899"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat A (Rosado): Juvenil 14-17 años - Mcal. Juana Azurduy
+                          A.- Juvenil Damas y Varones (ROSADO): 14 a 17 años — Mcal. Juana Azurduy de Padilla
                         </option>
                         <option
-                          value="Cat B - Mayores 18-39 años - Mcal. Antonio José de Sucre 1"
+                          value="B.- Categoría Mayores Damas y Varones (AZUL): desde los 18 hasta los 29 años - Mcal. Antonio José de Sucre 1"
                           data-color="blue-600"
                           data-base="blue"
                           data-bg="bg-blue-600"
                           data-border="border-blue-600"
                           data-hex="#2563eb"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat B (Azul): Mayores 18-39 años - Mcal. Antonio José de Sucre 1
+                          B.- Mayores Damas y Varones (AZUL): 18 a 29 años — Mcal. Antonio José de Sucre 1
                         </option>
                         <option
-                          value="Cat C - Máster 40-60 años - Mcal. Andrés de Santa Cruz 1"
+                          value="C.- Categoría Master A Damas y Varones (CAFÉ): desde los 30 hasta los 37 años - Mcal. Andrés de Santa Cruz 1"
                           data-color="amber-800"
                           data-base="amber"
                           data-bg="bg-amber-800"
                           data-border="border-amber-800"
-                          data-hex="#92400e"
+                          data-hex="#854d0e"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat C (Café): Máster 40-60 años - Mcal. Andrés de Santa Cruz 1
+                          C.- Master A Damas y Varones (CAFÉ): 30 a 37 años — Mcal. Andrés de Santa Cruz 1
                         </option>
                         <option
-                          value="Cat D - Senior 61+ años - Mcal. Otto Felipe Braun"
+                          value="D.- Categoría Master B Damas y Varones (GRIS): desde los 38 hasta los 45 años - Mcal. Otto Felipe Braun"
                           data-color="gray-500"
                           data-base="gray"
                           data-bg="bg-gray-500"
                           data-border="border-gray-500"
                           data-hex="#6b7280"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat D (Gris): Senior 61+ años - Mcal. Otto Felipe Braun
+                          D.- Master B Damas y Varones (GRIS): 38 a 45 años — Mcal. Otto Felipe Braun
+                        </option>
+                        <option
+                          value="E.- Categoría Master C Damas y Varones (AMARILLO): desde los 46 años en adelante - Mcal. Esteban Arze"
+                          data-color="yellow-500"
+                          data-base="yellow"
+                          data-bg="bg-yellow-500"
+                          data-border="border-yellow-500"
+                          data-hex="#eab308"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
+                          class="bg-army-900 text-stone-100 font-normal py-1"
+                        >
+                          E.- Master C Damas y Varones (AMARILLO): desde los 46 años en adelante — Mcal. Esteban Arze
                         </option>
                       </optgroup>
 
-                      <!-- Grupo Institucionales -->
-                      <optgroup label="Institucionales" class="bg-army-950 text-gold-300 font-bold">
+                      <!-- Grupo Militar y Policial -->
+                      <optgroup label="Categorías Militar y Policial (10 KM)" class="bg-army-950 text-gold-300 font-bold">
                         <option
-                          value="Cat E - Conscriptos - Mal. Bernardino Bilbao Rioja"
-                          data-color="gray-900"
-                          data-base="black"
-                          data-bg="bg-gray-900"
-                          data-border="border-gray-900"
-                          data-hex="#111827"
+                          value="F.- Categoría Militar Soldados y Premilitares Damas y Varones (NEGRO) - Mal. Bernardino Bilbao Rioja"
+                          data-color="neutral-900"
+                          data-base="neutral"
+                          data-bg="bg-neutral-900"
+                          data-border="border-neutral-900"
+                          data-hex="#171717"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat E (Negro): Conscriptos - Mal. Bernardino Bilbao Rioja
+                          F.- Militar Soldados y Premilitares Damas y Varones (NEGRO): Tropa y Premilitares — Mal. Bernardino Bilbao Rioja
                         </option>
                         <option
-                          value="Cat F - Militar/Policial A (Formación) - Mcal. José Ballivián Segurola"
+                          value="G.- Categoría Militar y Policial “A” Damas y Varones (ROJO) Formación - Mcal. José Ballivián Segurola"
                           data-color="red-600"
                           data-base="red"
                           data-bg="bg-red-600"
                           data-border="border-red-600"
                           data-hex="#dc2626"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat F (Rojo): Militar/Policial "A" (Formación) - Mcal. José Ballivián Segurola
+                          G.- Militar y Policial “A” Damas y Varones (ROJO): Formación profesional (Cadetes y Alumnos) — Mcal. José Ballivián Segurola
                         </option>
                         <option
-                          value="Cat G - Militar/Policial B (Hasta 15 años) - Mcal. Antonio José de Sucre 2"
+                          value="H.- Categoría Militar y Policial “B” Damas y Varones (AMARILLO) Hasta 15 años - Mcal. Antonio José de Sucre 2"
                           data-color="yellow-400"
                           data-base="yellow"
                           data-bg="bg-yellow-400"
                           data-border="border-yellow-400"
                           data-hex="#facc15"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat G (Amarillo): Militar/Policial "B" (Hasta 15 años) - Mcal. Antonio José de Sucre 2
+                          H.- Militar y Policial “B” Damas y Varones (AMARILLO): Oficiales y Suboficiales hasta 15 años de servicio — Mcal. Antonio José de Sucre 2
                         </option>
                         <option
-                          value="Cat H - Militar/Policial C (16+ años) - Mcal. Andrés de Santa Cruz 2"
-                          data-color="green-600"
-                          data-base="green"
+                          value="I.- Categoría Militar y Policial “C” Damas y Varones (VERDE) A partir de 16 años - Mcal. Andrés de Santa Cruz 2"
+                          data-color="emerald-600"
+                          data-base="emerald"
                           data-bg="bg-emerald-600"
                           data-border="border-emerald-600"
-                          data-hex="#059669"
+                          data-hex="#16a34a"
+                          data-distancia="CARRERA PEDESTRE 10 KM"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          Cat H (Verde): Militar/Policial "C" (16+ años) - Mcal. Andrés de Santa Cruz 2
+                          I.- Militar y Policial “C” Damas y Varones (VERDE): Oficiales y Suboficiales a partir de 16 años de servicio — Mcal. Andrés de Santa Cruz 2
+                        </option>
+                      </optgroup>
+
+                      <!-- Grupo Niñas y Niños (Infantil) -->
+                      <optgroup label="Categorías Niñas y Niños (Infantil)" class="bg-army-950 text-gold-300 font-bold">
+                        <option
+                          value="J.- Categoría niñas y niños U-4 (CELESTE): hasta los 4 años de edad (80 metros)"
+                          data-color="cyan-500"
+                          data-base="cyan"
+                          data-bg="bg-cyan-500"
+                          data-border="border-cyan-500"
+                          data-hex="#06b6d4"
+                          data-distancia="CARRERA INFANTIL · 80 METROS"
+                          class="bg-army-900 text-stone-100 font-normal py-1"
+                        >
+                          J.- Niñas y niños U-4 (CELESTE): hasta los 4 años de edad — 80 metros
+                        </option>
+                        <option
+                          value="K.- Categoría niñas y niños U-6 (NARANJA): hasta los 6 años de edad (200 metros)"
+                          data-color="orange-500"
+                          data-base="orange"
+                          data-bg="bg-orange-500"
+                          data-border="border-orange-500"
+                          data-hex="#f97316"
+                          data-distancia="CARRERA INFANTIL · 200 METROS"
+                          class="bg-army-900 text-stone-100 font-normal py-1"
+                        >
+                          K.- Niñas y niños U-6 (NARANJA): hasta los 6 años de edad — 200 metros
+                        </option>
+                        <option
+                          value="L.- Categoría niñas y niños U-8 (MORADO): hasta los 8 años de edad (400 metros)"
+                          data-color="purple-500"
+                          data-base="purple"
+                          data-bg="bg-purple-500"
+                          data-border="border-purple-500"
+                          data-hex="#a855f7"
+                          data-distancia="CARRERA INFANTIL · 400 METROS"
+                          class="bg-army-900 text-stone-100 font-normal py-1"
+                        >
+                          L.- Niñas y niños U-8 (MORADO): hasta los 8 años de edad — 400 metros
+                        </option>
+                        <option
+                          value="M.- Categoría niñas y niños U-13 (TURQUESA): hasta los 13 años de edad (1000 metros)"
+                          data-color="teal-500"
+                          data-base="teal"
+                          data-bg="bg-teal-500"
+                          data-border="border-teal-500"
+                          data-hex="#14b8a6"
+                          data-distancia="CARRERA INFANTIL · 1000 METROS"
+                          class="bg-army-900 text-stone-100 font-normal py-1"
+                        >
+                          M.- Niñas y niños U-13 (TURQUESA): hasta los 13 años de edad — 1000 metros
                         </option>
                       </optgroup>
                     </select>
@@ -443,7 +602,7 @@
 
           <!-- Contenido del Dorsal: Subtítulo -->
           <div class="text-center mt-3">
-            <span class="font-display font-black text-sm sm:text-base tracking-widest text-amber-600 sm:text-gold-600 uppercase">
+            <span id="dorsalDistanciaLabel" class="font-display font-black text-sm sm:text-base tracking-widest text-amber-600 sm:text-gold-600 uppercase">
               CARRERA PEDESTRE 10 KM
             </span>
             <!-- Etiqueta de Categoría Asignada en el Dorsal -->
@@ -520,150 +679,7 @@
 
   </div>
 
-  <!-- MODAL: PERSONALIZADOR DE FONDO E ÍCONO DE LA WEBAPP -->
-  <div id="visualModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm transition-opacity duration-300">
-    <div class="bg-army-900 border border-gold-500/40 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative text-stone-100 max-h-[92vh] overflow-y-auto">
-      
-      <!-- Cabecera del Modal -->
-      <div class="flex items-center justify-between pb-3 border-b border-army-800 mb-5">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-lg bg-gold-500/20 text-gold-400 flex items-center justify-center border border-gold-500/30">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <h3 class="font-display font-bold text-lg text-gold-300 uppercase tracking-wide leading-none">
-              Personalizar Fondo e Ícono
-            </h3>
-            <p class="text-[11px] text-stone-400 mt-0.5">Configura la imagen de fondo y el escudo institucional</p>
-          </div>
-        </div>
-        <button id="closeVisualModalBtn" type="button" class="text-stone-400 hover:text-white p-1 rounded-lg hover:bg-army-800 transition cursor-pointer">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
-      </div>
-
-      <!-- Banner de Estado de Sincronización y Persistencia Permanente -->
-      <div class="mb-5 px-3.5 py-2.5 rounded-xl bg-emerald-950/80 border border-emerald-500/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-emerald-200 shadow-lg">
-        <div class="flex items-center gap-2.5">
-          <span class="relative flex h-2.5 w-2.5 shrink-0">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-          </span>
-          <div>
-            <span class="font-bold text-[11px] sm:text-xs block">Almacenamiento Permanente en Disco y Tiempo Real</span>
-            <span class="text-[10px] text-emerald-300/80 block">Las imágenes insertadas se guardan en el servidor y memoria local persistente.</span>
-          </div>
-        </div>
-        <span class="text-[10px] bg-emerald-900/90 text-emerald-200 font-bold px-2 py-0.5 rounded border border-emerald-500/40 uppercase whitespace-nowrap">DISCO + MÓVIL + PC</span>
-      </div>
-
-      <!-- SECCIÓN 1: IMAGEN DE FONDO -->
-      <div class="space-y-4 mb-6">
-        <div class="flex items-center justify-between">
-          <label class="text-xs uppercase tracking-wider font-bold text-gold-400 flex items-center gap-1.5">
-            <span>1. Imagen de Fondo de la WebApp</span>
-          </label>
-        </div>
-        
-        <!-- Carga de Imagen: Archivo Local o URL -->
-        <div class="space-y-2">
-          <div>
-            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción A: Subir imagen desde tu dispositivo (Celular o PC):</label>
-            <input type="file" id="bgFileInput" accept="image/*" class="w-full text-xs text-stone-400 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-army-800 file:text-gold-400 hover:file:bg-army-700 cursor-pointer bg-army-950 p-1.5 rounded-lg border border-army-700" />
-          </div>
-          <div>
-            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Opción B: Pegar enlace o URL directa de imagen:</label>
-            <input type="url" id="bgUrlInput" placeholder="https://ejemplo.com/fondo-maraton.jpg" class="w-full text-xs bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-stone-200 placeholder-stone-500 focus:outline-none focus:border-gold-500" />
-          </div>
-        </div>
-
-        <!-- Presets Temáticos Rápidos -->
-        <div>
-          <label class="text-[11px] text-stone-400 mb-1.5 block font-semibold">Fondos temáticos predefinidos (1 clic):</label>
-          <div class="grid grid-cols-3 gap-2">
-            <button type="button" data-bg="maraton" class="preset-bg-btn text-xs py-2 px-2 rounded-lg bg-army-950 border border-army-700 hover:border-gold-500 text-stone-300 transition text-center hover:bg-army-800 cursor-pointer flex flex-col items-center gap-1">
-              <span class="text-base">🏃</span>
-              <span class="font-bold text-[11px]">Maratón 10K</span>
-            </button>
-            <button type="button" data-bg="tactico" class="preset-bg-btn text-xs py-2 px-2 rounded-lg bg-army-950 border border-army-700 hover:border-gold-500 text-stone-300 transition text-center hover:bg-army-800 cursor-pointer flex flex-col items-center gap-1">
-              <span class="text-base">🎖️</span>
-              <span class="font-bold text-[11px]">Militar Táctico</span>
-            </button>
-            <button type="button" data-bg="pista" class="preset-bg-btn text-xs py-2 px-2 rounded-lg bg-army-950 border border-army-700 hover:border-gold-500 text-stone-300 transition text-center hover:bg-army-800 cursor-pointer flex flex-col items-center gap-1">
-              <span class="text-base">🏁</span>
-              <span class="font-bold text-[11px]">Pista Atlética</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Controles de Opacidad, Desenfoque y Filtro de Contraste -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-army-950/70 p-3 rounded-xl border border-army-800">
-          <div>
-            <div class="flex justify-between text-xs text-stone-300 mb-1">
-              <span>Opacidad Fondo:</span>
-              <span id="bgOpacityValue" class="text-gold-400 font-bold">45%</span>
-            </div>
-            <input type="range" id="bgOpacitySlider" min="10" max="95" value="45" class="w-full accent-gold-500 cursor-pointer" />
-          </div>
-          <div>
-            <div class="flex justify-between text-xs text-stone-300 mb-1">
-              <span>Desenfoque:</span>
-              <span id="bgBlurValue" class="text-gold-400 font-bold">0px</span>
-            </div>
-            <input type="range" id="bgBlurSlider" min="0" max="15" value="0" class="w-full accent-gold-500 cursor-pointer" />
-          </div>
-          <div>
-            <div class="flex justify-between text-xs text-stone-300 mb-1">
-              <span>Filtro Contraste:</span>
-              <span id="overlayDarknessValue" class="text-gold-400 font-bold">70%</span>
-            </div>
-            <input type="range" id="overlayDarknessSlider" min="15" max="95" value="70" class="w-full accent-gold-500 cursor-pointer" />
-          </div>
-        </div>
-      </div>
-
-      <!-- SECCIÓN 2: ÍCONO / ESCUDO OFICIAL -->
-      <div class="space-y-4 mb-6 pt-4 border-t border-army-800">
-        <label class="text-xs uppercase tracking-wider font-bold text-gold-400 block">
-          2. Ícono / Escudo Oficial (Favicon y Cabecera)
-        </label>
-        
-        <div class="space-y-2">
-          <div>
-            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">Subir imagen de escudo o logotipo:</label>
-            <input type="file" id="iconFileInput" accept="image/*" class="w-full text-xs text-stone-400 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-army-800 file:text-gold-400 hover:file:bg-army-700 cursor-pointer bg-army-950 p-1.5 rounded-lg border border-army-700" />
-          </div>
-          <div>
-            <label class="text-[11px] text-stone-300 font-semibold mb-1 block">O pegar enlace directo a imagen de logo:</label>
-            <input type="url" id="iconUrlInput" placeholder="https://ejemplo.com/escudo-eceme.png" class="w-full text-xs bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-stone-200 placeholder-stone-500 focus:outline-none focus:border-gold-500" />
-          </div>
-        </div>
-
-        <!-- Vista Previa del Ícono -->
-        <div class="flex items-center gap-3 bg-army-950/70 p-3 rounded-xl border border-army-800">
-          <div class="w-12 h-12 rounded-full border-2 border-gold-500/70 bg-army-900 p-1 shrink-0 overflow-hidden flex items-center justify-center shadow-lg">
-            <img id="iconPreview" src="" alt="Vista previa ícono" class="w-full h-full object-contain filter drop-shadow" />
-          </div>
-          <div class="text-xs">
-            <span class="block font-semibold text-stone-200">Vista previa del ícono activo</span>
-            <span class="text-[11px] text-stone-400">Se actualiza en la pestaña del navegador (favicon) y en la cabecera oficial.</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- BOTONES DE ACCIÓN -->
-      <div class="flex items-center justify-between pt-4 border-t border-army-800">
-        <button type="button" id="resetVisualsBtn" class="text-xs text-rose-400 hover:text-rose-300 underline cursor-pointer font-medium">
-          Restaurar originales
-        </button>
-        <button type="button" id="saveVisualsBtn" class="bg-gold-500 hover:bg-gold-400 text-army-950 font-display font-bold uppercase tracking-wider text-xs sm:text-sm py-2 px-5 rounded-lg shadow-lg cursor-pointer transition">
-          Guardar Cambios
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- DISEÑO VISUAL BLOQUEADO PERMANENTEMENTE: No se permiten más modificaciones en las imágenes -->
 
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
@@ -683,6 +699,22 @@
       const finalizeBtn = document.getElementById('finalizeBtn');
       const finalizeNotification = document.getElementById('finalizeNotification');
 
+      // Botón para mostrar / ocultar cuadro guía de categorías
+      const toggleCategoriasGuiaBtn = document.getElementById('toggleCategoriasGuiaBtn');
+      const categoriasGuiaBox = document.getElementById('categoriasGuiaBox');
+      if (toggleCategoriasGuiaBtn && categoriasGuiaBox) {
+        toggleCategoriasGuiaBtn.addEventListener('click', () => {
+          const isHidden = categoriasGuiaBox.classList.contains('hidden');
+          if (isHidden) {
+            categoriasGuiaBox.classList.remove('hidden');
+            toggleCategoriasGuiaBtn.textContent = 'Ocultar cuadro de categorías';
+          } else {
+            categoriasGuiaBox.classList.add('hidden');
+            toggleCategoriasGuiaBtn.textContent = 'Ver cuadro de categorías (A - M)';
+          }
+        });
+      }
+
       // 2. AUTOMATIZACIÓN DE COLOR (INDICADOR EN TIEMPO REAL)
       const updateCategoriaIndicator = () => {
         if (!categoriaSelect) return;
@@ -697,7 +729,7 @@
         const hex = selected.dataset.hex || '';
 
         // Actualizar visualmente el indicador
-        categoriaColorDot.className = `w-9 h-9 rounded-full border-2 border-white/60 ${bgClass} shrink-0 transition-all duration-300 shadow-md ring-2 ring-black/40 flex items-center justify-center scale-105`;
+        categoriaColorDot.className = `w-9 h-9 rounded-full border-2 border-white/80 ${bgClass} shrink-0 transition-all duration-300 shadow-lg ring-2 ring-black/50 flex items-center justify-center scale-105`;
         if (hex) {
           categoriaColorDot.style.backgroundColor = hex;
         }
@@ -887,19 +919,28 @@
             // Oculta sección de formulario y muestra dorsal
             registrationSection.classList.add('hidden');
 
-            // 2. Extraer el color de la categoría seleccionada y reemplazar el borde verde del Dorsal
+            // 2. Extraer el color y distancia de la categoría seleccionada para el Dorsal
             const selectedOption = categoriaSelect.options[categoriaSelect.selectedIndex];
             const borderClass = selectedOption ? (selectedOption.dataset.border || 'border-army-900') : 'border-army-900';
             const hexColor = selectedOption ? (selectedOption.dataset.hex || '#142312') : '#142312';
+            const distancia = selectedOption ? (selectedOption.dataset.distancia || 'CARRERA PEDESTRE 10 KM') : 'CARRERA PEDESTRE 10 KM';
 
             const possibleBorders = [
               'border-army-900', 'border-green-900', 'border-pink-500', 'border-blue-600',
               'border-amber-800', 'border-gray-500', 'border-gray-900', 'border-red-600',
-              'border-yellow-400', 'border-emerald-600'
+              'border-yellow-400', 'border-yellow-500', 'border-emerald-600',
+              'border-cyan-500', 'border-orange-500', 'border-purple-500', 'border-teal-500',
+              'border-neutral-900'
             ];
             possibleBorders.forEach((cls) => dorsalContainer.classList.remove(cls));
             dorsalContainer.classList.add(borderClass);
             dorsalContainer.style.borderColor = hexColor;
+
+            // Actualizar etiqueta de distancia en el marbete
+            const dorsalDistanciaLabel = document.getElementById('dorsalDistanciaLabel');
+            if (dorsalDistanciaLabel) {
+              dorsalDistanciaLabel.textContent = distancia;
+            }
 
             // Sincronización de Color en el Mensaje de Confirmación
             if (preApprovalBanner && selectedOption) {
@@ -917,12 +958,12 @@
               const bannerText = `text-${baseColor}-900`;
               const bannerBorder = `border-${baseColor}-300`;
 
-              const colorBases = ['green', 'emerald', 'pink', 'blue', 'amber', 'gray', 'black', 'zinc', 'neutral', 'red', 'yellow'];
+              const colorBases = ['green', 'emerald', 'pink', 'blue', 'amber', 'gray', 'black', 'zinc', 'neutral', 'red', 'yellow', 'cyan', 'orange', 'purple', 'teal'];
               colorBases.forEach((c) => {
                 preApprovalBanner.classList.remove(`bg-${c}-100`, `text-${c}-900`, `border-${c}-300`);
               });
               Array.from(preApprovalBanner.classList).forEach((cls) => {
-                if (/^(bg|text|border)-(green|emerald|pink|blue|amber|gray|black|zinc|neutral|red|yellow)-/i.test(cls)) {
+                if (/^(bg|text|border)-(green|emerald|pink|blue|amber|gray|black|zinc|neutral|red|yellow|cyan|orange|purple|teal)-/i.test(cls)) {
                   preApprovalBanner.classList.remove(cls);
                 }
               });
@@ -946,7 +987,7 @@
             // Inyectar el nombre de la categoría en el marbete
             if (dorsalCategoriaLabel && selectedOption) {
               dorsalCategoriaLabel.textContent = selectedOption.value;
-              dorsalCategoriaLabel.style.color = hexColor === '#111827' ? '#1f2937' : hexColor;
+              dorsalCategoriaLabel.style.color = (hexColor === '#111827' || hexColor === '#171717') ? '#1f2937' : hexColor;
             }
 
             // Muestra la vista de dorsal y notificación de éxito
@@ -1163,33 +1204,20 @@
       const appHeaderIconImg = document.getElementById('appHeaderIconImg');
       const dorsalIconImg = document.getElementById('dorsalIconImg');
 
-      const visualModal = document.getElementById('visualModal');
-      const openVisualModalBtn = document.getElementById('openVisualModalBtn');
-      const closeVisualModalBtn = document.getElementById('closeVisualModalBtn');
+      // CONFIGURACIÓN VISUAL OFICIAL BLOQUEADA PERMANENTEMENTE
+      // Se mantienen las imágenes insertadas actuales y se bloquea cualquier cambio futuro
+      const LOCKED_BG_SOURCE = PRESET_BACKGROUNDS.tactico;
+      const LOCKED_BG_OPACITY = 50;
+      const LOCKED_BG_BLUR = 1;
+      const LOCKED_OVERLAY_DARKNESS = 65;
+      const LOCKED_ICON_SOURCE = DEFAULT_ICON_SVG;
 
-      const bgFileInput = document.getElementById('bgFileInput');
-      const bgUrlInput = document.getElementById('bgUrlInput');
-      const bgOpacitySlider = document.getElementById('bgOpacitySlider');
-      const bgOpacityValue = document.getElementById('bgOpacityValue');
-      const bgBlurSlider = document.getElementById('bgBlurSlider');
-      const bgBlurValue = document.getElementById('bgBlurValue');
-      const overlayDarknessSlider = document.getElementById('overlayDarknessSlider');
-      const overlayDarknessValue = document.getElementById('overlayDarknessValue');
-
-      const iconFileInput = document.getElementById('iconFileInput');
-      const iconUrlInput = document.getElementById('iconUrlInput');
-      const iconPreview = document.getElementById('iconPreview');
-
-      const saveVisualsBtn = document.getElementById('saveVisualsBtn');
-      const resetVisualsBtn = document.getElementById('resetVisualsBtn');
-      const presetBgBtns = document.querySelectorAll('.preset-bg-btn');
-
-      // Estado activo en memoria
-      let currentBgSource = PRESET_BACKGROUNDS.maraton;
-      let currentBgOpacity = 45;
-      let currentBgBlur = 0;
-      let currentOverlayDarkness = 70;
-      let currentIconSource = DEFAULT_ICON_SVG;
+      // Estado activo en memoria fijado e inmutable
+      let currentBgSource = LOCKED_BG_SOURCE;
+      let currentBgOpacity = LOCKED_BG_OPACITY;
+      let currentBgBlur = LOCKED_BG_BLUR;
+      let currentOverlayDarkness = LOCKED_OVERLAY_DARKNESS;
+      let currentIconSource = LOCKED_ICON_SOURCE;
 
       // =========================================================================
       // MOTOR DE PERSISTENCIA PERMANENTE EN EL NAVEGADOR: INDEXED-DB
@@ -1319,468 +1347,102 @@
         });
       };
 
-      // 3. Funciones API Globales expuestas en `window`
+      // 3. Funciones API Globales expuestas en `window` (MODO PERMANENTE Y BLOQUEADO)
       /**
-       * Aplica una imagen de fondo a la webapp (optimizada para móviles y computadoras)
+       * Mantiene permanentemente el fondo táctico militar oficial de la ECEME
        */
-      window.setBackgroundImage = function(source, opacity = 45, blur = 0) {
-        if (!source || source === 'default') {
-          currentBgSource = PRESET_BACKGROUNDS.maraton;
-        } else if (PRESET_BACKGROUNDS[source]) {
-          currentBgSource = PRESET_BACKGROUNDS[source];
-        } else {
-          currentBgSource = source;
-        }
-        currentBgOpacity = Math.max(5, Math.min(95, parseInt(opacity, 10) || 45));
-        currentBgBlur = Math.max(0, Math.min(15, parseInt(blur, 10) || 0));
+      window.setBackgroundImage = function() {
+        currentBgSource = LOCKED_BG_SOURCE;
+        currentBgOpacity = LOCKED_BG_OPACITY;
+        currentBgBlur = LOCKED_BG_BLUR;
 
         if (appBackgroundLayer) {
-          appBackgroundLayer.style.backgroundImage = `url("${currentBgSource}")`;
-          appBackgroundLayer.style.opacity = (currentBgOpacity / 100).toString();
-          appBackgroundLayer.style.filter = currentBgBlur > 0 ? `blur(${currentBgBlur}px)` : 'none';
+          appBackgroundLayer.style.backgroundImage = `url("${LOCKED_BG_SOURCE}")`;
+          appBackgroundLayer.style.opacity = (LOCKED_BG_OPACITY / 100).toString();
+          appBackgroundLayer.style.filter = LOCKED_BG_BLUR > 0 ? `blur(${LOCKED_BG_BLUR}px)` : 'none';
         }
-
-        if (bgOpacitySlider) bgOpacitySlider.value = currentBgOpacity;
-        if (bgOpacityValue) bgOpacityValue.textContent = `${currentBgOpacity}%`;
-        if (bgBlurSlider) bgBlurSlider.value = currentBgBlur;
-        if (bgBlurValue) bgBlurValue.textContent = `${currentBgBlur}px`;
       };
 
       /**
-       * Ajusta la intensidad del filtro oscuro para garantizar legibilidad en móviles y pantallas brillantes
+       * Mantiene permanentemente la opacidad táctica del filtro oscuro
        */
-      window.setOverlayDarkness = function(darkness = 70) {
-        currentOverlayDarkness = Math.max(10, Math.min(95, parseInt(darkness, 10) || 70));
+      window.setOverlayDarkness = function() {
+        currentOverlayDarkness = LOCKED_OVERLAY_DARKNESS;
         if (appOverlayLayer) {
-          appOverlayLayer.style.opacity = (currentOverlayDarkness / 100).toString();
+          appOverlayLayer.style.opacity = (LOCKED_OVERLAY_DARKNESS / 100).toString();
         }
-        if (overlayDarknessSlider) overlayDarknessSlider.value = currentOverlayDarkness;
-        if (overlayDarknessValue) overlayDarknessValue.textContent = `${currentOverlayDarkness}%`;
       };
 
       /**
-       * Aplica el ícono/escudo oficial en toda la webapp:
+       * Mantiene permanentemente el Escudo Oficial de la ECEME en toda la webapp:
        * - Cabecera oficial
        * - Favicon en pestaña de escritorio
        * - Acceso directo en pantalla de inicio de Celulares (Apple Touch & Android)
        * - Marbete / Dorsal digital de carrera
        */
-      window.setAppIcon = function(source) {
-        currentIconSource = (source && source !== 'default') ? source : DEFAULT_ICON_SVG;
-        if (appFavicon) appFavicon.href = currentIconSource;
-        if (appAppleTouchIcon) appAppleTouchIcon.href = currentIconSource;
-        if (appShortcutIcon) appShortcutIcon.href = currentIconSource;
-        if (appHeaderIconImg) appHeaderIconImg.src = currentIconSource;
-        if (dorsalIconImg) dorsalIconImg.src = currentIconSource;
-        if (iconPreview) iconPreview.src = currentIconSource;
+      window.setAppIcon = function() {
+        currentIconSource = LOCKED_ICON_SOURCE;
+        if (appFavicon) appFavicon.href = LOCKED_ICON_SOURCE;
+        if (appAppleTouchIcon) appAppleTouchIcon.href = LOCKED_ICON_SOURCE;
+        if (appShortcutIcon) appShortcutIcon.href = LOCKED_ICON_SOURCE;
+        if (appHeaderIconImg) appHeaderIconImg.src = LOCKED_ICON_SOURCE;
+        if (dorsalIconImg) dorsalIconImg.src = LOCKED_ICON_SOURCE;
       };
 
       /**
-       * Aplica un lote completo de configuraciones visuales recibidas desde el servidor o la nube
+       * Aplica y reafirma la configuración visual oficial bloqueada de forma permanente
        */
-      window.applyAllVisualSettings = async function(data, saveLocal = true) {
-        if (!data) return;
-        if (data.bgSource) {
-          window.setBackgroundImage(data.bgSource, data.bgOpacity || 45, data.bgBlur || 0);
-        }
-        if (typeof data.overlayDarkness !== 'undefined') {
-          window.setOverlayDarkness(data.overlayDarkness);
-        }
-        if (data.iconSource) {
-          window.setAppIcon(data.iconSource);
-        }
-        if (data.bgUrl && bgUrlInput) bgUrlInput.value = data.bgUrl;
-        if (data.iconUrl && iconUrlInput) iconUrlInput.value = data.iconUrl;
+      window.applyAllVisualSettings = async function() {
+        window.setBackgroundImage();
+        window.setOverlayDarkness();
+        window.setAppIcon();
 
-        if (saveLocal) {
-          const payload = {
-            bgSource: currentBgSource,
-            bgOpacity: currentBgOpacity,
-            bgBlur: currentBgBlur,
-            overlayDarkness: currentOverlayDarkness,
-            iconSource: currentIconSource,
-            bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
-            iconUrl: iconUrlInput ? iconUrlInput.value.trim() : '',
-            updatedAt: data.updatedAt || Date.now()
-          };
-
-          // 1. Guardar permanentemente en IndexedDB (sin límite de tamaño)
-          await EcemeDB.set('eceme_visual_settings', payload);
-
-          // 2. Guardar en localStorage de forma segura
-          try {
-            // Evitar guardar strings gigantes en localStorage para prevenir QuotaExceeded
-            const safeLocal = { ...payload };
-            if (safeLocal.bgSource && safeLocal.bgSource.length > 200000) {
-              safeLocal.bgSource = 'indexeddb';
-            }
-            if (safeLocal.iconSource && safeLocal.iconSource.length > 200000) {
-              safeLocal.iconSource = 'indexeddb';
-            }
-            localStorage.setItem('eceme_visual_settings', JSON.stringify(safeLocal));
-          } catch (e) {
-            // Si localStorage falla, IndexedDB ya tiene los datos permanentemente
-          }
-        }
-      };
-
-      /**
-       * Restaura el fondo y el escudo original de la ECEME
-       */
-      window.resetVisualSettings = async function() {
-        try {
-          localStorage.removeItem('eceme_visual_settings');
-          await EcemeDB.clear();
-        } catch (e) {}
-
-        window.setBackgroundImage(PRESET_BACKGROUNDS.maraton, 45, 0);
-        window.setOverlayDarkness(70);
-        window.setAppIcon(DEFAULT_ICON_SVG);
-        if (bgUrlInput) bgUrlInput.value = '';
-        if (bgFileInput) bgFileInput.value = '';
-        if (iconUrlInput) iconUrlInput.value = '';
-        if (iconFileInput) iconFileInput.value = '';
-
-        try {
-          await fetch('/api/visual-settings', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              bgSource: 'default',
-              bgOpacity: 45,
-              bgBlur: 0,
-              overlayDarkness: 70,
-              iconSource: 'default',
-              bgUrl: '',
-              iconUrl: ''
-            })
-          });
-        } catch (e) {}
-      };
-
-      // 4. Carga inicial permanente: Primero IndexedDB + localStorage (0 flicker), luego servidor en disco
-      const cargarConfiguracionInicial = async () => {
-        let loadedFromLocal = false;
-
-        // A. Carga ultrarrápida desde IndexedDB permanente
-        try {
-          const idbData = await EcemeDB.get('eceme_visual_settings');
-          if (idbData && idbData.bgSource && idbData.bgSource !== 'indexeddb') {
-            await window.applyAllVisualSettings(idbData, false);
-            loadedFromLocal = true;
-          }
-        } catch (e) {}
-
-        // B. Si IndexedDB no tenía datos, consultar localStorage
-        if (!loadedFromLocal) {
-          try {
-            const raw = localStorage.getItem('eceme_visual_settings');
-            if (raw) {
-              const localData = JSON.parse(raw);
-              if (localData && localData.bgSource && localData.bgSource !== 'indexeddb') {
-                await window.applyAllVisualSettings(localData, false);
-                loadedFromLocal = true;
-              }
-            }
-          } catch (e) {}
-        }
-
-        // C. Si no había caché, aplicar valores por defecto antes de conectar con el servidor
-        if (!loadedFromLocal) {
-          window.setBackgroundImage(PRESET_BACKGROUNDS.tactico, 50, 1);
-          window.setOverlayDarkness(65);
-          window.setAppIcon(DEFAULT_ICON_SVG);
-        }
-
-        // D. Consulta al servidor para obtener la versión oficial sincronizada en disco
-        try {
-          const res = await fetch('/api/visual-settings', { cache: 'no-store' });
-          if (res.ok) {
-            const serverData = await res.json();
-            if (serverData && serverData.bgSource) {
-              await window.applyAllVisualSettings(serverData, true);
-            }
-          }
-        } catch (err) {
-          console.log('[VisualSync] Servidor local no disponible, verificando Google Apps Script...');
-          // Contingencia: consultar a Google Apps Script
-          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-            try {
-              const gasRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_visuals`);
-              if (gasRes.ok) {
-                const gasData = await gasRes.json();
-                if (gasData && gasData.bgSource) {
-                  await window.applyAllVisualSettings(gasData, true);
-                }
-              }
-            } catch (gasErr) {}
-          }
-        }
-      };
-      cargarConfiguracionInicial();
-
-      // 5. SINCRONIZACIÓN EN TIEMPO REAL MULTI-DISPOSITIVO (Server-Sent Events)
-      // Permite que cualquier celular, tablet o PC conectado reciba y guarde los cambios en disco
-      const iniciarSincronizacionEnTiempoReal = () => {
-        if (!window.EventSource) return;
-
-        let eventSource = null;
-        const conectarSSE = () => {
-          try {
-            eventSource = new EventSource('/api/visual-settings/stream');
-
-            eventSource.onmessage = (event) => {
-              try {
-                if (event.data) {
-                  const data = JSON.parse(event.data);
-                  if (data && data.bgSource) {
-                    window.applyAllVisualSettings(data, true);
-                  }
-                }
-              } catch (parseErr) {
-                console.warn('[VisualSync] Mensaje SSE no reconocible:', parseErr);
-              }
-            };
-
-            eventSource.onerror = () => {
-              if (eventSource) eventSource.close();
-              setTimeout(conectarSSE, 5000);
-            };
-          } catch (e) {
-            setTimeout(conectarSSE, 5000);
-          }
+        const lockedPayload = {
+          bgSource: LOCKED_BG_SOURCE,
+          bgOpacity: LOCKED_BG_OPACITY,
+          bgBlur: LOCKED_BG_BLUR,
+          overlayDarkness: LOCKED_OVERLAY_DARKNESS,
+          iconSource: LOCKED_ICON_SOURCE,
+          locked: true,
+          status: 'PERMANENTEMENTE_BLOQUEADO',
+          updatedAt: 1793695593030
         };
 
-        conectarSSE();
-
-        // Polling de respaldo cuando la pantalla del móvil vuelve a estar activa
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            fetch('/api/visual-settings', { cache: 'no-store' })
-              .then((r) => r.json())
-              .then((data) => {
-                if (data && data.bgSource) window.applyAllVisualSettings(data, true);
-              })
-              .catch(() => {});
-          }
-        });
-
-        // Polling periódico ligero cada 10s para redes móviles con desconexiones
-        setInterval(() => {
-          fetch('/api/visual-settings', { cache: 'no-store' })
-            .then((r) => r.json())
-            .then((data) => {
-              if (data && data.bgSource) {
-                const raw = localStorage.getItem('eceme_visual_settings');
-                const local = raw ? JSON.parse(raw) : {};
-                if (!local.updatedAt || (data.updatedAt && data.updatedAt > local.updatedAt)) {
-                  window.applyAllVisualSettings(data, true);
-                }
-              }
-            })
-            .catch(() => {});
-        }, 10000);
+        // Guardar permanentemente en IndexedDB y localStorage
+        try {
+          await EcemeDB.set('eceme_visual_settings', lockedPayload);
+          localStorage.setItem('eceme_visual_settings', JSON.stringify({
+            bgSource: 'tactico',
+            bgOpacity: LOCKED_BG_OPACITY,
+            bgBlur: LOCKED_BG_BLUR,
+            overlayDarkness: LOCKED_OVERLAY_DARKNESS,
+            iconSource: 'default',
+            locked: true,
+            status: 'PERMANENTEMENTE_BLOQUEADO',
+            updatedAt: 1793695593030
+          }));
+        } catch (e) {}
       };
-      iniciarSincronizacionEnTiempoReal();
 
-      // 6. Controladores de Eventos del Modal y Personalizador
-      if (openVisualModalBtn && visualModal) {
-        openVisualModalBtn.addEventListener('click', () => {
-          visualModal.classList.remove('hidden');
-        });
-      }
+      window.resetVisualSettings = function() {
+        window.applyAllVisualSettings();
+      };
 
-      if (closeVisualModalBtn && visualModal) {
-        closeVisualModalBtn.addEventListener('click', () => {
-          visualModal.classList.add('hidden');
-        });
-      }
+      // 4. Inicialización inmediata al cargar el DOM:
+      // Aplica el fondo y el escudo institucional al instante en cualquier móvil o PC
+      window.applyAllVisualSettings();
 
-      if (visualModal) {
-        visualModal.addEventListener('click', (e) => {
-          if (e.target === visualModal) {
-            visualModal.classList.add('hidden');
-          }
-        });
-      }
-
-      // Deslizadores en tiempo real
-      if (bgOpacitySlider && bgOpacityValue) {
-        bgOpacitySlider.addEventListener('input', (e) => {
-          const val = e.target.value;
-          bgOpacityValue.textContent = `${val}%`;
-          if (appBackgroundLayer) appBackgroundLayer.style.opacity = (val / 100).toString();
-          currentBgOpacity = parseInt(val, 10);
-        });
-      }
-
-      if (bgBlurSlider && bgBlurValue) {
-        bgBlurSlider.addEventListener('input', (e) => {
-          const val = e.target.value;
-          bgBlurValue.textContent = `${val}px`;
-          if (appBackgroundLayer) appBackgroundLayer.style.filter = val > 0 ? `blur(${val}px)` : 'none';
-          currentBgBlur = parseInt(val, 10);
-        });
-      }
-
-      if (overlayDarknessSlider && overlayDarknessValue) {
-        overlayDarknessSlider.addEventListener('input', (e) => {
-          const val = e.target.value;
-          overlayDarknessValue.textContent = `${val}%`;
-          if (appOverlayLayer) appOverlayLayer.style.opacity = (val / 100).toString();
-          currentOverlayDarkness = parseInt(val, 10);
-        });
-      }
-
-      // Archivo local de fondo con optimización automática para Celular y PC
-      if (bgFileInput) {
-        bgFileInput.addEventListener('change', async (e) => {
-          const file = e.target.files ? e.target.files[0] : null;
-          if (file) {
-            // Optimizar resolución (Full HD 1920x1080) preservando nitidez y aligerando la carga
-            const optimizedBase64 = await optimizarImagenParaAlmacenamiento(file, 1920, 0.88, false);
-            if (optimizedBase64) {
-              window.setBackgroundImage(optimizedBase64, currentBgOpacity, currentBgBlur);
-              if (bgUrlInput) bgUrlInput.value = '';
-            }
-          }
-        });
-      }
-
-      // URL de fondo
-      if (bgUrlInput) {
-        bgUrlInput.addEventListener('input', (e) => {
-          const url = e.target.value.trim();
-          if (url) {
-            window.setBackgroundImage(url, currentBgOpacity, currentBgBlur);
-            if (bgFileInput) bgFileInput.value = '';
-          }
-        });
-      }
-
-      // Botones de presets temáticos
-      presetBgBtns.forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const presetKey = btn.dataset.bg;
-          if (PRESET_BACKGROUNDS[presetKey]) {
-            window.setBackgroundImage(PRESET_BACKGROUNDS[presetKey], currentBgOpacity, currentBgBlur);
-            if (bgUrlInput) bgUrlInput.value = '';
-            if (bgFileInput) bgFileInput.value = '';
-          }
-        });
-      });
-
-      // Archivo local de ícono / escudo con optimización automática
-      if (iconFileInput) {
-        iconFileInput.addEventListener('change', async (e) => {
-          const file = e.target.files ? e.target.files[0] : null;
-          if (file) {
-            // Optimizar ícono (512x512 con canal alfa PNG transparente)
-            const optimizedIcon = await optimizarImagenParaAlmacenamiento(file, 512, 0.95, true);
-            if (optimizedIcon) {
-              window.setAppIcon(optimizedIcon);
-              if (iconUrlInput) iconUrlInput.value = '';
-            }
-          }
-        });
-      }
-
-      // URL de ícono / escudo
-      if (iconUrlInput) {
-        iconUrlInput.addEventListener('input', (e) => {
-          const url = e.target.value.trim();
-          if (url) {
-            window.setAppIcon(url);
-            if (iconFileInput) iconFileInput.value = '';
-          }
-        });
-      }
-
-      // 7. Guardar cambios PERMANENTEMENTE EN DISCO y SINCRONIZAR A TODOS LOS DISPOSITIVOS MÓVILES Y PCS
-      if (saveVisualsBtn) {
-        saveVisualsBtn.addEventListener('click', async () => {
-          const origText = saveVisualsBtn.textContent;
-          saveVisualsBtn.disabled = true;
-          saveVisualsBtn.textContent = "Guardando en disco permanente...";
-
-          const settings = {
-            bgSource: currentBgSource,
-            bgOpacity: currentBgOpacity,
-            bgBlur: currentBgBlur,
-            overlayDarkness: currentOverlayDarkness,
-            bgUrl: bgUrlInput ? bgUrlInput.value.trim() : '',
-            iconSource: currentIconSource,
-            iconUrl: iconUrlInput ? iconUrlInput.value.trim() : '',
-            updatedAt: Date.now()
+      // Sincronización SSE de respaldo para mantener la aplicación permanentemente sincronizada
+      if (window.EventSource) {
+        try {
+          const sse = new EventSource('/api/visual-settings/stream');
+          sse.onmessage = () => {
+            window.applyAllVisualSettings();
           };
-
-          // A. Guardar de inmediato en almacenamiento permanente del navegador (IndexedDB)
-          await EcemeDB.set('eceme_visual_settings', settings);
-
-          // B. Enviar al Servidor para guardado permanente como archivo físico en disco y distribución en tiempo real
-          let serverSuccess = false;
-          let persistedStaticSettings = null;
-
-          try {
-            const res = await fetch('/api/visual-settings', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(settings)
-            });
-            if (res.ok) {
-              const resData = await res.json();
-              serverSuccess = true;
-              if (resData && resData.settings) {
-                persistedStaticSettings = resData.settings;
-                // Actualizar las fuentes con las URLs estáticas permanentes generadas por el servidor
-                if (persistedStaticSettings.bgSource) {
-                  currentBgSource = persistedStaticSettings.bgSource;
-                }
-                if (persistedStaticSettings.iconSource) {
-                  currentIconSource = persistedStaticSettings.iconSource;
-                }
-                // Actualizar IndexedDB con las URLs estáticas permanentes
-                await EcemeDB.set('eceme_visual_settings', persistedStaticSettings);
-                try {
-                  localStorage.setItem('eceme_visual_settings', JSON.stringify(persistedStaticSettings));
-                } catch (e) {}
-              }
-            }
-          } catch (err) {
-            console.warn('[VisualSync] Aviso al transmitir al servidor:', err);
-          }
-
-          // C. Sincronización secundaria en segundo plano con Google Apps Script (Cloud)
-          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-            try {
-              fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                  action: "save_visuals",
-                  visualSettings: persistedStaticSettings || settings
-                })
-              }).catch(() => {});
-            } catch (e) {}
-          }
-
-          saveVisualsBtn.textContent = serverSuccess ? "✓ ¡Permanente en Disco y En Vivo!" : "✓ ¡Guardado Permanente!";
-          saveVisualsBtn.classList.replace('bg-gold-500', 'bg-emerald-600');
-          setTimeout(() => {
-            saveVisualsBtn.disabled = false;
-            saveVisualsBtn.textContent = origText;
-            saveVisualsBtn.classList.replace('bg-emerald-600', 'bg-gold-500');
-            if (visualModal) visualModal.classList.add('hidden');
-          }, 1100);
-        });
-      }
-
-      // Restaurar valores por defecto
-      if (resetVisualsBtn) {
-        resetVisualsBtn.addEventListener('click', () => {
-          window.resetVisualSettings();
-        });
+          sse.onerror = () => {
+            sse.close();
+          };
+        } catch (e) {}
       }
 
     });
