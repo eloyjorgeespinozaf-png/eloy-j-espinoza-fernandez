@@ -9,17 +9,65 @@
  * - ContentService: Respuesta API JSON sin bloqueos de CORS.
  */
 
+/**
+ * ⚡ PASO OBLIGATORIO DE AUTORIZACIÓN:
+ * Selecciona 'testSetup' en el menú de funciones arriba del editor de Apps Script
+ * y haz clic en 'Ejecutar'. Acepta los permisos de Google ("Avanzado" -> "Ir a... (no seguro)" -> "Permitir").
+ */
+function testSetup() {
+  Logger.log("Iniciando prueba de conexión...");
+  
+  // 1. Verificar Google Drive
+  var folderName = "Comprobantes 10KM";
+  var folders = DriveApp.getFoldersByName(folderName);
+  var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+  Logger.log("✅ Google Drive conectado. Carpeta lista: " + folder.getName() + " (ID: " + folder.getId() + ")");
+  
+  // 2. Verificar Google Sheets
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) {
+    var sheet = ss.getActiveSheet();
+    Logger.log("✅ Google Sheets conectado. Hoja activa: " + sheet.getName());
+    
+    // Crear encabezados si está vacía
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        "Marca Temporal",
+        "Dorsal Asignado",
+        "Nombres y Apellidos",
+        "Cédula de Identidad",
+        "Número de Celular",
+        "Unidad / Repartición",
+        "Categoría",
+        "URL Comprobante (Drive)"
+      ]);
+      var headerRange = sheet.getRange(1, 1, 1, 8);
+      headerRange.setFontWeight("bold");
+      headerRange.setBackground("#1e341b");
+      headerRange.setFontColor("#ffffff");
+      Logger.log("✅ Encabezados creados en la hoja.");
+    }
+  } else {
+    Logger.log("⚠️ Advertencia: Este script no está vinculado directamente a un Google Sheet.");
+    Logger.log("Asegúrate de crearlo desde: Google Sheets > Extensiones > Apps Script.");
+  }
+  
+  Logger.log("🎉 Autorización completa. Ahora implementa como 'Nueva versión' con acceso para 'Cualquier persona'.");
+}
+
 function doPost(e) {
   try {
-    // 1. Recepción y validación del payload
-    if (!e || !e.postData || !e.postData.contents) {
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "error",
-        message: "No se recibieron datos en el cuerpo de la petición."
-      })).setMimeType(ContentService.MimeType.JSON);
+    // 1. Recepción y validación del payload (JSON o Form)
+    var data = {};
+    if (e && e.postData && e.postData.contents) {
+      try {
+        data = JSON.parse(e.postData.contents);
+      } catch (err) {
+        data = e.parameter || {};
+      }
+    } else if (e && e.parameter) {
+      data = e.parameter;
     }
-
-    var data = JSON.parse(e.postData.contents);
 
     // 2. Extracción de los campos del formulario
     var nombres = data.nombres || "Sin Nombre";
@@ -35,13 +83,7 @@ function doPost(e) {
     if (comprobanteBase64 && comprobanteBase64.length > 50) {
       var folderName = "Comprobantes 10KM";
       var folders = DriveApp.getFoldersByName(folderName);
-      var targetFolder;
-
-      if (folders.hasNext()) {
-        targetFolder = folders.next();
-      } else {
-        targetFolder = DriveApp.createFolder(folderName);
-      }
+      var targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
 
       // Procesar formato Base64 (remover prefijos data:image/...;base64,)
       var contentType = "image/jpeg";
@@ -63,45 +105,49 @@ function doPost(e) {
       var file = targetFolder.createFile(blob);
 
       // Configurar permisos de visualización al enlace
-      file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (shareErr) {}
       fileUrl = file.getUrl();
     }
 
     // 4. Lógica de Sheets: Insertar fila en la hoja de cálculo activa
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getActiveSheet();
+    if (ss) {
+      var sheet = ss.getActiveSheet();
 
-    // Si la hoja es nueva o no tiene filas, generar encabezados institucionales
-    if (sheet.getLastRow() === 0) {
+      // Si la hoja es nueva o no tiene filas, generar encabezados institucionales
+      if (sheet.getLastRow() === 0) {
+        sheet.appendRow([
+          "Marca Temporal",
+          "Dorsal Asignado",
+          "Nombres y Apellidos",
+          "Cédula de Identidad",
+          "Número de Celular",
+          "Unidad / Repartición",
+          "Categoría",
+          "URL Comprobante (Drive)"
+        ]);
+
+        // Formato visual militar al encabezado
+        var headerRange = sheet.getRange(1, 1, 1, 8);
+        headerRange.setFontWeight("bold");
+        headerRange.setBackground("#1e341b");
+        headerRange.setFontColor("#ffffff");
+      }
+
+      var timestamp = new Date();
       sheet.appendRow([
-        "Marca Temporal",
-        "Dorsal Asignado",
-        "Nombres y Apellidos",
-        "Cédula de Identidad",
-        "Número de Celular",
-        "Unidad / Repartición",
-        "Categoría",
-        "URL Comprobante (Drive)"
+        timestamp,
+        dorsal,
+        nombres,
+        ci,
+        celular,
+        unidad,
+        categoria,
+        fileUrl
       ]);
-
-      // Formato visual militar al encabezado
-      var headerRange = sheet.getRange(1, 1, 1, 8);
-      headerRange.setFontWeight("bold");
-      headerRange.setBackground("#1e341b");
-      headerRange.setFontColor("#ffffff");
     }
-
-    var timestamp = new Date();
-    sheet.appendRow([
-      timestamp,
-      dorsal,
-      nombres,
-      ci,
-      celular,
-      unidad,
-      categoria,
-      fileUrl
-    ]);
 
     // 5. Retorno de respuesta JSON de éxito usando ContentService
     return ContentService.createTextOutput(JSON.stringify({
