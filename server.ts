@@ -204,6 +204,78 @@ async function startServer() {
     }
   });
 
+  const COUNTERS_FILE = path.resolve(__dirname, 'category-counters.json');
+
+  const CATEGORY_CONFIG: Record<string, { start: number; end: number; prefix: string; name: string }> = {
+    'A': { start: 1001, end: 1999, prefix: 'A-', name: 'Juvenil (14-17 años)' },
+    'B': { start: 2001, end: 2999, prefix: 'B-', name: 'Mayores (18-29 años)' },
+    'C': { start: 3001, end: 3999, prefix: 'C-', name: 'Master A (30-37 años)' },
+    'D': { start: 4001, end: 4999, prefix: 'D-', name: 'Master B (38-45 años)' },
+    'E': { start: 5001, end: 5999, prefix: 'E-', name: 'Master C (46+ años)' },
+    'F': { start: 6001, end: 6999, prefix: 'F-', name: 'Militar Soldados / Premilitares' },
+    'G': { start: 7001, end: 7999, prefix: 'G-', name: 'Militar y Policial "A" (Formación)' },
+    'H': { start: 8001, end: 8999, prefix: 'H-', name: 'Militar y Policial "B" (Hasta 15 años)' },
+    'I': { start: 9001, end: 9999, prefix: 'I-', name: 'Militar y Policial "C" (16+ años)' },
+    'J': { start: 401, end: 499, prefix: 'J-', name: 'Niñas y Niños U-4 (80m)' },
+    'K': { start: 601, end: 699, prefix: 'K-', name: 'Niñas y Niños U-6 (200m)' },
+    'L': { start: 801, end: 899, prefix: 'L-', name: 'Niñas y Niños U-8 (400m)' },
+    'M': { start: 1301, end: 1399, prefix: 'M-', name: 'Niñas y Niños U-13 (1000m)' }
+  };
+
+  const getCounters = (): Record<string, number> => {
+    try {
+      if (fs.existsSync(COUNTERS_FILE)) {
+        return JSON.parse(fs.readFileSync(COUNTERS_FILE, 'utf-8'));
+      }
+    } catch {}
+    const defaults: Record<string, number> = {};
+    for (const [key, cfg] of Object.entries(CATEGORY_CONFIG)) {
+      defaults[key] = cfg.start - 1;
+    }
+    return defaults;
+  };
+
+  // Endpoint para consultar contadores y rangos por categoría
+  app.get('/api/dorsal/stats', (_req, res) => {
+    const counters = getCounters();
+    res.json({ success: true, counters, config: CATEGORY_CONFIG });
+  });
+
+  // Endpoint para asignar el siguiente dorsal según la categoría
+  app.post('/api/dorsal/next', (req, res) => {
+    try {
+      const { categoryCode } = req.body || {};
+      const code = (categoryCode || 'A').toUpperCase().charAt(0);
+      const cfg = CATEGORY_CONFIG[code] || CATEGORY_CONFIG['A'];
+
+      const counters = getCounters();
+      let current = counters[code] ?? (cfg.start - 1);
+      if (current < cfg.start - 1 || current >= cfg.end) {
+        current = cfg.start - 1;
+      }
+      current += 1;
+      counters[code] = current;
+
+      fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+
+      const paddedNumber = String(current).padStart(4, '0');
+      const dorsal = `${cfg.prefix}${paddedNumber}`;
+
+      return res.json({
+        success: true,
+        dorsal,
+        prefix: cfg.prefix,
+        number: paddedNumber,
+        categoryCode: code,
+        range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
+        categoryName: cfg.name
+      });
+    } catch (err: any) {
+      console.error('Error asignando dorsal:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // Health check endpoints para pre-warming y balanceador de carga
   app.get(['/health', '/api/health'], (_req, res) => {
     res.status(200).json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() });
