@@ -241,6 +241,20 @@ async function startServer() {
     res.json({ success: true, counters, config: CATEGORY_CONFIG });
   });
 
+  // Endpoint para obtener el código backend actualizado de Google Apps Script (Code.gs)
+  app.get('/api/script/code', (_req, res) => {
+    try {
+      const scriptPath = path.resolve(__dirname, 'Code.gs');
+      if (fs.existsSync(scriptPath)) {
+        const code = fs.readFileSync(scriptPath, 'utf-8');
+        return res.json({ success: true, code });
+      }
+      return res.status(404).json({ success: false, error: 'Code.gs no encontrado' });
+    } catch (err: any) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // Endpoint para asignar el siguiente dorsal según la categoría
   app.post('/api/dorsal/next', (req, res) => {
     try {

@@ -54,13 +54,17 @@ function testSetup() {
         "Número de Celular",
         "Unidad / Repartición",
         "Categoría",
+        "Rama (Damas / Varones)",
         "URL Comprobante (Drive)"
       ]);
-      var headerRange = sheet.getRange(1, 1, 1, 8);
+      var headerRange = sheet.getRange(1, 1, 1, 9);
       headerRange.setFontWeight("bold");
       headerRange.setBackground("#1e341b");
       headerRange.setFontColor("#ffffff");
-      Logger.log("✅ Encabezados creados en la hoja.");
+      headerRange.setHorizontalAlignment("center");
+      Logger.log("✅ Encabezados creados en la hoja (9 columnas incluyendo Rama).");
+    } else {
+      asegurarColumnaRama(sheet);
     }
   } else {
     Logger.log("⚠️ Advertencia: Este script no está vinculado directamente a un Google Sheet.");
@@ -68,6 +72,44 @@ function testSetup() {
   }
   
   Logger.log("🎉 Autorización completa. Ahora implementa como 'Nueva versión' con acceso para 'Cualquier persona'.");
+}
+
+/**
+ * Verifica si la hoja existente cuenta con la columna "Rama (Damas / Varones)".
+ * Si la hoja viene con el formato anterior de 8 columnas (donde la col 8 era URL Comprobante),
+ * inserta de forma segura la columna "Rama (Damas / Varones)" en la posición 8,
+ * evitando desfase de datos o rotura de registros anteriores.
+ */
+function asegurarColumnaRama(sheet) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return;
+
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var tieneRama = false;
+  var colComprobanteIndex = -1;
+
+  for (var i = 0; i < headers.length; i++) {
+    var val = headers[i] ? headers[i].toString().toUpperCase() : "";
+    if (val.indexOf("RAMA") !== -1 || val.indexOf("GÉNERO") !== -1 || val.indexOf("GENERO") !== -1) {
+      tieneRama = true;
+      break;
+    }
+    if (val.indexOf("COMPROBANTE") !== -1 || val.indexOf("DRIVE") !== -1) {
+      colComprobanteIndex = i + 1; // 1-based index
+    }
+  }
+
+  if (!tieneRama) {
+    var insertPos = colComprobanteIndex > 0 ? colComprobanteIndex : 8;
+    sheet.insertColumnBefore(insertPos);
+    var cell = sheet.getRange(1, insertPos);
+    cell.setValue("Rama (Damas / Varones)");
+    cell.setFontWeight("bold");
+    cell.setBackground("#1e341b");
+    cell.setFontColor("#ffffff");
+    cell.setHorizontalAlignment("center");
+    Logger.log("✅ Columna 'Rama (Damas / Varones)' insertada automáticamente en columna " + insertPos);
+  }
 }
 
 function doPost(e) {
@@ -111,6 +153,26 @@ function doPost(e) {
     var dorsal = data.dorsal || "0000";
     var comprobanteBase64 = data.comprobante || "";
     var fileUrl = "Sin comprobante adjunto";
+
+    // Extracción y normalización de la Rama / Género (DAMAS / VARONES / NO APLICA)
+    var genero = data.genero || "";
+    if (!genero && categoria) {
+      if (categoria.indexOf("RAMA: DAMAS") !== -1 || categoria.indexOf("DAMAS") !== -1) {
+        genero = "DAMAS";
+      } else if (categoria.indexOf("RAMA: VARONES") !== -1 || categoria.indexOf("VARONES") !== -1) {
+        genero = "VARONES";
+      } else if (categoria.indexOf("Niñas y niños") !== -1 || categoria.indexOf("U-") !== -1) {
+        genero = "NO APLICA (INFANTIL)";
+      }
+    }
+    if (!genero) {
+      genero = "NO APLICA";
+    }
+
+    // Limpiar el texto de categoría para que la columna sea nítida sin redundancia
+    if (categoria && categoria.indexOf(" · RAMA:") !== -1) {
+      categoria = categoria.split(" · RAMA:")[0].trim();
+    }
 
     // 3. Lógica de Drive: Buscar o crear carpeta "Comprobantes 10KM"
     if (comprobanteBase64 && comprobanteBase64.length > 50) {
@@ -159,14 +221,19 @@ function doPost(e) {
           "Número de Celular",
           "Unidad / Repartición",
           "Categoría",
+          "Rama (Damas / Varones)",
           "URL Comprobante (Drive)"
         ]);
 
         // Formato visual militar al encabezado
-        var headerRange = sheet.getRange(1, 1, 1, 8);
+        var headerRange = sheet.getRange(1, 1, 1, 9);
         headerRange.setFontWeight("bold");
         headerRange.setBackground("#1e341b");
         headerRange.setFontColor("#ffffff");
+        headerRange.setHorizontalAlignment("center");
+      } else {
+        // Asegurar que la columna Rama exista para evitar desfases
+        asegurarColumnaRama(sheet);
       }
 
       var timestamp = new Date();
@@ -178,6 +245,7 @@ function doPost(e) {
         celular,
         unidad,
         categoria,
+        genero,
         fileUrl
       ]);
     }
@@ -187,6 +255,7 @@ function doPost(e) {
       status: "success",
       message: "Inscripción registrada correctamente en el sistema.",
       dorsal: dorsal,
+      genero: genero,
       fileUrl: fileUrl
     })).setMimeType(ContentService.MimeType.JSON);
 
