@@ -675,11 +675,261 @@
     <footer class="text-center text-xs text-stone-500 py-4 border-t border-army-900">
       <p>Escuela de Comando y Estado Mayor del Ejército (ECEME) &copy; 2026</p>
       <p class="mt-1 text-[11px] text-stone-600">Fuerza Terrestre del Estado Plurinacional de Bolivia</p>
+      
+      <!-- Botón de Acceso Administrador Protegido por Contraseña (Método 3) -->
+      <div class="mt-3">
+        <button
+          type="button"
+          id="adminOpenModalBtn"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-army-700/80 bg-army-900/90 hover:bg-army-800 text-stone-400 hover:text-gold-300 text-[11px] font-semibold transition cursor-pointer shadow-md"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gold-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
+          </svg>
+          <span>Acceso Administrador (Subir Fondo e Ícono)</span>
+        </button>
+      </div>
     </footer>
 
   </div>
 
-  <!-- DISEÑO VISUAL BLOQUEADO PERMANENTEMENTE: No se permiten más modificaciones en las imágenes -->
+  <!-- ========================================================================= -->
+  <!-- MODAL DE ADMINISTRACIÓN VISUAL: PROTEGIDO POR CONTRASEÑA (MÉTODO 3)       -->
+  <!-- ========================================================================= -->
+  <div id="adminModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="relative w-full max-w-lg bg-army-950 border border-gold-500/50 rounded-2xl shadow-2xl p-5 sm:p-7 overflow-hidden max-h-[92vh] flex flex-col">
+      
+      <!-- Botón cerrar modal -->
+      <button
+        type="button"
+        id="adminModalCloseBtn"
+        class="absolute top-4 right-4 text-stone-400 hover:text-white p-1 rounded-lg hover:bg-army-900 transition cursor-pointer z-10"
+        aria-label="Cerrar modal"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+
+      <!-- PANTALLA 1: INGRESO DE CONTRASEÑA -->
+      <div id="adminAuthScreen">
+        <div class="text-center mb-6">
+          <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-army-900 border border-gold-500/60 text-gold-400 mb-3 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+          </div>
+          <h3 class="text-lg sm:text-xl font-bold font-display uppercase tracking-wide text-white">
+            Acceso de Administrador
+          </h3>
+          <p class="text-xs text-stone-400 mt-1 max-w-sm mx-auto">
+            Ingrese la contraseña autorizada para insertar o modificar las imágenes institucionales (fondo de pantalla y escudo).
+          </p>
+        </div>
+
+        <form id="adminAuthForm" class="space-y-4">
+          <div>
+            <label for="adminPasswordInput" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex justify-between items-center">
+              <span>Contraseña de Seguridad</span>
+              <span class="text-[10px] text-stone-400">Por defecto: <code class="text-gold-400 bg-army-900 px-1 py-0.5 rounded">ECEME2026</code></span>
+            </label>
+            <input
+              type="password"
+              id="adminPasswordInput"
+              placeholder="Ingrese su contraseña..."
+              required
+              class="w-full bg-army-900 border border-army-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500"
+            />
+            <span id="adminAuthError" class="hidden text-xs text-rose-400 mt-1.5 font-medium block">
+              Contraseña incorrecta. Verifique e intente nuevamente.
+            </span>
+          </div>
+
+          <button
+            type="submit"
+            id="adminLoginSubmitBtn"
+            class="w-full py-3 rounded-lg bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>Verificar y Acceder al Panel</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- PANTALLA 2: PANEL DE CONTROL VISUAL (FONDOS E ÍCONOS) -->
+      <div id="adminPanelScreen" class="hidden flex-1 overflow-y-auto space-y-5 pr-1 text-left">
+        <div class="border-b border-army-800 pb-3 flex items-center justify-between">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold font-display uppercase tracking-wide text-gold-300 flex items-center gap-2">
+              <span>Panel Visual de la WebApp</span>
+              <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-semibold">ADMIN AUTORIZADO</span>
+            </h3>
+            <p class="text-xs text-stone-400 mt-0.5">Los cambios se aplican y sincronizan en tiempo real en móviles y PC.</p>
+          </div>
+          <button
+            type="button"
+            id="adminLogoutBtn"
+            class="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+
+        <!-- SECCIÓN 1: SUBIR IMAGEN DE FONDO -->
+        <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-200">1. Imagen de Fondo de Pantalla</span>
+            <span class="text-[10px] text-stone-400">JPG, PNG o WebP</span>
+          </div>
+
+          <!-- Input de archivo para fondo -->
+          <div>
+            <label class="block w-full cursor-pointer">
+              <input
+                type="file"
+                id="adminBgFileInput"
+                accept="image/*"
+                class="hidden"
+              />
+              <div class="py-2.5 px-4 rounded-lg bg-army-950 hover:bg-army-800 border border-gold-500/40 text-gold-300 text-xs font-semibold flex items-center justify-center gap-2 transition shadow cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span>Seleccionar Foto de Fondo desde Galería / PC</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Miniatura vista previa de fondo -->
+          <div class="flex items-center gap-3 bg-army-950/60 p-2 rounded-lg border border-army-800">
+            <div id="adminBgPreview" class="w-20 h-12 rounded border border-army-700 bg-cover bg-center shrink-0"></div>
+            <div class="text-[11px] text-stone-300 truncate flex-1">
+              <span id="adminBgStatusText" class="font-medium">Fondo activo en la aplicación</span>
+            </div>
+            <button
+              type="button"
+              id="adminResetBgBtn"
+              class="text-[10px] text-gold-400 hover:text-gold-300 underline cursor-pointer shrink-0"
+            >
+              Restaurar Táctico
+            </button>
+          </div>
+
+          <!-- Controles deslizantes (Opacidad, Desenfoque, Overlay) -->
+          <div class="space-y-2.5 pt-2 border-t border-army-800/80 text-[11px]">
+            <div>
+              <div class="flex justify-between text-stone-300 mb-1">
+                <span>Opacidad de la foto de fondo:</span>
+                <span id="adminBgOpacityVal" class="font-mono text-gold-400 font-bold">50%</span>
+              </div>
+              <input
+                type="range"
+                id="adminBgOpacityRange"
+                min="10"
+                max="100"
+                value="50"
+                class="w-full h-1.5 bg-army-950 rounded-lg appearance-none cursor-pointer accent-gold-500"
+              />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-stone-300 mb-1">
+                <span>Desenfoque (Efecto Blur):</span>
+                <span id="adminBgBlurVal" class="font-mono text-gold-400 font-bold">1px</span>
+              </div>
+              <input
+                type="range"
+                id="adminBgBlurRange"
+                min="0"
+                max="8"
+                value="1"
+                class="w-full h-1.5 bg-army-950 rounded-lg appearance-none cursor-pointer accent-gold-500"
+              />
+            </div>
+
+            <div>
+              <div class="flex justify-between text-stone-300 mb-1">
+                <span>Filtro de Oscuridad (Contraste):</span>
+                <span id="adminOverlayDarknessVal" class="font-mono text-gold-400 font-bold">65%</span>
+              </div>
+              <input
+                type="range"
+                id="adminOverlayDarknessRange"
+                min="20"
+                max="95"
+                value="65"
+                class="w-full h-1.5 bg-army-950 rounded-lg appearance-none cursor-pointer accent-gold-500"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 2: SUBIR ESCUDO / ÍCONO OFICIAL -->
+        <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-200">2. Ícono / Escudo Institucional</span>
+            <span class="text-[10px] text-stone-400">PNG transparente, SVG, JPG</span>
+          </div>
+
+          <!-- Input de archivo para ícono -->
+          <div>
+            <label class="block w-full cursor-pointer">
+              <input
+                type="file"
+                id="adminIconFileInput"
+                accept="image/*,.svg"
+                class="hidden"
+              />
+              <div class="py-2.5 px-4 rounded-lg bg-army-950 hover:bg-army-800 border border-gold-500/40 text-gold-300 text-xs font-semibold flex items-center justify-center gap-2 transition shadow cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <span>Seleccionar Nuevo Escudo / Logo</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Miniatura vista previa del ícono -->
+          <div class="flex items-center gap-3 bg-army-950/60 p-2 rounded-lg border border-army-800">
+            <div class="w-12 h-12 rounded-full border border-gold-500/60 bg-army-900 p-1 flex items-center justify-center shrink-0">
+              <img id="adminIconPreview" src="" alt="Escudo preview" class="w-full h-full object-contain filter drop-shadow" />
+            </div>
+            <div class="text-[11px] text-stone-300 truncate flex-1">
+              <span id="adminIconStatusText" class="font-medium">Escudo activo en cabecera y dorsal</span>
+            </div>
+            <button
+              type="button"
+              id="adminResetIconBtn"
+              class="text-[10px] text-gold-400 hover:text-gold-300 underline cursor-pointer shrink-0"
+            >
+              Restaurar Original
+            </button>
+          </div>
+        </div>
+
+        <!-- BOTÓN GUARDAR Y TRANSMITIR A TODOS LOS DISPOSITIVOS -->
+        <div class="pt-1">
+          <button
+            type="button"
+            id="adminSaveVisualsBtn"
+            class="w-full py-3.5 px-6 rounded-lg bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-sm sm:text-base transition shadow-xl hover:shadow-gold-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-wait"
+          >
+            <span id="adminSaveBtnText">Guardar y Aplicar en Tiempo Real</span>
+            <svg id="adminSaveBtnIcon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+          </button>
+          <p id="adminSaveFeedback" class="hidden text-center text-xs text-emerald-400 font-semibold mt-2.5">
+            ✓ ¡Imágenes guardadas y sincronizadas en tiempo real con móviles y PC!
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
 
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
@@ -1347,101 +1597,371 @@
         });
       };
 
-      // 3. Funciones API Globales expuestas en `window` (MODO PERMANENTE Y BLOQUEADO)
-      /**
-       * Mantiene permanentemente el fondo táctico militar oficial de la ECEME
-       */
-      window.setBackgroundImage = function() {
-        currentBgSource = LOCKED_BG_SOURCE;
-        currentBgOpacity = LOCKED_BG_OPACITY;
-        currentBgBlur = LOCKED_BG_BLUR;
+      // 3. Sistema Dinámico de Aplicación Visual
+      function applyVisualState(bg, op, bl, dark, icon) {
+        currentBgSource = bg || currentBgSource;
+        currentBgOpacity = typeof op === 'number' ? op : currentBgOpacity;
+        currentBgBlur = typeof bl === 'number' ? bl : currentBgBlur;
+        currentOverlayDarkness = typeof dark === 'number' ? dark : currentOverlayDarkness;
+        currentIconSource = icon || currentIconSource;
 
         if (appBackgroundLayer) {
-          appBackgroundLayer.style.backgroundImage = `url("${LOCKED_BG_SOURCE}")`;
-          appBackgroundLayer.style.opacity = (LOCKED_BG_OPACITY / 100).toString();
-          appBackgroundLayer.style.filter = LOCKED_BG_BLUR > 0 ? `blur(${LOCKED_BG_BLUR}px)` : 'none';
+          appBackgroundLayer.style.backgroundImage = `url("${currentBgSource}")`;
+          appBackgroundLayer.style.opacity = (currentBgOpacity / 100).toString();
+          appBackgroundLayer.style.filter = currentBgBlur > 0 ? `blur(${currentBgBlur}px)` : 'none';
         }
-      };
-
-      /**
-       * Mantiene permanentemente la opacidad táctica del filtro oscuro
-       */
-      window.setOverlayDarkness = function() {
-        currentOverlayDarkness = LOCKED_OVERLAY_DARKNESS;
         if (appOverlayLayer) {
-          appOverlayLayer.style.opacity = (LOCKED_OVERLAY_DARKNESS / 100).toString();
+          appOverlayLayer.style.opacity = (currentOverlayDarkness / 100).toString();
         }
-      };
+        if (appFavicon) appFavicon.href = currentIconSource;
+        if (appAppleTouchIcon) appAppleTouchIcon.href = currentIconSource;
+        if (appShortcutIcon) appShortcutIcon.href = currentIconSource;
+        if (appHeaderIconImg) appHeaderIconImg.src = currentIconSource;
+        if (dorsalIconImg) dorsalIconImg.src = currentIconSource;
 
-      /**
-       * Mantiene permanentemente el Escudo Oficial de la ECEME en toda la webapp:
-       * - Cabecera oficial
-       * - Favicon en pestaña de escritorio
-       * - Acceso directo en pantalla de inicio de Celulares (Apple Touch & Android)
-       * - Marbete / Dorsal digital de carrera
-       */
-      window.setAppIcon = function() {
-        currentIconSource = LOCKED_ICON_SOURCE;
-        if (appFavicon) appFavicon.href = LOCKED_ICON_SOURCE;
-        if (appAppleTouchIcon) appAppleTouchIcon.href = LOCKED_ICON_SOURCE;
-        if (appShortcutIcon) appShortcutIcon.href = LOCKED_ICON_SOURCE;
-        if (appHeaderIconImg) appHeaderIconImg.src = LOCKED_ICON_SOURCE;
-        if (dorsalIconImg) dorsalIconImg.src = LOCKED_ICON_SOURCE;
-      };
+        syncAdminModalUI();
+      }
 
-      /**
-       * Aplica y reafirma la configuración visual oficial bloqueada de forma permanente
-       */
-      window.applyAllVisualSettings = async function() {
-        window.setBackgroundImage();
-        window.setOverlayDarkness();
-        window.setAppIcon();
+      function syncAdminModalUI() {
+        const bgPrev = document.getElementById('adminBgPreview');
+        const iconPrev = document.getElementById('adminIconPreview');
+        const bgStatus = document.getElementById('adminBgStatusText');
+        const iconStatus = document.getElementById('adminIconStatusText');
+        const opVal = document.getElementById('adminBgOpacityVal');
+        const blVal = document.getElementById('adminBgBlurVal');
+        const darkVal = document.getElementById('adminOverlayDarknessVal');
+        const opRange = document.getElementById('adminBgOpacityRange');
+        const blRange = document.getElementById('adminBgBlurRange');
+        const darkRange = document.getElementById('adminOverlayDarknessRange');
 
-        const lockedPayload = {
-          bgSource: LOCKED_BG_SOURCE,
-          bgOpacity: LOCKED_BG_OPACITY,
-          bgBlur: LOCKED_BG_BLUR,
-          overlayDarkness: LOCKED_OVERLAY_DARKNESS,
-          iconSource: LOCKED_ICON_SOURCE,
-          locked: true,
-          status: 'PERMANENTEMENTE_BLOQUEADO',
-          updatedAt: 1793695593030
-        };
+        if (bgPrev && currentBgSource) {
+          bgPrev.style.backgroundImage = `url("${currentBgSource}")`;
+          if (bgStatus) {
+            bgStatus.textContent = currentBgSource.startsWith('data:image/svg') ? 'Fondo táctico vectorial activo' : 'Foto personalizada activa';
+          }
+        }
+        if (iconPrev && currentIconSource) {
+          iconPrev.src = currentIconSource;
+          if (iconStatus) {
+            iconStatus.textContent = currentIconSource.startsWith('data:image/svg') ? 'Escudo vectorial oficial ECEME' : 'Logo personalizado activo';
+          }
+        }
+        if (opVal && opRange) {
+          opVal.textContent = `${currentBgOpacity}%`;
+          opRange.value = currentBgOpacity;
+        }
+        if (blVal && blRange) {
+          blVal.textContent = `${currentBgBlur}px`;
+          blRange.value = currentBgBlur;
+        }
+        if (darkVal && darkRange) {
+          darkVal.textContent = `${currentOverlayDarkness}%`;
+          darkRange.value = currentOverlayDarkness;
+        }
+      }
 
-        // Guardar permanentemente en IndexedDB y localStorage
+      // 4. CONTROLADOR DEL MODAL DE ADMINISTRACIÓN (MÉTODO 3)
+      const adminModal = document.getElementById('adminModal');
+      const adminOpenModalBtn = document.getElementById('adminOpenModalBtn');
+      const adminModalCloseBtn = document.getElementById('adminModalCloseBtn');
+      const adminAuthScreen = document.getElementById('adminAuthScreen');
+      const adminPanelScreen = document.getElementById('adminPanelScreen');
+      const adminAuthForm = document.getElementById('adminAuthForm');
+      const adminPasswordInput = document.getElementById('adminPasswordInput');
+      const adminAuthError = document.getElementById('adminAuthError');
+      const adminLogoutBtn = document.getElementById('adminLogoutBtn');
+
+      const adminBgFileInput = document.getElementById('adminBgFileInput');
+      const adminResetBgBtn = document.getElementById('adminResetBgBtn');
+      const adminBgOpacityRange = document.getElementById('adminBgOpacityRange');
+      const adminBgOpacityVal = document.getElementById('adminBgOpacityVal');
+      const adminBgBlurRange = document.getElementById('adminBgBlurRange');
+      const adminBgBlurVal = document.getElementById('adminBgBlurVal');
+      const adminOverlayDarknessRange = document.getElementById('adminOverlayDarknessRange');
+      const adminOverlayDarknessVal = document.getElementById('adminOverlayDarknessVal');
+
+      const adminIconFileInput = document.getElementById('adminIconFileInput');
+      const adminResetIconBtn = document.getElementById('adminResetIconBtn');
+      const adminSaveVisualsBtn = document.getElementById('adminSaveVisualsBtn');
+      const adminSaveFeedback = document.getElementById('adminSaveFeedback');
+
+      // Abrir modal
+      if (adminOpenModalBtn && adminModal) {
+        adminOpenModalBtn.addEventListener('click', () => {
+          const isAuthed = sessionStorage.getItem('eceme_admin_authed') === 'true';
+          if (isAuthed) {
+            adminAuthScreen.classList.add('hidden');
+            adminPanelScreen.classList.remove('hidden');
+            syncAdminModalUI();
+          } else {
+            adminAuthScreen.classList.remove('hidden');
+            adminPanelScreen.classList.add('hidden');
+            if (adminPasswordInput) adminPasswordInput.value = '';
+            if (adminAuthError) adminAuthError.classList.add('hidden');
+          }
+          adminModal.classList.remove('hidden');
+        });
+      }
+
+      // Cerrar modal
+      if (adminModalCloseBtn && adminModal) {
+        adminModalCloseBtn.addEventListener('click', () => {
+          adminModal.classList.add('hidden');
+          if (adminSaveFeedback) adminSaveFeedback.classList.add('hidden');
+        });
+      }
+
+      // Verificación de Contraseña de Administrador
+      if (adminAuthForm) {
+        adminAuthForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const pass = adminPasswordInput ? adminPasswordInput.value.trim() : '';
+          if (!pass) return;
+
+          try {
+            const res = await fetch('/api/admin/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ password: pass })
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+              sessionStorage.setItem('eceme_admin_authed', 'true');
+              sessionStorage.setItem('eceme_admin_pass', pass);
+              adminAuthScreen.classList.add('hidden');
+              adminPanelScreen.classList.remove('hidden');
+              if (adminAuthError) adminAuthError.classList.add('hidden');
+              syncAdminModalUI();
+            } else {
+              if (adminAuthError) {
+                adminAuthError.textContent = data.error || 'Contraseña incorrecta.';
+                adminAuthError.classList.remove('hidden');
+              }
+            }
+          } catch (err) {
+            // Verificación de respaldo local en caso de desconexión
+            if (pass === 'ECEME2026') {
+              sessionStorage.setItem('eceme_admin_authed', 'true');
+              sessionStorage.setItem('eceme_admin_pass', pass);
+              adminAuthScreen.classList.add('hidden');
+              adminPanelScreen.classList.remove('hidden');
+              syncAdminModalUI();
+            } else if (adminAuthError) {
+              adminAuthError.textContent = 'Contraseña incorrecta.';
+              adminAuthError.classList.remove('hidden');
+            }
+          }
+        });
+      }
+
+      // Cerrar Sesión de Administrador
+      if (adminLogoutBtn) {
+        adminLogoutBtn.addEventListener('click', () => {
+          sessionStorage.removeItem('eceme_admin_authed');
+          sessionStorage.removeItem('eceme_admin_pass');
+          adminPanelScreen.classList.add('hidden');
+          adminAuthScreen.classList.remove('hidden');
+          if (adminPasswordInput) adminPasswordInput.value = '';
+        });
+      }
+
+      // Subir Imagen de Fondo
+      if (adminBgFileInput) {
+        adminBgFileInput.addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          try {
+            const dataUrl = await optimizarImagenParaAlmacenamiento(file, 1920, 0.88);
+            if (dataUrl) {
+              currentBgSource = dataUrl;
+              applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);
+            }
+          } catch (err) {
+            console.error('Error al procesar imagen de fondo:', err);
+          }
+        });
+      }
+
+      // Restaurar Fondo Táctico Predeterminado
+      if (adminResetBgBtn) {
+        adminResetBgBtn.addEventListener('click', () => {
+          currentBgSource = PRESET_BACKGROUNDS.tactico;
+          applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);
+        });
+      }
+
+      // Sliders en tiempo real
+      if (adminBgOpacityRange) {
+        adminBgOpacityRange.addEventListener('input', (e) => {
+          currentBgOpacity = parseInt(e.target.value, 10);
+          if (adminBgOpacityVal) adminBgOpacityVal.textContent = `${currentBgOpacity}%`;
+          if (appBackgroundLayer) appBackgroundLayer.style.opacity = (currentBgOpacity / 100).toString();
+        });
+      }
+
+      if (adminBgBlurRange) {
+        adminBgBlurRange.addEventListener('input', (e) => {
+          currentBgBlur = parseInt(e.target.value, 10);
+          if (adminBgBlurVal) adminBgBlurVal.textContent = `${currentBgBlur}px`;
+          if (appBackgroundLayer) appBackgroundLayer.style.filter = currentBgBlur > 0 ? `blur(${currentBgBlur}px)` : 'none';
+        });
+      }
+
+      if (adminOverlayDarknessRange) {
+        adminOverlayDarknessRange.addEventListener('input', (e) => {
+          currentOverlayDarkness = parseInt(e.target.value, 10);
+          if (adminOverlayDarknessVal) adminOverlayDarknessVal.textContent = `${currentOverlayDarkness}%`;
+          if (appOverlayLayer) appOverlayLayer.style.opacity = (currentOverlayDarkness / 100).toString();
+        });
+      }
+
+      // Subir Escudo / Logo
+      if (adminIconFileInput) {
+        adminIconFileInput.addEventListener('change', async (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          try {
+            const dataUrl = await optimizarImagenParaAlmacenamiento(file, 512, 0.9, true);
+            if (dataUrl) {
+              currentIconSource = dataUrl;
+              applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);
+            }
+          } catch (err) {
+            console.error('Error al procesar escudo/logo:', err);
+          }
+        });
+      }
+
+      // Restaurar Escudo Vectorial Oficial
+      if (adminResetIconBtn) {
+        adminResetIconBtn.addEventListener('click', () => {
+          currentIconSource = DEFAULT_ICON_SVG;
+          applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);
+        });
+      }
+
+      // Guardar y Publicar en el Servidor (con Contraseña)
+      if (adminSaveVisualsBtn) {
+        adminSaveVisualsBtn.addEventListener('click', async () => {
+          const pass = sessionStorage.getItem('eceme_admin_pass') || 'ECEME2026';
+          adminSaveVisualsBtn.disabled = true;
+          const origText = adminSaveVisualsBtn.innerHTML;
+          adminSaveVisualsBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-army-950 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Guardando en el servidor...</span>
+          `;
+
+          const payload = {
+            bgSource: currentBgSource,
+            bgOpacity: currentBgOpacity,
+            bgBlur: currentBgBlur,
+            overlayDarkness: currentOverlayDarkness,
+            iconSource: currentIconSource
+          };
+
+          try {
+            // Guardar en el servidor Node.js
+            const res = await fetch('/api/visual-settings', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-admin-password': pass
+              },
+              body: JSON.stringify({
+                ...payload,
+                adminPassword: pass
+              })
+            });
+
+            // Guardar localmente en IndexedDB y localStorage para disponibilidad inmediata
+            try {
+              await EcemeDB.set('eceme_visual_settings', payload);
+              localStorage.setItem('eceme_visual_settings', JSON.stringify({
+                bgOpacity: currentBgOpacity,
+                bgBlur: currentBgBlur,
+                overlayDarkness: currentOverlayDarkness,
+                updatedAt: Date.now()
+              }));
+            } catch (e) {}
+
+            if (adminSaveFeedback) {
+              adminSaveFeedback.classList.remove('hidden');
+              setTimeout(() => adminSaveFeedback.classList.add('hidden'), 5000);
+            }
+          } catch (err) {
+            console.warn('Guardado local efectuado:', err);
+            if (adminSaveFeedback) {
+              adminSaveFeedback.textContent = '✓ ¡Configuración guardada en este dispositivo!';
+              adminSaveFeedback.classList.remove('hidden');
+              setTimeout(() => adminSaveFeedback.classList.add('hidden'), 5000);
+            }
+          } finally {
+            adminSaveVisualsBtn.innerHTML = origText;
+            adminSaveVisualsBtn.disabled = false;
+          }
+        });
+      }
+
+      // 5. Carga Inicial de Configuración Visual al abrir la WebApp
+      async function inicializarVisuales() {
+        // Primero aplicar valores por defecto de alta velocidad
+        applyVisualState(LOCKED_BG_SOURCE, LOCKED_BG_OPACITY, LOCKED_BG_BLUR, LOCKED_OVERLAY_DARKNESS, LOCKED_ICON_SOURCE);
+
+        // Luego consultar almacenamiento local (IndexedDB)
         try {
-          await EcemeDB.set('eceme_visual_settings', lockedPayload);
-          localStorage.setItem('eceme_visual_settings', JSON.stringify({
-            bgSource: 'tactico',
-            bgOpacity: LOCKED_BG_OPACITY,
-            bgBlur: LOCKED_BG_BLUR,
-            overlayDarkness: LOCKED_OVERLAY_DARKNESS,
-            iconSource: 'default',
-            locked: true,
-            status: 'PERMANENTEMENTE_BLOQUEADO',
-            updatedAt: 1793695593030
-          }));
+          const cached = await EcemeDB.get('eceme_visual_settings');
+          if (cached && (cached.bgSource || cached.iconSource)) {
+            applyVisualState(cached.bgSource, cached.bgOpacity, cached.bgBlur, cached.overlayDarkness, cached.iconSource);
+          }
         } catch (e) {}
-      };
 
-      window.resetVisualSettings = function() {
-        window.applyAllVisualSettings();
-      };
+        // Finalmente consultar servidor para sincronizar cualquier cambio hecho por el administrador
+        try {
+          const res = await fetch('/api/visual-settings', { cache: 'no-store' });
+          if (res.ok) {
+            const serverSettings = await res.json();
+            if (serverSettings) {
+              applyVisualState(
+                serverSettings.bgSource,
+                serverSettings.bgOpacity,
+                serverSettings.bgBlur,
+                serverSettings.overlayDarkness,
+                serverSettings.iconSource
+              );
+            }
+          }
+        } catch (e) {}
+      }
 
-      // 4. Inicialización inmediata al cargar el DOM:
-      // Aplica el fondo y el escudo institucional al instante en cualquier móvil o PC
-      window.applyAllVisualSettings();
+      inicializarVisuales();
 
-      // Sincronización SSE de respaldo para mantener la aplicación permanentemente sincronizada
+      // Sincronización SSE en tiempo real para todos los clientes (Móvil y PC)
       if (window.EventSource) {
         try {
           const sse = new EventSource('/api/visual-settings/stream');
-          sse.onmessage = () => {
-            window.applyAllVisualSettings();
+          sse.onmessage = (event) => {
+            if (event && event.data) {
+              try {
+                const streamData = JSON.parse(event.data);
+                if (streamData) {
+                  applyVisualState(
+                    streamData.bgSource,
+                    streamData.bgOpacity,
+                    streamData.bgBlur,
+                    streamData.overlayDarkness,
+                    streamData.iconSource
+                  );
+                }
+              } catch (parseErr) {}
+            }
           };
-          sse.onerror = () => {
-            sse.close();
-          };
+          sse.onerror = () => sse.close();
         } catch (e) {}
       }
 

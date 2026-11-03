@@ -98,3 +98,25 @@ Registro oficial de las 13 categorías (A hasta M), asignación de colores táct
 - **Marbete / Dorsal Dinámico**: Borde del dorsal, color de la etiqueta de categoría y subtítulo de distancia adaptados automáticamente según la categoría (p. ej. *CARRERA INFANTIL · 80 METROS* o *CARRERA PEDESTRE 10 KM*).
 - **Banner de Confirmación Sincronizado**: Notificación de registro con el color exacto de la categoría seleccionada.
 - **Persistencia en Google Sheets & Drive**: Envío del nombre completo de la categoría a Google Apps Script y almacenamiento del registro.
+
+---
+
+## 5. Método 3: Botón de Subida y Administración Visual Protegido por Contraseña
+
+### Características Implementadas:
+1. **Botón de Acceso en Pie de Página**:
+   - `Acceso Administrador (Subir Fondo e Ícono)` ubicado discretamente en el pie de página institucional.
+2. **Autenticación con Contraseña**:
+   - Contraseña predeterminada: `ECEME2026`.
+   - Verificación en backend a través de `/api/admin/verify`.
+   - Protección en servidor en `POST /api/visual-settings` (rechaza intentos sin clave con error 401).
+3. **Carga y Optimización de Imágenes**:
+   - Selector de fotos para **Fondo de Pantalla** (optimizado con Canvas a 1920px Full HD).
+   - Selector de fotos para **Escudo / Ícono Oficial** (PNG transparente, SVG, JPG).
+   - Controles deslizantes en tiempo real para:
+     - Opacidad del fondo (10% a 100%).
+     - Desenfoque táctico (Blur 0px a 8px).
+     - Oscuridad del Overlay / Contraste (20% a 95%).
+4. **Sincronización en Tiempo Real**:
+   - Las imágenes se difunden mediante Server-Sent Events (SSE) a cualquier celular o PC conectado.
+   - Se actualiza automáticamente el fondo, el ícono de cabecera, el dorsal de carrera y el favicon de la pestaña.
