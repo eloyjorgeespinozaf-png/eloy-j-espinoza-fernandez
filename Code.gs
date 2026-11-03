@@ -112,6 +112,63 @@ function asegurarColumnaRama(sheet) {
   }
 }
 
+/**
+ * Tabla Oficial de Rangos y Prefijos Correlativos por Categoría (A - M)
+ */
+var CATEGORIAS_CONTROL = {
+  "A": { start: 1001, end: 1999, prefix: "A-", name: "Juvenil (14-17 años)" },
+  "B": { start: 2001, end: 2999, prefix: "B-", name: "Mayores (18-29 años)" },
+  "C": { start: 3001, end: 3999, prefix: "C-", name: "Master A (30-37 años)" },
+  "D": { start: 4001, end: 4999, prefix: "D-", name: "Master B (38-45 años)" },
+  "E": { start: 5001, end: 5999, prefix: "E-", name: "Master C (46+ años)" },
+  "F": { start: 6001, end: 6999, prefix: "F-", name: "Militar Soldados / Premilitares" },
+  "G": { start: 7001, end: 7999, prefix: "G-", name: "Militar y Policial 'A' (Formación)" },
+  "H": { start: 8001, end: 8999, prefix: "H-", name: "Militar y Policial 'B' (Hasta 15 años)" },
+  "I": { start: 9001, end: 9999, prefix: "I-", name: "Militar y Policial 'C' (16+ años)" },
+  "J": { start: 401, end: 499, prefix: "J-", name: "Niñas y Niños U-4 (80m)" },
+  "K": { start: 601, end: 699, prefix: "K-", name: "Niñas y Niños U-6 (200m)" },
+  "L": { start: 801, end: 899, prefix: "L-", name: "Niñas y Niños U-8 (400m)" },
+  "M": { start: 1301, end: 1399, prefix: "M-", name: "Niñas y Niños U-13 (1000m)" }
+};
+
+/**
+ * Calcula el siguiente número de dorsal correlativo según las filas existentes en la hoja de cálculo
+ */
+function calcularSiguienteDorsal(sheet, categoriaTexto) {
+  var code = "A";
+  if (categoriaTexto) {
+    var match = categoriaTexto.match(/^([A-M])[\.\-]/i);
+    if (match) {
+      code = match[1].toUpperCase();
+    }
+  }
+  var cfg = CATEGORIAS_CONTROL[code] || CATEGORIAS_CONTROL["A"];
+  var maxNum = cfg.start - 1;
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow > 1) {
+    // La columna 2 contiene los Dorsales asignados
+    var dorsales = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    for (var r = 0; r < dorsales.length; r++) {
+      var d = dorsales[r][0] ? dorsales[r][0].toString().trim() : "";
+      if (d.indexOf(cfg.prefix) === 0) {
+        var numStr = d.replace(cfg.prefix, "");
+        var numVal = parseInt(numStr, 10);
+        if (!isNaN(numVal) && numVal > maxNum && numVal <= cfg.end) {
+          maxNum = numVal;
+        }
+      }
+    }
+  }
+
+  var nextNum = maxNum + 1;
+  if (nextNum > cfg.end) {
+    nextNum = cfg.start;
+  }
+  var padded = ("0000" + nextNum).slice(-4);
+  return cfg.prefix + padded;
+}
+
 function doPost(e) {
   try {
     // 1. Recepción y validación del payload (JSON o Form)
@@ -207,6 +264,12 @@ function doPost(e) {
     }
 
     // 4. Lógica de Sheets: Insertar fila en la hoja de cálculo activa
+    var lock = LockService.getScriptLock();
+    var lockAcquired = false;
+    try {
+      lockAcquired = lock.tryLock(10000); // Esperar hasta 10 segundos para garantizar correlatividad sin duplicados
+    } catch (lockErr) {}
+
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     if (ss) {
       var sheet = ss.getActiveSheet();
@@ -236,6 +299,11 @@ function doPost(e) {
         asegurarColumnaRama(sheet);
       }
 
+      // Garantizar número de dorsal correlativo según los registros de la hoja
+      if (!dorsal || dorsal === "0000" || dorsal === "undefined") {
+        dorsal = calcularSiguienteDorsal(sheet, categoria);
+      }
+
       var timestamp = new Date();
       sheet.appendRow([
         timestamp,
@@ -248,6 +316,10 @@ function doPost(e) {
         genero,
         fileUrl
       ]);
+    }
+
+    if (lockAcquired) {
+      try { lock.releaseLock(); } catch (e) {}
     }
 
     // 5. Retorno de respuesta JSON de éxito usando ContentService
