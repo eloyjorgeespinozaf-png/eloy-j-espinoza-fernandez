@@ -10,6 +10,17 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT || 3000;
 
+  // Middleware de CORS para permitir peticiones desde cualquier dispositivo, móvil o iframe
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-admin-password');
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+    next();
+  });
+
   // Middleware con límite extendido para imágenes de fondo y escudos en Base64
   app.use(express.json({ limit: '25mb' }));
   app.use(express.urlencoded({ extended: true, limit: '25mb' }));
@@ -235,10 +246,40 @@ async function startServer() {
     return defaults;
   };
 
+  const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
+
+  function extractCatCode(str?: string): string {
+    if (!str) return 'A';
+    const s = str.trim().toUpperCase();
+    if (/^[A-M]$/.test(s)) return s;
+    const m = s.match(/^\[?([A-M])[\.\-\)\s]/);
+    if (m) return m[1];
+    const m2 = s.match(/CATEGOR[IÍ]A\s+([A-M])\b/);
+    if (m2) return m2[1];
+    const first = s.charAt(0);
+    if (first >= 'A' && first <= 'M') return first;
+    return 'A';
+  }
+
   // Endpoint para consultar contadores y rangos por categoría
   app.get('/api/dorsal/stats', (_req, res) => {
     const counters = getCounters();
-    res.json({ success: true, counters, config: CATEGORY_CONFIG });
+    const stats: Record<string, any> = {};
+    for (const [code, cfg] of Object.entries(CATEGORY_CONFIG)) {
+      const cur = counters[code] ?? (cfg.start - 1);
+      const nextNum = (cur < cfg.start - 1 || cur >= cfg.end) ? cfg.start : (cur + 1);
+      stats[code] = {
+        code,
+        name: cfg.name,
+        prefix: cfg.prefix,
+        start: cfg.start,
+        end: cfg.end,
+        range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
+        currentNumber: cur,
+        nextDorsal: `${cfg.prefix}${String(nextNum).padStart(4, '0')}`
+      };
+    }
+    res.json({ success: true, counters, stats, config: CATEGORY_CONFIG });
   });
 
   // Endpoint para obtener el código backend actualizado de Google Apps Script (Code.gs)
@@ -255,11 +296,11 @@ async function startServer() {
     }
   });
 
-  // Endpoint para asignar el siguiente dorsal según la categoría
+  // Endpoint atómico para reservar el siguiente dorsal según la categoría
   app.post('/api/dorsal/next', (req, res) => {
     try {
       const { categoryCode } = req.body || {};
-      const code = (categoryCode || 'A').toUpperCase().charAt(0);
+      const code = extractCatCode(categoryCode);
       const cfg = CATEGORY_CONFIG[code] || CATEGORY_CONFIG['A'];
 
       const counters = getCounters();
@@ -288,6 +329,129 @@ async function startServer() {
       console.error('Error asignando dorsal:', err);
       return res.status(500).json({ success: false, error: err.message });
     }
+  });
+
+  // Endpoint principal de registro e inscripción con asignación correlativa y sincronización con Google Sheets
+  app.post('/api/inscribir', async (req, res) => {
+    try {
+      const payload = req.body || {};
+      const catCode = extractCatCode(payload.categoria || payload.categoryCode);
+      const cfg = CATEGORY_CONFIG[catCode] || CATEGORY_CONFIG['A'];
+
+      // Preparar el siguiente dorsal local por seguridad
+      const counters = getCounters();
+      let localNext = (counters[catCode] ?? (cfg.start - 1)) + 1;
+      if (localNext < cfg.start || localNext > cfg.end) {
+        localNext = cfg.start;
+      }
+
+      // Preparar payload hacia Google Apps Script (dejando dorsal vacío para cálculo correlativo oficial en Sheets)
+      const gasPayload = {
+        nombres: payload.nombres || '',
+        ci: payload.ci || '',
+        celular: payload.celular || '',
+        unidad: payload.unidad || '',
+        categoria: payload.categoria || cfg.name,
+        genero: payload.genero || 'NO APLICA',
+        dorsal: '', // Vacío para forzar cálculo correlativo oficial en Google Sheets
+        capturaCedula: payload.capturaCedula || '',
+        nombreArchivoCedula: payload.nombreArchivoCedula || '',
+        comprobante: payload.comprobante || '',
+        nombreArchivo: payload.nombreArchivo || ''
+      };
+
+      let assignedDorsal = '';
+      let fileUrl = '';
+      let fileCedulaUrl = '';
+
+      if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 28000);
+          const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(gasPayload),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+
+          if (gasRes.ok) {
+            const gasData: any = await gasRes.json();
+            if (gasData && gasData.dorsal) {
+              assignedDorsal = gasData.dorsal;
+              fileUrl = gasData.fileUrl || '';
+              fileCedulaUrl = gasData.fileCedulaUrl || '';
+
+              // Actualizar el contador local según lo asignado por Google Sheets
+              const matches = assignedDorsal.match(/\d+/g);
+              if (matches) {
+                const gasNum = parseInt(matches[matches.length - 1], 10);
+                if (!isNaN(gasNum) && gasNum >= cfg.start && gasNum <= cfg.end) {
+                  counters[catCode] = Math.max(counters[catCode] || (cfg.start - 1), gasNum);
+                  fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+                }
+              }
+            }
+          }
+        } catch (gasErr) {
+          console.warn('[GAS Proxy] Error al comunicar con Google Apps Script, recurriendo a contador local seguro:', gasErr);
+        }
+      }
+
+      // Si Google Apps Script no respondió a tiempo, emitir dorsal correlativo local
+      if (!assignedDorsal) {
+        counters[catCode] = localNext;
+        fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+        assignedDorsal = `${cfg.prefix}${String(localNext).padStart(4, '0')}`;
+      }
+
+      let numOnly = assignedDorsal.replace(cfg.prefix, '').replace(/^[A-M]-?/, '');
+      if (numOnly.length < 4) numOnly = numOnly.padStart(4, '0');
+
+      return res.json({
+        success: true,
+        dorsal: assignedDorsal,
+        number: numOnly,
+        prefix: cfg.prefix,
+        categoryCode: catCode,
+        categoryName: cfg.name,
+        range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
+        fileUrl,
+        fileCedulaUrl
+      });
+    } catch (err: any) {
+      console.error('[Inscribir] Error en registro:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Endpoint de administración para sincronizar o ajustar contadores manualmente
+  app.post('/api/dorsal/update-counter', (req, res) => {
+    const providedPassword = (req.headers['x-admin-password'] as string) || req.body?.adminPassword;
+    if (providedPassword !== ADMIN_PASSWORD) {
+      return res.status(401).json({ success: false, error: 'No autorizado' });
+    }
+    const { categoryCode, nextValue } = req.body || {};
+    const code = extractCatCode(categoryCode);
+    const cfg = CATEGORY_CONFIG[code];
+    if (!cfg) return res.status(400).json({ success: false, error: 'Categoría inválida' });
+
+    const val = parseInt(nextValue, 10);
+    if (isNaN(val) || val < cfg.start || val > cfg.end) {
+      return res.status(400).json({ success: false, error: `El número debe estar entre ${cfg.start} y ${cfg.end}` });
+    }
+
+    const counters = getCounters();
+    counters[code] = val - 1; // Para que el próximo asignado sea exactamente val
+    fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+
+    return res.json({
+      success: true,
+      message: `Categoría ${code} (${cfg.name}) ajustada. El próximo dorsal será ${cfg.prefix}${String(val).padStart(4, '0')}`,
+      nextDorsal: `${cfg.prefix}${String(val).padStart(4, '0')}`,
+      counters
+    });
   });
 
   // Health check endpoints para pre-warming y balanceador de carga

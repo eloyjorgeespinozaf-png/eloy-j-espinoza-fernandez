@@ -1294,6 +1294,31 @@
           </div>
         </div>
 
+        <!-- SECCIÓN 4: MONITOR DE CORRELATIVIDAD Y CONTROL DE DORSALES (A - M) -->
+        <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-200 flex items-center gap-1.5">
+              <span>4. Monitor de Dorsales Correlativos</span>
+              <span class="text-[9px] bg-gold-500/20 text-gold-300 border border-gold-500/40 px-1.5 py-0.5 rounded font-mono font-bold">13 CATEGORÍAS</span>
+            </span>
+            <button
+              type="button"
+              id="adminRefreshDorsalesBtn"
+              class="text-[10px] text-gold-400 hover:text-gold-300 underline cursor-pointer"
+            >
+              ↻ Actualizar Estado
+            </button>
+          </div>
+
+          <p class="text-[11px] text-stone-300 leading-relaxed">
+            Monitoreo en vivo de los números sucesivos asignados a cada categoría. Garantiza que ningún dorsal se repita en inscripciones simultáneas o desde múltiples dispositivos.
+          </p>
+
+          <div id="adminDorsalesList" class="bg-army-950 p-2 rounded-lg border border-army-800/80 max-h-52 overflow-y-auto space-y-1 divide-y divide-army-800/40 text-[10px]">
+            <div class="text-center text-stone-400 py-3 font-mono">Cargando monitor de dorsales...</div>
+          </div>
+        </div>
+
         <!-- BOTÓN GUARDAR Y TRANSMITIR A TODOS LOS DISPOSITIVOS -->
         <div class="pt-1">
           <button
@@ -1478,6 +1503,19 @@
           if (categoriaRangoText) {
             categoriaRangoText.innerHTML = `Control Categoría <strong>${catCode}</strong> · Rango oficial asignado:`;
           }
+
+          // Consultar el próximo número correlativo en tiempo real
+          fetch('/api/dorsal/stats')
+            .then((r) => r.json())
+            .then((data) => {
+              if (data && data.stats && data.stats[catCode]) {
+                const info = data.stats[catCode];
+                if (categoriaRangoBadge && categoriaSelect.value === selected.value) {
+                  categoriaRangoBadge.textContent = `${catPrefix}${catRange.replace(' - ', ' al ')} · Próximo: ${info.nextDorsal}`;
+                }
+              }
+            })
+            .catch(() => {});
         }
 
         // Control condicional de Rama (Damas / Varones):
@@ -1645,8 +1683,8 @@
         return { base64, nombre };
       }
 
-      // Función unificada de transmisión a Google Apps Script
-      async function transmitirRegistroAScript(dorsal) {
+      // Función unificada de transmisión e inscripción con garantía correlativa
+      async function procesarInscripcionOficial(catCode, catPrefix, catStart, catEnd) {
         const fileInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
         const file = fileInput && fileInput.files ? fileInput.files[0] : null;
         let fileData = { base64: "", nombre: "" };
@@ -1683,28 +1721,98 @@
           celular: celular,
           unidad: unidad,
           categoria: genero ? `${categoria} · RAMA: ${genero}` : categoria,
+          categoryCode: catCode,
           genero: genero || 'NO APLICA (INFANTIL)',
-          dorsal: dorsal,
           capturaCedula: fileCedulaData.base64,
           nombreArchivoCedula: fileCedulaData.nombre,
           comprobante: fileData.base64,
           nombreArchivo: fileData.nombre
         };
 
-        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-          await fetch(GOOGLE_SCRIPT_URL, {
+        let result = {
+          dorsal: '',
+          number: '',
+          prefix: catPrefix
+        };
+
+        // 1. Intentar registro a través del backend centralizado (/api/inscribir)
+        // El servidor asigna el siguiente dorsal correlativo oficial sincronizado con Google Sheets
+        try {
+          const resp = await fetch('/api/inscribir', {
             method: 'POST',
-            mode: 'no-cors',
-            headers: {
-              'Content-Type': 'text/plain;charset=utf-8'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
+          if (resp.ok) {
+            const data = await resp.json();
+            if (data.success && data.dorsal) {
+              result.dorsal = data.dorsal;
+              result.number = data.number;
+              result.prefix = data.prefix || catPrefix;
+              return result;
+            }
+          }
+        } catch (err) {
+          console.warn('[Registro] Endpoint /api/inscribir no disponible o en espera, activando contingencia:', err);
         }
-        return payload;
+
+        // 2. Fallback de contingencia: Envío directo a Google Apps Script con dorsal vacío para cálculo en Sheets
+        if (!result.dorsal) {
+          // Intentar reservar correlativo desde /api/dorsal/next si responde
+          try {
+            const nextResp = await fetch('/api/dorsal/next', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ categoryCode: catCode })
+            });
+            if (nextResp.ok) {
+              const nextData = await nextResp.json();
+              if (nextData.success && nextData.dorsal) {
+                result.dorsal = nextData.dorsal;
+                result.number = nextData.number;
+                result.prefix = nextData.prefix || catPrefix;
+              }
+            }
+          } catch (e) {}
+
+          // Fallback local correlativo persistente (LocalStorage)
+          if (!result.dorsal) {
+            const STORAGE_KEY = 'eceme_category_counters_v2';
+            let localCounters = {};
+            try {
+              localCounters = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            } catch {}
+            let currentVal = localCounters[catCode] || (catStart - 1);
+            if (currentVal < catStart - 1 || currentVal >= catEnd) currentVal = catStart - 1;
+            currentVal += 1;
+            localCounters[catCode] = currentVal;
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(localCounters));
+            } catch {}
+            result.number = String(currentVal).padStart(4, '0');
+            result.dorsal = `${catPrefix}${result.number}`;
+          }
+
+          // Transmitir hacia Google Apps Script (dejando dorsal vacío para forzar que el script en Sheets verifique correlatividad)
+          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+            try {
+              const gasPayload = { ...payload, dorsal: '' };
+              await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(gasPayload)
+              });
+            } catch (gasErr) {
+              console.warn('[Direct GAS] Error en transmisión no-cors:', gasErr);
+            }
+          }
+        }
+
+        return result;
       }
 
-      // MÓDULO 1 & 2: Envío de Formulario, Transmisión Automática y Generación de Dorsal
+      // MÓDULO 1 & 2: Envío de Formulario, Transmisión Automática y Asignación Correlativa de Dorsal
       if (form) {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
@@ -1774,7 +1882,7 @@
 
           if (isValid) {
             submitBtn.disabled = true;
-            btnText.textContent = "Guardando en Sheets y Drive...";
+            btnText.textContent = "Asignando dorsal correlativo y archivando...";
             btnIcon.innerHTML = `
               <svg class="animate-spin h-5 w-5 text-army-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -1783,8 +1891,6 @@
             `;
 
             // 1. Extraer configuración y rango de la categoría seleccionada
-            const selectedOption = categoriaSelect.options[categoriaSelect.selectedIndex];
-            const catCode = selectedOption ? (selectedOption.dataset.code || 'A') : 'A';
             const catPrefix = selectedOption ? (selectedOption.dataset.prefix || `${catCode}-`) : 'A-';
             const catRange = selectedOption ? (selectedOption.dataset.rango || '1001 - 1999') : '1001 - 1999';
             const catStart = parseInt(selectedOption ? (selectedOption.dataset.start || '1001') : '1001', 10);
@@ -1793,46 +1899,11 @@
             const hexColor = selectedOption ? (selectedOption.dataset.hex || '#142312') : '#142312';
             const distancia = selectedOption ? (selectedOption.dataset.distancia || 'CARRERA PEDESTRE 10 KM') : 'CARRERA PEDESTRE 10 KM';
 
-            // 2. Asignación de Dorsal estructurada por categoría (Backend + Fallback local correlativo)
-            let allocatedDorsal = '';
-            let allocatedNumber = '';
-            let allocatedPrefix = catPrefix;
-
-            try {
-              const resp = await fetch('/api/dorsal/next', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ categoryCode: catCode })
-              });
-              if (resp.ok) {
-                const data = await resp.json();
-                if (data.success && data.dorsal) {
-                  allocatedDorsal = data.dorsal;
-                  allocatedNumber = data.number;
-                  allocatedPrefix = data.prefix || catPrefix;
-                }
-              }
-            } catch (err) {
-              console.warn("Fallo petición backend dorsal, activando fallback local controlado:", err);
-            }
-
-            // Fallback local robusto (LocalStorage)
-            if (!allocatedDorsal) {
-              const STORAGE_KEY = 'eceme_category_counters_v1';
-              let localCounters = {};
-              try {
-                localCounters = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-              } catch {}
-              let currentVal = localCounters[catCode] || (catStart - 1);
-              if (currentVal < catStart - 1 || currentVal >= catEnd) currentVal = catStart - 1;
-              currentVal += 1;
-              localCounters[catCode] = currentVal;
-              try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(localCounters));
-              } catch {}
-              allocatedNumber = String(currentVal).padStart(4, '0');
-              allocatedDorsal = `${catPrefix}${allocatedNumber}`;
-            }
+            // 2. Procesar inscripción y obtener dorsal oficial confirmado
+            const allocation = await procesarInscripcionOficial(catCode, catPrefix, catStart, catEnd);
+            const allocatedDorsal = allocation.dorsal;
+            const allocatedNumber = allocation.number;
+            const allocatedPrefix = allocation.prefix;
 
             // Actualizar elementos visuales del Dorsal Oficial
             const dorsalCategoryPrefix = document.getElementById('dorsalCategoryPrefix');
@@ -1850,18 +1921,12 @@
               dorsalRangoBadge.style.borderColor = (hexColor === '#111827' || hexColor === '#171717') ? '#6b7280' : hexColor;
             }
 
-            // Transmisión asíncrona directa hacia Google Apps Script con el dorsal oficial
-            try {
-              await transmitirRegistroAScript(allocatedDorsal);
-            } catch (err) {
-              console.warn("Transmisión realizada con manejo de contingencia:", err);
-            }
-
             // Oculta sección de formulario y muestra dorsal
             registrationSection.classList.add('hidden');
 
             const possibleBorders = [
               'border-army-900', 'border-green-900', 'border-pink-500', 'border-blue-600',
+              'border-amber-800', 'border-gray-500', 'border-gray-900', 'border-red-600',
               'border-amber-800', 'border-gray-500', 'border-gray-900', 'border-red-600',
               'border-yellow-400', 'border-yellow-500', 'border-emerald-600',
               'border-cyan-500', 'border-orange-500', 'border-purple-500', 'border-teal-500',
@@ -1966,28 +2031,12 @@
         });
       }
 
-      // Botón secundario para reenvío manual si se requiere
+      // Botón secundario para reconfirmación si se requiere
       if (btnFinalizar) {
-        btnFinalizar.addEventListener('click', async () => {
-          const originalBtnContent = btnFinalizar.innerHTML;
+        btnFinalizar.addEventListener('click', () => {
+          btnFinalizar.innerHTML = `<span>✓ Inscripción Oficial Archivada en Google Sheets</span>`;
           btnFinalizar.disabled = true;
-          btnFinalizar.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-army-950 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>Confirmando envío...</span>
-          `;
-
-          const currentDorsal = dorsalNumber ? dorsalNumber.textContent.trim() : '0000';
-          try {
-            await transmitirRegistroAScript(currentDorsal);
-            btnFinalizar.innerHTML = `<span>✓ Guardado en Google Sheets</span>`;
-          } catch (err) {
-            console.error(err);
-            btnFinalizar.innerHTML = originalBtnContent;
-            btnFinalizar.disabled = false;
-          }
+          if (vistaExito) vistaExito.classList.remove('hidden');
         });
       }
 
@@ -2368,6 +2417,10 @@
           darkVal.textContent = `${currentOverlayDarkness}%`;
           darkRange.value = currentOverlayDarkness;
         }
+
+        if (typeof cargarMonitorDorsales === 'function') {
+          cargarMonitorDorsales();
+        }
       }
 
       // 4. CONTROLADOR DEL MODAL DE ADMINISTRACIÓN (MÉTODO 3)
@@ -2647,6 +2700,45 @@
             if (adminCopyScriptText) adminCopyScriptText.textContent = "Selecciona y copia desde Code.gs";
           }
         });
+      }
+
+      // Monitor de dorsales en tiempo real para el panel de administración
+      const adminRefreshDorsalesBtn = document.getElementById('adminRefreshDorsalesBtn');
+      const adminDorsalesList = document.getElementById('adminDorsalesList');
+
+      async function cargarMonitorDorsales() {
+        if (!adminDorsalesList) return;
+        try {
+          const res = await fetch('/api/dorsal/stats');
+          const data = await res.json();
+          if (data && data.stats) {
+            adminDorsalesList.innerHTML = '';
+            Object.values(data.stats).forEach((item) => {
+              const row = document.createElement('div');
+              row.className = 'py-1 flex items-center justify-between gap-2';
+              row.innerHTML = `
+                <div class="truncate flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                  <span class="font-bold text-stone-200">${item.code}:</span>
+                  <span class="text-stone-400 truncate max-w-[140px] sm:max-w-[200px]">${item.name}</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 font-mono text-[9px]">
+                  <span class="text-stone-400">Rango ${item.range}</span>
+                  <span class="bg-gold-950 text-gold-300 border border-gold-500/50 px-1.5 py-0.5 rounded font-bold">
+                    Próx: ${item.nextDorsal}
+                  </span>
+                </div>
+              `;
+              adminDorsalesList.appendChild(row);
+            });
+          }
+        } catch (err) {
+          adminDorsalesList.innerHTML = '<div class="text-center text-rose-400 py-2">Error al cargar contadores</div>';
+        }
+      }
+
+      if (adminRefreshDorsalesBtn) {
+        adminRefreshDorsalesBtn.addEventListener('click', cargarMonitorDorsales);
       }
 
       // 5. Carga Inicial de Configuración Visual al abrir la WebApp
