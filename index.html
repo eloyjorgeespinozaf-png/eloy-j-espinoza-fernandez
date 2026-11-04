@@ -1652,7 +1652,7 @@
             if (file.type && file.type.startsWith('image/')) {
               const img = new Image();
               img.onload = () => {
-                const maxDim = 1200;
+                const maxDim = 1000;
                 let width = img.width;
                 let height = img.height;
                 if (width > maxDim || height > maxDim) {
@@ -1669,7 +1669,7 @@
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.85));
+                resolve(canvas.toDataURL('image/jpeg', 0.75));
               };
               img.onerror = () => resolve(result);
               img.src = result;

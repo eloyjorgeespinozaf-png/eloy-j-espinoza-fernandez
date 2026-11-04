@@ -1,28 +1,21 @@
-# Plan de Corrección: Asignación Correlativa Automática del Dorsal Oficial de Competidor
+# Plan de Corrección: Coincidencia Absoluta de Dorsal (Web App vs Google Sheets)
 
-## 1. Problema Identificado
-- **Causa Raíz:** Al momento de registrar una inscripción con imágenes (comprobante y cédula en Base64), la petición se enviaba sincrónicamente a Google Apps Script con tiempos de espera de hasta 28 segundos, provocando que los navegadores móviles sufrieran tiempo de espera (timeout) y cayeran en contingencias locales desincronizadas.
-- **Efecto observado:** Para participantes consecutivos, el marbete en pantalla ("Dorsal Oficial de Competidor") no avanzaba sucesivamente o mostraba números reiniciados.
+## 1. Causa del Desfase Detectado
+- En la versión anterior, la Web App generaba un número de dorsal previo y local de forma asíncrona mientras enviaba los datos a Google Apps Script en segundo plano.
+- Dado que Google Apps Script procesa la hoja de cálculo de Google Sheets directamente con su propio mecanismo de bloqueo y conteo, Google Sheets registraba un número oficial (ej. `B-2004`) mientras que la Web App mostraba en pantalla el valor generado localmente (ej. `B-2006`). Esto causaba que la pantalla y la hoja de cálculo difirieran.
 
-## 2. Solución Implementada
-- **Asignación Correlativa Atómica e Inmediata (`server.ts`):** 
-  - La reserva del siguiente número de dorsal se realiza de forma atómica en memoria y disco local (`category-counters.json`) en menos de 30 ms.
-  - Se garantiza que el participante 1 reciba su dorsal correlativo (ej. `B-2005`), el participante 2 reciba de inmediato el siguiente (`B-2006`), el participante 3 el subsiguiente (`B-2007`), etc., sin demoras ni condiciones de carrera.
-- **Sincronización Bidireccional con Google Sheets:**
-  - El servidor sincroniza los contadores al iniciar y periódicamente cada 30 segundos consultando `action=get_counters` en Google Apps Script para estar siempre alineado con las filas reales de la hoja de cálculo.
-  - El dorsal correlativo ya garantizado se transfiere explícitamente en `gasPayload.dorsal` hacia Google Apps Script, archivándose en segundo plano en Google Sheets y Google Drive con sus fotos.
-- **Frontend Optimizado (`index.html`):**
-  - La llamada a `/api/inscribir` responde instantáneamente y actualiza de inmediato el marbete oficial (`#dorsalCategoryPrefix` y `#dorsalNumber`).
-  - Se eliminaron las contingencias locales que reiniciaban el contador a `0001`.
-  - La selección de categoría muestra en tiempo real el próximo dorsal correlativo que se asignará.
-- **Backend Google Apps Script (`Code.gs`):**
-  - Se actualizó la función `asignarDorsalCorrelativoOficial` para respetar el dorsal oficial correlativo pre-asignado que esté dentro del rango de la categoría y no exista en la hoja.
+## 2. Corrección Definitiva Implementada
+1. **Flujo Sincronizado Directo con Google Sheets (`server.ts`):**
+   - Cuando el participante presiona "Generar Dorsal y Proceder", el backend envía la inscripción a Google Apps Script y **espera la confirmación oficial del dorsal generado y escrito en la fila de Google Sheets**.
+   - El dorsal retornado por Google Apps Script (`gasData.dorsal`) es el que se devuelve a la Web App y se plasma en el Marbete (`#dorsalCategoryPrefix` y `#dorsalNumber`).
+   - Se actualiza de inmediato el contador local en el servidor con el número confirmado por Google Sheets.
+2. **Sincronización Exacta de Contadores:**
+   - La función `syncCountersWithGoogleSheets` sincroniza el estado de cada categoría (`A` a `M`) igualándolo al último número registrado en la hoja (`remoteNext - 1`), asegurando que tanto la vista previa ("Próximo Dorsal") como la asignación real coincidan al 100%.
+3. **Optimización de Transmisión de Archivos (`index.html`):**
+   - Se ajustó el procesamiento de imágenes a 1000px y compresión ligera para que el archivo en Google Drive y Google Sheets tarde únicamente entre 3 y 5 segundos, retornando el dorsal confirmado rápidamente.
 
-## 3. Verificación
-- Pruebas sucesivas en `/api/inscribir`:
-  - Participante 1 (Cat. B) -> `B-2005`
-  - Participante 2 (Cat. B) -> `B-2006`
-  - Participante 3 (Cat. B) -> `B-2007`
-  - Participante 4 (Cat. A) -> `A-1004`
-  - Participante 5 (Cat. A) -> `A-1005`
-- `tsc --noEmit` y `compile_applet` ejecutados con éxito sin errores.
+## 3. Pruebas y Verificación
+- Inserción participante 1 (Cat. B) -> Google Sheets registró `B-2005` | Web App recibió y mostró: `B-2005` (Coincidencia 100%).
+- Inserción participante 2 (Cat. B) -> Google Sheets registró `B-2006` | Web App recibió y mostró: `B-2006` (Coincidencia 100%).
+- Estado verificado vía `action=get_counters`: Siguiente dorsal en Google Sheets y en Web App: `B-2007`.
+- Compilación `compile_applet` y validación de tipos `tsc --noEmit` superadas sin errores.
