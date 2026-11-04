@@ -1797,7 +1797,7 @@
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(24000)
+            signal: AbortSignal.timeout(38000)
           });
           if (resp.ok) {
             const data = await resp.json();
@@ -1812,36 +1812,25 @@
           console.warn('[Registro] Servidor /api/inscribir ocupado o en espera, activando contingencia segura:', err);
         }
 
-        // 2. Respaldo de contingencia en caso de tiempo de espera prolongado
-        if (!result.dorsal) {
+        // 2. Respaldo directo a Google Apps Script en caso de tiempo de espera prolongado
+        if (!result.dorsal && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
           try {
-            const nextResp = await fetch('/api/dorsal/next', {
+            const gasResp = await fetch(GOOGLE_SCRIPT_URL, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ categoryCode: catCode }),
-              signal: AbortSignal.timeout(7000)
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(payload)
             });
-            if (nextResp.ok) {
-              const nextData = await nextResp.json();
-              if (nextData && nextData.success && nextData.dorsal) {
-                result.dorsal = nextData.dorsal;
-                result.number = nextData.number || nextData.dorsal.replace(catPrefix, '').replace(/^[A-M]-?/, '');
-                result.prefix = nextData.prefix || catPrefix;
-
-                // Transmitir en segundo plano a Google Apps Script con el dorsal oficial correlativo asignado
-                if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-                  fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ ...payload, dorsal: result.dorsal })
-                  }).catch(() => {});
-                }
+            if (gasResp.ok) {
+              const gasData = await gasResp.json().catch(() => ({}));
+              if (gasData && gasData.status === 'success' && gasData.dorsal) {
+                result.dorsal = gasData.dorsal;
+                result.number = gasData.number || gasData.dorsal.replace(catPrefix, '').replace(/^[A-M]-?/, '');
+                result.prefix = gasData.prefix || catPrefix;
                 return result;
               }
             }
           } catch (e) {
-            console.warn('[Contingencia] Fallo al contactar /api/dorsal/next:', e);
+            console.warn('[Contingencia] Fallo al contactar Google Apps Script directo:', e);
           }
         }
 
@@ -1941,7 +1930,7 @@
 
           if (isValid) {
             submitBtn.disabled = true;
-            btnText.textContent = "Asignando dorsal correlativo y archivando...";
+            btnText.textContent = "Registrando en Google Sheets y asignando dorsal...";
             btnIcon.innerHTML = `
               <svg class="animate-spin h-5 w-5 text-army-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>

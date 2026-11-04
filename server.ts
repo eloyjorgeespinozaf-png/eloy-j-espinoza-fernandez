@@ -407,43 +407,9 @@ async function startServer() {
       const catCode = extractCatCode(payload.categoria || payload.categoryCode);
       const cfg = CATEGORY_CONFIG[catCode] || CATEGORY_CONFIG['A'];
 
-      // 1. OBTENER Y RESERVAR EL NÚMERO CORRELATIVO OFICIAL EXACTO
-      const counters = getCounters();
-      let lastRecorded = counters[catCode] ?? (cfg.start - 1);
-      if (lastRecorded < cfg.start - 1 || lastRecorded >= cfg.end) {
-        lastRecorded = cfg.start - 1;
-      }
-
-      // Verificación rápida en tiempo real con Google Sheets (máximo 2.5s)
-      if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
-        try {
-          const syncRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
-            signal: AbortSignal.timeout(2500)
-          });
-          if (syncRes.ok) {
-            const syncData: any = await syncRes.json();
-            if (syncData && syncData.status === 'success' && syncData.dorsal) {
-              const remoteNum = parseInt(syncData.number || syncData.dorsal.replace(/\D/g, ''), 10);
-              if (!isNaN(remoteNum) && remoteNum >= cfg.start && remoteNum <= cfg.end) {
-                lastRecorded = Math.max(lastRecorded, remoteNum - 1);
-              }
-            }
-          }
-        } catch (e) {
-          // Si Google Sheets demora, utiliza el contador en disco que está sincronizado
-        }
-      }
-
-      // Asignar el siguiente correlativo oficial de forma atómica e irreversible
-      const assignedNum = lastRecorded + 1;
-      counters[catCode] = assignedNum;
-      fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
-
-      const paddedNumber = String(assignedNum).padStart(4, '0');
-      const assignedDorsal = `${cfg.prefix}${paddedNumber}`;
-      console.log(`[Dorsal Asignado] Categoría ${catCode}: ${assignedDorsal} para ${payload.nombres || 'Competidor'}`);
-
-      // Preparar payload hacia Google Apps Script CON EL DORSAL CORRELATIVO OFICIAL ASIGNADO
+      // Preparar payload hacia Google Apps Script
+      // No imponemos un dorsal obsoleto; Google Apps Script, mediante LockService y lectura
+      // de la hoja activa en tiempo real, asigna e inserta el correlativo oficial inalterable.
       const gasPayload = {
         nombres: payload.nombres || '',
         ci: payload.ci || '',
@@ -451,54 +417,85 @@ async function startServer() {
         unidad: payload.unidad || '',
         categoria: payload.categoria || cfg.name,
         genero: payload.genero || 'NO APLICA',
-        dorsal: assignedDorsal, // Dorsal oficial garantizado que coincidirá exactamente con la WebApp
+        dorsal: payload.dorsal || '', // Si viene vacío, GAS calcula el siguiente correlativo oficial en la hoja
         capturaCedula: payload.capturaCedula || '',
         nombreArchivoCedula: payload.nombreArchivoCedula || '',
         comprobante: payload.comprobante || '',
         nombreArchivo: payload.nombreArchivo || ''
       };
 
+      let assignedDorsal = '';
+      let paddedNumber = '';
       let fileUrl = '';
       let fileCedulaUrl = '';
 
-      // 2. TRANSMITIR A GOOGLE SHEETS
-      // Esperar hasta 6.5 segundos para respuesta de URLs de Drive; si tarda más por fotos pesadas,
-      // la petición a Google Apps Script continuará en segundo plano asegurando que el corredor quede registrado en Google Sheets
+      // 1. TRANSMISIÓN PRIMARIA Y AUTORITATIVA A GOOGLE APPS SCRIPT (Fuente Oficial)
       if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
-        const gasPromise = (async () => {
-          try {
-            console.log(`[Google Sheets] Transmitiendo ${assignedDorsal} a Google Sheets (${payload.nombres})...`);
-            const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(gasPayload),
-              signal: AbortSignal.timeout(45000)
-            });
-
-            if (gasRes.ok) {
-              const gasData: any = await gasRes.json().catch(() => ({}));
-              console.log(`[Google Sheets REGISTRADO] Confirmado ${assignedDorsal} en la hoja oficial`);
-              return gasData;
-            }
-          } catch (gasErr) {
-            console.error('[Google Sheets Error]:', gasErr);
-          }
-          return null;
-        })();
-
-        // Esperar hasta 6.5 segundos para responder al usuario de inmediato sin demoras
         try {
-          const quickRes = await Promise.race([
-            gasPromise,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout_inmediato')), 6500))
-          ]);
-          if (quickRes) {
-            fileUrl = quickRes.fileUrl || '';
-            fileCedulaUrl = quickRes.fileCedulaUrl || '';
+          console.log(`[Google Sheets] Transmitiendo inscripción oficial (${payload.nombres} - Cat ${catCode})...`);
+          const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(gasPayload),
+            signal: AbortSignal.timeout(35000)
+          });
+
+          if (gasRes.ok) {
+            const gasData: any = await gasRes.json().catch(() => ({}));
+            console.log(`[Google Sheets REGISTRADO] Confirmado en Google Sheets:`, gasData);
+            if (gasData && gasData.status === 'success' && gasData.dorsal) {
+              // USAR EL DORSAL OFICIAL QUE GOOGLE SHEETS ESCRIBIÓ EN LA CELDA DE LA HOJA
+              assignedDorsal = String(gasData.dorsal).trim();
+              const numMatch = assignedDorsal.match(/\d+/);
+              paddedNumber = numMatch ? String(numMatch[0]).padStart(4, '0') : (gasData.number ? String(gasData.number).padStart(4, '0') : '');
+              const numVal = parseInt(paddedNumber, 10);
+              if (!isNaN(numVal)) {
+                const counters = getCounters();
+                counters[catCode] = Math.max(counters[catCode] || 0, numVal);
+                fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+              }
+              fileUrl = gasData.fileUrl || '';
+              fileCedulaUrl = gasData.fileCedulaUrl || '';
+
+              return res.json({
+                success: true,
+                dorsal: assignedDorsal,
+                number: paddedNumber,
+                prefix: cfg.prefix,
+                categoryCode: catCode,
+                categoryName: cfg.name,
+                range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
+                fileUrl,
+                fileCedulaUrl
+              });
+            }
           }
-        } catch (raceErr) {
-          console.log(`[Respuesta Rápida] Dorsal ${assignedDorsal} entregado al usuario; Google Sheets archivando en segundo plano.`);
+        } catch (gasErr) {
+          console.error('[Google Sheets Error en transmisión]:', gasErr);
         }
+      }
+
+      // 2. CONTINGENCIA LOCAL (Solo en caso de desconexión total con Google Apps Script)
+      console.warn('[Inscribir] Activando contingencia local por falta de respuesta remota');
+      const counters = getCounters();
+      let lastRecorded = counters[catCode] ?? (cfg.start - 1);
+      if (lastRecorded < cfg.start - 1 || lastRecorded >= cfg.end) {
+        lastRecorded = cfg.start - 1;
+      }
+      const assignedNum = lastRecorded + 1;
+      counters[catCode] = assignedNum;
+      fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+
+      paddedNumber = String(assignedNum).padStart(4, '0');
+      assignedDorsal = `${cfg.prefix}${paddedNumber}`;
+
+      // Enviar en background a Google Sheets para que la fila no se pierda
+      if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
+        fetch(GOOGLE_SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ ...gasPayload, dorsal: assignedDorsal })
+        }).catch(() => {});
       }
 
       return res.json({
