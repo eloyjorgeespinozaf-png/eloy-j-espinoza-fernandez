@@ -32,11 +32,16 @@
 function testSetup() {
   Logger.log("Iniciando prueba de conexión...");
   
-  // 1. Verificar Google Drive
+  // 1. Verificar Google Drive: Carpetas para Comprobantes y Cédulas
   var folderName = "Comprobantes 10KM";
   var folders = DriveApp.getFoldersByName(folderName);
   var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-  Logger.log("✅ Google Drive conectado. Carpeta lista: " + folder.getName() + " (ID: " + folder.getId() + ")");
+  Logger.log("✅ Google Drive conectado. Carpeta Comprobantes lista: " + folder.getName() + " (ID: " + folder.getId() + ")");
+
+  var folderCedulasName = "Cedulas 10KM";
+  var foldersCedula = DriveApp.getFoldersByName(folderCedulasName);
+  var folderCedula = foldersCedula.hasNext() ? foldersCedula.next() : DriveApp.createFolder(folderCedulasName);
+  Logger.log("✅ Google Drive conectado. Carpeta Cédulas lista: " + folderCedula.getName() + " (ID: " + folderCedula.getId() + ")");
   
   // 2. Verificar Google Sheets
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -44,7 +49,7 @@ function testSetup() {
     var sheet = ss.getActiveSheet();
     Logger.log("✅ Google Sheets conectado. Hoja activa: " + sheet.getName());
     
-    // Crear encabezados si está vacía
+    // Crear encabezados si está vacía (10 columnas institucionales)
     if (sheet.getLastRow() === 0) {
       sheet.appendRow([
         "Marca Temporal",
@@ -55,16 +60,18 @@ function testSetup() {
         "Unidad / Repartición",
         "Categoría",
         "Rama (Damas / Varones)",
+        "URL Cédula Identidad (Drive)",
         "URL Comprobante (Drive)"
       ]);
-      var headerRange = sheet.getRange(1, 1, 1, 9);
+      var headerRange = sheet.getRange(1, 1, 1, 10);
       headerRange.setFontWeight("bold");
       headerRange.setBackground("#1e341b");
       headerRange.setFontColor("#ffffff");
       headerRange.setHorizontalAlignment("center");
-      Logger.log("✅ Encabezados creados en la hoja (9 columnas incluyendo Rama).");
+      Logger.log("✅ Encabezados creados en la hoja (10 columnas incluyendo Cédula de Identidad).");
     } else {
       asegurarColumnaRama(sheet);
+      asegurarColumnaCedula(sheet);
     }
   } else {
     Logger.log("⚠️ Advertencia: Este script no está vinculado directamente a un Google Sheet.");
@@ -76,9 +83,8 @@ function testSetup() {
 
 /**
  * Verifica si la hoja existente cuenta con la columna "Rama (Damas / Varones)".
- * Si la hoja viene con el formato anterior de 8 columnas (donde la col 8 era URL Comprobante),
- * inserta de forma segura la columna "Rama (Damas / Varones)" en la posición 8,
- * evitando desfase de datos o rotura de registros anteriores.
+ * Si la hoja viene con el formato anterior, inserta de forma segura la columna
+ * en la posición adecuada evitando desfases.
  */
 function asegurarColumnaRama(sheet) {
   var lastCol = sheet.getLastColumn();
@@ -95,7 +101,7 @@ function asegurarColumnaRama(sheet) {
       break;
     }
     if (val.indexOf("COMPROBANTE") !== -1 || val.indexOf("DRIVE") !== -1) {
-      colComprobanteIndex = i + 1; // 1-based index
+      if (colComprobanteIndex === -1) colComprobanteIndex = i + 1; // 1-based index
     }
   }
 
@@ -109,6 +115,43 @@ function asegurarColumnaRama(sheet) {
     cell.setFontColor("#ffffff");
     cell.setHorizontalAlignment("center");
     Logger.log("✅ Columna 'Rama (Damas / Varones)' insertada automáticamente en columna " + insertPos);
+  }
+}
+
+/**
+ * Verifica si la hoja existente cuenta con la columna "URL Cédula Identidad (Drive)".
+ * Si falta, la inserta de forma segura antes de la columna del Comprobante
+ * para evitar desfase de datos o rotura de registros anteriores.
+ */
+function asegurarColumnaCedula(sheet) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return;
+
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  var tieneCedula = false;
+  var colComprobanteIndex = -1;
+
+  for (var i = 0; i < headers.length; i++) {
+    var val = headers[i] ? headers[i].toString().toUpperCase() : "";
+    if ((val.indexOf("CÉDULA") !== -1 || val.indexOf("CEDULA") !== -1) && (val.indexOf("DRIVE") !== -1 || val.indexOf("URL") !== -1 || val.indexOf("FOTO") !== -1)) {
+      tieneCedula = true;
+      break;
+    }
+    if (val.indexOf("COMPROBANTE") !== -1) {
+      colComprobanteIndex = i + 1; // 1-based index
+    }
+  }
+
+  if (!tieneCedula) {
+    var insertPos = colComprobanteIndex > 0 ? colComprobanteIndex : (lastCol + 1);
+    sheet.insertColumnBefore(insertPos);
+    var cell = sheet.getRange(1, insertPos);
+    cell.setValue("URL Cédula Identidad (Drive)");
+    cell.setFontWeight("bold");
+    cell.setBackground("#1e341b");
+    cell.setFontColor("#ffffff");
+    cell.setHorizontalAlignment("center");
+    Logger.log("✅ Columna 'URL Cédula Identidad (Drive)' insertada automáticamente en columna " + insertPos);
   }
 }
 
@@ -210,6 +253,8 @@ function doPost(e) {
     var dorsal = data.dorsal || "0000";
     var comprobanteBase64 = data.comprobante || "";
     var fileUrl = "Sin comprobante adjunto";
+    var cedulaBase64 = data.capturaCedula || "";
+    var fileCedulaUrl = "Sin captura de cédula adjunta";
 
     // Extracción y normalización de la Rama / Género (DAMAS / VARONES / NO APLICA)
     var genero = data.genero || "";
@@ -231,7 +276,39 @@ function doPost(e) {
       categoria = categoria.split(" · RAMA:")[0].trim();
     }
 
-    // 3. Lógica de Drive: Buscar o crear carpeta "Comprobantes 10KM"
+    // 3.1 Lógica de Drive: Buscar o crear carpeta "Cedulas 10KM" y guardar foto de cédula
+    if (cedulaBase64 && cedulaBase64.length > 50) {
+      try {
+        var folderCedulasName = "Cedulas 10KM";
+        var foldersCedula = DriveApp.getFoldersByName(folderCedulasName);
+        var targetFolderCedulas = foldersCedula.hasNext() ? foldersCedula.next() : DriveApp.createFolder(folderCedulasName);
+
+        var contentTypeCedula = "image/jpeg";
+        var cleanBase64Cedula = cedulaBase64;
+
+        if (cedulaBase64.indexOf("data:") !== -1 && cedulaBase64.indexOf(";base64,") !== -1) {
+          var partsCedula = cedulaBase64.split(";base64,");
+          contentTypeCedula = partsCedula[0].replace("data:", "");
+          cleanBase64Cedula = partsCedula[1];
+        }
+
+        var decodedBytesCedula = Utilities.base64Decode(cleanBase64Cedula);
+        var sanitizedNameCedula = (ci + "_" + nombres).replace(/[^a-zA-Z0-9_\-]/g, "_");
+        var fileNameCedula = sanitizedNameCedula + "_cedula";
+
+        var blobCedula = Utilities.newBlob(decodedBytesCedula, contentTypeCedula, fileNameCedula);
+        var fileCedula = targetFolderCedulas.createFile(blobCedula);
+
+        try {
+          fileCedula.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (shareErrCedula) {}
+        fileCedulaUrl = fileCedula.getUrl();
+      } catch (errCedulaDrive) {
+        Logger.log("Error al guardar cédula en Drive: " + errCedulaDrive.toString());
+      }
+    }
+
+    // 3.2 Lógica de Drive: Buscar o crear carpeta "Comprobantes 10KM" y guardar comprobante
     if (comprobanteBase64 && comprobanteBase64.length > 50) {
       var folderName = "Comprobantes 10KM";
       var folders = DriveApp.getFoldersByName(folderName);
@@ -274,7 +351,7 @@ function doPost(e) {
     if (ss) {
       var sheet = ss.getActiveSheet();
 
-      // Si la hoja es nueva o no tiene filas, generar encabezados institucionales
+      // Si la hoja es nueva o no tiene filas, generar encabezados institucionales (10 columnas)
       if (sheet.getLastRow() === 0) {
         sheet.appendRow([
           "Marca Temporal",
@@ -285,18 +362,20 @@ function doPost(e) {
           "Unidad / Repartición",
           "Categoría",
           "Rama (Damas / Varones)",
+          "URL Cédula Identidad (Drive)",
           "URL Comprobante (Drive)"
         ]);
 
         // Formato visual militar al encabezado
-        var headerRange = sheet.getRange(1, 1, 1, 9);
+        var headerRange = sheet.getRange(1, 1, 1, 10);
         headerRange.setFontWeight("bold");
         headerRange.setBackground("#1e341b");
         headerRange.setFontColor("#ffffff");
         headerRange.setHorizontalAlignment("center");
       } else {
-        // Asegurar que la columna Rama exista para evitar desfases
+        // Asegurar que las columnas de Rama y Cédula existan para evitar desfases
         asegurarColumnaRama(sheet);
+        asegurarColumnaCedula(sheet);
       }
 
       // Garantizar número de dorsal correlativo según los registros de la hoja
@@ -314,6 +393,7 @@ function doPost(e) {
         unidad,
         categoria,
         genero,
+        fileCedulaUrl,
         fileUrl
       ]);
     }
@@ -328,6 +408,7 @@ function doPost(e) {
       message: "Inscripción registrada correctamente en el sistema.",
       dorsal: dorsal,
       genero: genero,
+      fileCedulaUrl: fileCedulaUrl,
       fileUrl: fileUrl
     })).setMimeType(ContentService.MimeType.JSON);
 

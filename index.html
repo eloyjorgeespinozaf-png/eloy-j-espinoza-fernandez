@@ -259,6 +259,59 @@
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
 
+              <!-- Captura o Fotografía de Cédula de Identidad -->
+              <div id="cedulaCaptureContainer" class="bg-army-950/80 border border-army-700/80 rounded-xl p-3.5 space-y-2.5 transition-all">
+                <div class="flex items-center justify-between">
+                  <label for="capturaCedula" class="block text-xs uppercase tracking-wider font-semibold text-stone-200 flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gold-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                    </svg>
+                    <span>Captura / Foto de Cédula de Identidad</span>
+                  </label>
+                  <span id="cedulaRequiredBadge" class="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50">
+                    * Requerido (10 KM)
+                  </span>
+                </div>
+
+                <div class="relative">
+                  <input
+                    type="file"
+                    id="capturaCedula"
+                    name="capturaCedula"
+                    accept="image/*"
+                    class="block w-full text-xs text-stone-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-army-800 file:text-gold-300 hover:file:bg-army-700 file:cursor-pointer cursor-pointer border border-army-700/80 rounded-lg bg-army-950 p-1.5 focus:outline-none focus:border-gold-500"
+                  />
+                </div>
+
+                <!-- Miniatura de Vista Previa de la Cédula cargada -->
+                <div id="cedulaPreviewContainer" class="hidden flex items-center gap-3 bg-army-900/95 p-2.5 rounded-lg border border-gold-500/40">
+                  <div class="w-16 h-12 rounded border border-army-700 bg-cover bg-center shrink-0 overflow-hidden bg-black/50 flex items-center justify-center">
+                    <img id="cedulaPreviewImg" src="" alt="Vista previa cédula" class="w-full h-full object-cover" />
+                  </div>
+                  <div class="flex-1 min-w-0 text-left">
+                    <p id="cedulaFileName" class="text-xs font-semibold text-stone-200 truncate font-mono">cedula.jpg</p>
+                    <p class="text-[10px] text-emerald-400 font-medium">✓ Fotografía de cédula cargada</p>
+                  </div>
+                  <button
+                    type="button"
+                    id="removeCedulaBtn"
+                    class="text-xs text-rose-400 hover:text-rose-300 p-1 rounded hover:bg-army-800 transition cursor-pointer"
+                    title="Remover imagen de cédula"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <p id="cedulaHelperText" class="text-[11px] text-stone-400 leading-snug">
+                  Adjunte una captura o foto clara de su documento de identidad (anverso o ambas caras) para verificar su categoría de competencia.
+                </p>
+                <span id="cedulaErrorMsg" class="error-msg hidden text-xs text-rose-400 mt-1 block font-medium">
+                  Debe adjuntar la fotografía o captura de su cédula de identidad.
+                </span>
+              </div>
+
               <!-- Unidad / Repartición -->
               <div>
                 <label for="unidadReparticion" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
@@ -1197,13 +1250,13 @@
         <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-bold uppercase tracking-wider text-stone-200 flex items-center gap-1.5">
-              <span>3. Google Sheets · Nueva Columna Rama / Género</span>
-              <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-500/50 px-1.5 py-0.5 rounded font-mono font-bold">9 COLUMNAS</span>
+              <span>3. Google Sheets · Cédula y Rama Registradas</span>
+              <span class="text-[9px] bg-emerald-950 text-emerald-400 border border-emerald-500/50 px-1.5 py-0.5 rounded font-mono font-bold">10 COLUMNAS</span>
             </span>
           </div>
 
           <p class="text-[11px] text-stone-300 leading-relaxed">
-            La hoja de cálculo ahora almacena la <strong class="text-gold-400">Rama (Damas / Varones)</strong> en una columna dedicada e independiente para filtros rápidos.
+            La hoja de cálculo ahora almacena la <strong class="text-gold-400">Rama (Damas / Varones)</strong> y el enlace a la <strong class="text-gold-400">Captura de Cédula de Identidad</strong> en columnas dedicadas en Google Drive y Sheets.
           </p>
 
           <!-- Columnas en la hoja -->
@@ -1217,8 +1270,9 @@
               <span class="truncate">5. Número Celular</span>
               <span class="truncate">6. Unidad / Repartición</span>
               <span class="truncate">7. Categoría</span>
-              <span class="truncate text-pink-300 font-bold bg-pink-950/70 px-1 rounded border border-pink-500/40">8. Rama (Damas / Varones) ✨</span>
-              <span class="truncate text-emerald-400">9. URL Comprobante (Drive)</span>
+              <span class="truncate text-pink-300 font-bold bg-pink-950/70 px-1 rounded border border-pink-500/40">8. Rama (Damas / Varones)</span>
+              <span class="truncate text-amber-300 font-bold bg-amber-950/70 px-1 rounded border border-amber-500/40">9. URL Cédula (Drive) ✨</span>
+              <span class="truncate text-emerald-400">10. URL Comprobante (Drive)</span>
             </div>
           </div>
 
@@ -1442,6 +1496,21 @@
             if (generoErrorMsg) generoErrorMsg.classList.add('hidden');
           }
         }
+        // Control condicional de Cédula de Identidad (Obligatorio para 10 KM, Opcional para Infantiles)
+        const cedulaRequiredBadge = document.getElementById('cedulaRequiredBadge');
+        const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
+        const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
+        if (cedulaRequiredBadge) {
+          if (isCivilOrMilitar) {
+            cedulaRequiredBadge.textContent = '* Requerido (10 KM)';
+            cedulaRequiredBadge.className = 'text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50';
+          } else {
+            cedulaRequiredBadge.textContent = 'Opcional (Infantil)';
+            cedulaRequiredBadge.className = 'text-[10px] font-medium tracking-normal text-stone-400 bg-army-900/60 px-2 py-0.5 rounded border border-stone-600/40';
+            if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
+            if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
+          }
+        }
       };
 
       if (categoriaSelect) {
@@ -1455,6 +1524,46 @@
           if (generoErrorMsg) generoErrorMsg.classList.add('hidden');
         });
       });
+
+      // Controlador de captura y vista previa de Cédula de Identidad
+      const capturaCedulaInput = document.getElementById('capturaCedula');
+      const cedulaPreviewContainer = document.getElementById('cedulaPreviewContainer');
+      const cedulaPreviewImg = document.getElementById('cedulaPreviewImg');
+      const cedulaFileName = document.getElementById('cedulaFileName');
+      const removeCedulaBtn = document.getElementById('removeCedulaBtn');
+      const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
+      const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
+
+      if (capturaCedulaInput) {
+        capturaCedulaInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (file) {
+            if (cedulaFileName) cedulaFileName.textContent = file.name;
+            if (cedulaPreviewImg) {
+              const reader = new FileReader();
+              reader.onload = (ev) => {
+                if (ev.target && ev.target.result) {
+                  cedulaPreviewImg.src = ev.target.result;
+                }
+              };
+              reader.readAsDataURL(file);
+            }
+            if (cedulaPreviewContainer) cedulaPreviewContainer.classList.remove('hidden');
+            if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
+            if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
+          } else {
+            if (cedulaPreviewContainer) cedulaPreviewContainer.classList.add('hidden');
+          }
+        });
+      }
+
+      if (removeCedulaBtn && capturaCedulaInput) {
+        removeCedulaBtn.addEventListener('click', () => {
+          capturaCedulaInput.value = '';
+          if (cedulaPreviewContainer) cedulaPreviewContainer.classList.add('hidden');
+          if (cedulaPreviewImg) cedulaPreviewImg.src = '';
+        });
+      }
 
       // =========================================================================
       // FORZADO EXCLUSIVO DE MAYÚSCULAS EN EL FORMULARIO DE INSCRIPCIÓN
@@ -1545,7 +1654,18 @@
           try {
             fileData = await procesarComprobanteArchivo(file);
           } catch (err) {
-            console.warn("Aviso al procesar archivo:", err);
+            console.warn("Aviso al procesar comprobante:", err);
+          }
+        }
+
+        const cedulaInput = document.getElementById('capturaCedula');
+        const cedulaFile = cedulaInput && cedulaInput.files ? cedulaInput.files[0] : null;
+        let fileCedulaData = { base64: "", nombre: "" };
+        if (cedulaFile) {
+          try {
+            fileCedulaData = await procesarComprobanteArchivo(cedulaFile);
+          } catch (err) {
+            console.warn("Aviso al procesar captura de cédula:", err);
           }
         }
 
@@ -1565,6 +1685,8 @@
           categoria: genero ? `${categoria} · RAMA: ${genero}` : categoria,
           genero: genero || 'NO APLICA (INFANTIL)',
           dorsal: dorsal,
+          capturaCedula: fileCedulaData.base64,
+          nombreArchivoCedula: fileCedulaData.nombre,
           comprobante: fileData.base64,
           nombreArchivo: fileData.nombre
         };
@@ -1630,6 +1752,24 @@
             if (generoContainer) generoContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
           } else {
             if (generoErrorMsg) generoErrorMsg.classList.add('hidden');
+          }
+
+          // Validación condicional de Cédula de Identidad (Obligatorio para 10 KM, Opcional para Infantiles)
+          const cedulaInput = document.getElementById('capturaCedula');
+          const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
+          const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
+          const hasCedulaFile = cedulaInput && cedulaInput.files && cedulaInput.files.length > 0;
+
+          if (isCivilOrMilitar && !hasCedulaFile) {
+            isValid = false;
+            if (cedulaErrorMsg) cedulaErrorMsg.classList.remove('hidden');
+            if (cedulaCaptureContainer) {
+              cedulaCaptureContainer.classList.add('border-rose-500');
+              cedulaCaptureContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          } else {
+            if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
+            if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
           }
 
           if (isValid) {
@@ -1855,6 +1995,15 @@
       if (newInscriptionBtn) {
         newInscriptionBtn.addEventListener('click', () => {
           form.reset();
+          const cedulaPreviewContainer = document.getElementById('cedulaPreviewContainer');
+          const cedulaPreviewImg = document.getElementById('cedulaPreviewImg');
+          const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
+          const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
+          if (cedulaPreviewContainer) cedulaPreviewContainer.classList.add('hidden');
+          if (cedulaPreviewImg) cedulaPreviewImg.src = '';
+          if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
+          if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
+
           updateCategoriaIndicator();
           submitBtn.disabled = false;
           btnText.textContent = "Generar Dorsal y Proceder";
