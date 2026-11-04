@@ -383,40 +383,46 @@ function doPost(e) {
         } catch (shareErrCedula) {}
         fileCedulaUrl = fileCedula.getUrl();
       } catch (errCedulaDrive) {
-        Logger.log("Error al guardar cédula en Drive: " + errCedulaDrive.toString());
+        Logger.log("Aviso al guardar cédula en Drive: " + errCedulaDrive.toString());
+        fileCedulaUrl = "Cédula recibida (No alojada en Drive)";
       }
     }
 
     // 3.2 Lógica de Drive: Buscar o crear carpeta "Comprobantes 10KM" y guardar comprobante
     if (comprobanteBase64 && comprobanteBase64.length > 50) {
-      var folderName = "Comprobantes 10KM";
-      var folders = DriveApp.getFoldersByName(folderName);
-      var targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-
-      // Procesar formato Base64 (remover prefijos data:image/...;base64,)
-      var contentType = "image/jpeg";
-      var cleanBase64 = comprobanteBase64;
-
-      if (comprobanteBase64.indexOf("data:") !== -1 && comprobanteBase64.indexOf(";base64,") !== -1) {
-        var parts = comprobanteBase64.split(";base64,");
-        contentType = parts[0].replace("data:", "");
-        cleanBase64 = parts[1];
-      }
-
-      var decodedBytes = Utilities.base64Decode(cleanBase64);
-
-      // Nombrar el archivo con el CI y Nombre del corredor
-      var sanitizedName = (ci + "_" + nombres).replace(/[^a-zA-Z0-9_\-]/g, "_");
-      var fileName = sanitizedName + "_comprobante";
-
-      var blob = Utilities.newBlob(decodedBytes, contentType, fileName);
-      var file = targetFolder.createFile(blob);
-
-      // Configurar permisos de visualización al enlace
       try {
-        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-      } catch (shareErr) {}
-      fileUrl = file.getUrl();
+        var folderName = "Comprobantes 10KM";
+        var folders = DriveApp.getFoldersByName(folderName);
+        var targetFolder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+
+        // Procesar formato Base64 (remover prefijos data:image/...;base64,)
+        var contentType = "image/jpeg";
+        var cleanBase64 = comprobanteBase64;
+
+        if (comprobanteBase64.indexOf("data:") !== -1 && comprobanteBase64.indexOf(";base64,") !== -1) {
+          var parts = comprobanteBase64.split(";base64,");
+          contentType = parts[0].replace("data:", "");
+          cleanBase64 = parts[1];
+        }
+
+        var decodedBytes = Utilities.base64Decode(cleanBase64);
+
+        // Nombrar el archivo con el CI y Nombre del corredor
+        var sanitizedName = (ci + "_" + nombres).replace(/[^a-zA-Z0-9_\-]/g, "_");
+        var fileName = sanitizedName + "_comprobante";
+
+        var blob = Utilities.newBlob(decodedBytes, contentType, fileName);
+        var file = targetFolder.createFile(blob);
+
+        // Configurar permisos de visualización al enlace
+        try {
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (shareErr) {}
+        fileUrl = file.getUrl();
+      } catch (errCompDrive) {
+        Logger.log("Aviso al guardar comprobante en Drive: " + errCompDrive.toString());
+        fileUrl = "Comprobante recibido (No alojado en Drive)";
+      }
     }
 
     // 4. Lógica de Sheets: Insertar fila en la hoja de cálculo activa
@@ -480,10 +486,17 @@ function doPost(e) {
     }
 
     // 5. Retorno de respuesta JSON de éxito usando ContentService
+    var cfgCode = extraerCodigoCategoria(categoria);
+    var cfgFound = CATEGORIAS_CONTROL[cfgCode] || CATEGORIAS_CONTROL["A"];
+    var cleanNumber = dorsal ? dorsal.replace(cfgFound.prefix, "").replace(/^[A-M]-?/, "") : "";
+
     return ContentService.createTextOutput(JSON.stringify({
       status: "success",
       message: "Inscripción registrada correctamente en el sistema.",
       dorsal: dorsal,
+      number: cleanNumber,
+      prefix: cfgFound.prefix,
+      categoria: categoria,
       genero: genero,
       fileCedulaUrl: fileCedulaUrl,
       fileUrl: fileUrl

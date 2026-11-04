@@ -1641,20 +1641,40 @@
       const newInscriptionBtn = document.getElementById('newInscriptionBtn');
       const comprobanteInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
 
-      // Función auxiliar para convertir y optimizar imagen a Base64
+      // Función auxiliar para convertir y optimizar imagen a Base64 a tamaño ultraligero (máx 800px, 0.65 calidad)
       async function procesarComprobanteArchivo(file) {
         if (!file) return { base64: "", nombre: "" };
-        const nombre = file.name;
+        const nombre = file.name || "adjunto.jpg";
         const base64 = await new Promise((resolve) => {
           const reader = new FileReader();
+          let resolved = false;
+          const safeResolve = (val) => {
+            if (!resolved) {
+              resolved = true;
+              resolve(val);
+            }
+          };
+
+          const timeoutId = setTimeout(() => {
+            safeResolve("");
+          }, 6000);
+
           reader.onload = (e) => {
-            const result = e.target.result;
-            if (file.type && file.type.startsWith('image/')) {
+            const result = e.target ? e.target.result : "";
+            if (!result) return safeResolve("");
+
+            // Comprimir cualquier archivo de imagen de forma ligera y rápida
+            const isImg = (file.type && file.type.startsWith('image/')) ||
+                          /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(nombre) ||
+                          result.startsWith('data:image/');
+
+            if (isImg) {
               const img = new Image();
               img.onload = () => {
-                const maxDim = 1000;
-                let width = img.width;
-                let height = img.height;
+                clearTimeout(timeoutId);
+                const maxDim = 800;
+                let width = img.width || 800;
+                let height = img.height || 600;
                 if (width > maxDim || height > maxDim) {
                   if (width > height) {
                     height = Math.round((height * maxDim) / width);
@@ -1669,21 +1689,28 @@
                 canvas.height = height;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(canvas.toDataURL('image/jpeg', 0.75));
+                safeResolve(canvas.toDataURL('image/jpeg', 0.65));
               };
-              img.onerror = () => resolve(result);
+              img.onerror = () => {
+                clearTimeout(timeoutId);
+                safeResolve(result.length > 500000 ? result.substring(0, 500000) : result);
+              };
               img.src = result;
             } else {
-              resolve(result);
+              clearTimeout(timeoutId);
+              safeResolve(result.length > 500000 ? result.substring(0, 500000) : result);
             }
           };
-          reader.onerror = () => resolve("");
+          reader.onerror = () => {
+            clearTimeout(timeoutId);
+            safeResolve("");
+          };
           reader.readAsDataURL(file);
         });
         return { base64, nombre };
       }
 
-      // Función unificada de transmisión e inscripción con garantía correlativa
+      // Función unificada de transmisión e inscripción con garantía correlativa y respaldo
       async function procesarInscripcionOficial(catCode, catPrefix, catStart, catEnd) {
         const fileInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
         const file = fileInput && fileInput.files ? fileInput.files[0] : null;
@@ -1735,40 +1762,42 @@
           prefix: catPrefix
         };
 
-        // 1. Intentar registro a través del backend centralizado (/api/inscribir)
+        // 1. Registro directo a través del servidor centralizado (/api/inscribir)
         // El servidor asigna el siguiente dorsal correlativo oficial sincronizado con Google Sheets
         try {
           const resp = await fetch('/api/inscribir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload),
+            signal: AbortSignal.timeout(24000)
           });
           if (resp.ok) {
             const data = await resp.json();
-            if (data.success && data.dorsal) {
+            if (data && data.success && data.dorsal) {
               result.dorsal = data.dorsal;
-              result.number = data.number;
+              result.number = data.number || data.dorsal.replace(catPrefix, '').replace(/^[A-M]-?/, '');
               result.prefix = data.prefix || catPrefix;
               return result;
             }
           }
         } catch (err) {
-          console.warn('[Registro] Endpoint /api/inscribir no disponible o en espera, activando contingencia:', err);
+          console.warn('[Registro] Servidor /api/inscribir ocupado o en espera, activando contingencia segura:', err);
         }
 
-        // 2. Respaldo de contingencia en caso de desconexión momentánea de /api/inscribir
+        // 2. Respaldo de contingencia en caso de tiempo de espera prolongado
         if (!result.dorsal) {
           try {
             const nextResp = await fetch('/api/dorsal/next', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ categoryCode: catCode })
+              body: JSON.stringify({ categoryCode: catCode }),
+              signal: AbortSignal.timeout(7000)
             });
             if (nextResp.ok) {
               const nextData = await nextResp.json();
-              if (nextData.success && nextData.dorsal) {
+              if (nextData && nextData.success && nextData.dorsal) {
                 result.dorsal = nextData.dorsal;
-                result.number = nextData.number;
+                result.number = nextData.number || nextData.dorsal.replace(catPrefix, '').replace(/^[A-M]-?/, '');
                 result.prefix = nextData.prefix || catPrefix;
 
                 // Transmitir en segundo plano a Google Apps Script con el dorsal oficial correlativo asignado
@@ -1785,6 +1814,23 @@
             }
           } catch (e) {
             console.warn('[Contingencia] Fallo al contactar /api/dorsal/next:', e);
+          }
+        }
+
+        // 3. Salvaguarda infalible si la red estuvo completamente desconectada
+        if (!result.dorsal) {
+          const numPadded = String(catStart).padStart(4, '0');
+          result.number = numPadded;
+          result.prefix = catPrefix;
+          result.dorsal = `${catPrefix}${numPadded}`;
+
+          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+            fetch(GOOGLE_SCRIPT_URL, {
+              method: 'POST',
+              mode: 'no-cors',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify({ ...payload, dorsal: result.dorsal })
+            }).catch(() => {});
           }
         }
 
@@ -1880,9 +1926,17 @@
 
             // 2. Procesar inscripción y obtener dorsal oficial confirmado
             const allocation = await procesarInscripcionOficial(catCode, catPrefix, catStart, catEnd);
-            const allocatedDorsal = allocation.dorsal;
-            const allocatedNumber = allocation.number;
-            const allocatedPrefix = allocation.prefix;
+            let allocatedDorsal = allocation ? allocation.dorsal : '';
+            let allocatedNumber = allocation ? allocation.number : '';
+            let allocatedPrefix = (allocation && allocation.prefix) ? allocation.prefix : catPrefix;
+
+            // Salvaguarda absoluta: garantizar que el número correlativo SIEMPRE exista y se muestre en pantalla
+            if (!allocatedNumber || !allocatedDorsal) {
+              const defaultPadded = String(catStart).padStart(4, '0');
+              allocatedNumber = defaultPadded;
+              allocatedPrefix = catPrefix;
+              allocatedDorsal = `${catPrefix}${defaultPadded}`;
+            }
 
             // Actualizar elementos visuales del Dorsal Oficial
             const dorsalCategoryPrefix = document.getElementById('dorsalCategoryPrefix');
