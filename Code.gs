@@ -262,12 +262,17 @@ function asignarDorsalCorrelativoOficial(sheet, categoriaTexto, dorsalPropuesto)
     }
   }
 
-  // Si el cliente propuso un dorsal que sea exactamente el siguiente legítimo y no esté usado, respetarlo
+  // Si el cliente propuso un dorsal correlativo oficial válido dentro del rango de la categoría y no está usado en la hoja, respetarlo
   if (dorsalPropuesto && dorsalPropuesto !== "0000" && dorsalPropuesto !== "undefined" && dorsalPropuesto !== "") {
     var propuestoClean = dorsalPropuesto.toString().trim().toUpperCase();
-    var esperado = cfg.prefix + ("0000" + (maxNum + 1)).slice(-4);
-    if (propuestoClean === esperado && !dorsalesExistentes[propuestoClean]) {
-      return esperado;
+    if (!dorsalesExistentes[propuestoClean]) {
+      var matchP = propuestoClean.match(/\d+/g);
+      if (matchP) {
+        var pNum = parseInt(matchP[matchP.length - 1], 10);
+        if (!isNaN(pNum) && pNum >= cfg.start && pNum <= cfg.end && pNum >= maxNum + 1) {
+          return propuestoClean;
+        }
+      }
     }
   }
 

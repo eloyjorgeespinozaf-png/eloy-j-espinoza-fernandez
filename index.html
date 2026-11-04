@@ -1756,9 +1756,8 @@
           console.warn('[Registro] Endpoint /api/inscribir no disponible o en espera, activando contingencia:', err);
         }
 
-        // 2. Fallback de contingencia: Envío directo a Google Apps Script con dorsal vacío para cálculo en Sheets
+        // 2. Respaldo de contingencia en caso de desconexión momentánea de /api/inscribir
         if (!result.dorsal) {
-          // Intentar reservar correlativo desde /api/dorsal/next si responde
           try {
             const nextResp = await fetch('/api/dorsal/next', {
               method: 'POST',
@@ -1771,41 +1770,21 @@
                 result.dorsal = nextData.dorsal;
                 result.number = nextData.number;
                 result.prefix = nextData.prefix || catPrefix;
+
+                // Transmitir en segundo plano a Google Apps Script con el dorsal oficial correlativo asignado
+                if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+                  fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ ...payload, dorsal: result.dorsal })
+                  }).catch(() => {});
+                }
+                return result;
               }
             }
-          } catch (e) {}
-
-          // Fallback local correlativo persistente (LocalStorage)
-          if (!result.dorsal) {
-            const STORAGE_KEY = 'eceme_category_counters_v2';
-            let localCounters = {};
-            try {
-              localCounters = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-            } catch {}
-            let currentVal = localCounters[catCode] || (catStart - 1);
-            if (currentVal < catStart - 1 || currentVal >= catEnd) currentVal = catStart - 1;
-            currentVal += 1;
-            localCounters[catCode] = currentVal;
-            try {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(localCounters));
-            } catch {}
-            result.number = String(currentVal).padStart(4, '0');
-            result.dorsal = `${catPrefix}${result.number}`;
-          }
-
-          // Transmitir hacia Google Apps Script (dejando dorsal vacío para forzar que el script en Sheets verifique correlatividad)
-          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-            try {
-              const gasPayload = { ...payload, dorsal: '' };
-              await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(gasPayload)
-              });
-            } catch (gasErr) {
-              console.warn('[Direct GAS] Error en transmisión no-cors:', gasErr);
-            }
+          } catch (e) {
+            console.warn('[Contingencia] Fallo al contactar /api/dorsal/next:', e);
           }
         }
 

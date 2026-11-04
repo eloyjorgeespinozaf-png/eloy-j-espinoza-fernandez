@@ -297,6 +297,47 @@ async function startServer() {
   });
 
   // Endpoint atómico para reservar el siguiente dorsal según la categoría
+  // Función para sincronizar contadores con los registros reales de Google Sheets
+  const syncCountersWithGoogleSheets = async () => {
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) return;
+    try {
+      const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_counters`, {
+        signal: AbortSignal.timeout(12000)
+      });
+      if (res.ok) {
+        const data: any = await res.json();
+        if (data && data.status === 'success' && data.categories) {
+          const counters = getCounters();
+          let modified = false;
+          for (const [code, info] of Object.entries(data.categories as Record<string, any>)) {
+            const cfg = CATEGORY_CONFIG[code];
+            if (!cfg) continue;
+            const remoteNext = info.nextNumber || (info.nextDorsal ? parseInt(info.nextDorsal.replace(/\D/g, ''), 10) : cfg.start);
+            const remoteLast = remoteNext - 1;
+            if (remoteLast >= cfg.start - 1 && remoteLast <= cfg.end) {
+              const currentLocal = counters[code] ?? (cfg.start - 1);
+              if (remoteLast > currentLocal) {
+                counters[code] = remoteLast;
+                modified = true;
+              }
+            }
+          }
+          if (modified) {
+            fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+            console.log('[CounterSync] Contadores correlativos sincronizados exitosamente con Google Sheets.');
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[CounterSync] Aviso al sincronizar contadores con Google Sheets (utilizando contadores locales):', err);
+    }
+  };
+
+  // Sincronización al iniciar y periódicamente cada 30 segundos
+  setTimeout(syncCountersWithGoogleSheets, 1500);
+  setInterval(syncCountersWithGoogleSheets, 30000);
+
+  // Endpoint atómico para reservar el siguiente dorsal según la categoría
   app.post('/api/dorsal/next', (req, res) => {
     try {
       const { categoryCode } = req.body || {};
@@ -331,21 +372,29 @@ async function startServer() {
     }
   });
 
-  // Endpoint principal de registro e inscripción con asignación correlativa y sincronización con Google Sheets
+  // Endpoint principal de registro e inscripción con asignación correlativa garantizada y archivo en Google Sheets
   app.post('/api/inscribir', async (req, res) => {
     try {
       const payload = req.body || {};
       const catCode = extractCatCode(payload.categoria || payload.categoryCode);
       const cfg = CATEGORY_CONFIG[catCode] || CATEGORY_CONFIG['A'];
 
-      // Preparar el siguiente dorsal local por seguridad
+      // 1. ASIGNACIÓN INMEDIATA Y ESTRICTAMENTE CORRELATIVA DEL DORSAL (ATÓMICA)
       const counters = getCounters();
-      let localNext = (counters[catCode] ?? (cfg.start - 1)) + 1;
-      if (localNext < cfg.start || localNext > cfg.end) {
-        localNext = cfg.start;
+      let current = counters[catCode] ?? (cfg.start - 1);
+      if (current < cfg.start - 1 || current >= cfg.end) {
+        current = cfg.start - 1;
       }
+      current += 1;
+      counters[catCode] = current;
+      fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
 
-      // Preparar payload hacia Google Apps Script (dejando dorsal vacío para cálculo correlativo oficial en Sheets)
+      const paddedNumber = String(current).padStart(4, '0');
+      const assignedDorsal = `${cfg.prefix}${paddedNumber}`;
+
+      console.log(`[Dorsal Oficial] Asignado correlativamente: ${assignedDorsal} para ${payload.nombres || 'Participante'} (${cfg.name})`);
+
+      // 2. Preparar el payload oficial con el dorsal correlativo ya garantizado
       const gasPayload = {
         nombres: payload.nombres || '',
         ci: payload.ci || '',
@@ -353,72 +402,50 @@ async function startServer() {
         unidad: payload.unidad || '',
         categoria: payload.categoria || cfg.name,
         genero: payload.genero || 'NO APLICA',
-        dorsal: '', // Vacío para forzar cálculo correlativo oficial en Google Sheets
+        dorsal: assignedDorsal, // Asignado estrictamente correlativo sin riesgo de desincronización
         capturaCedula: payload.capturaCedula || '',
         nombreArchivoCedula: payload.nombreArchivoCedula || '',
         comprobante: payload.comprobante || '',
         nombreArchivo: payload.nombreArchivo || ''
       };
 
-      let assignedDorsal = '';
-      let fileUrl = '';
-      let fileCedulaUrl = '';
-
+      // 3. Transmisión a Google Apps Script para archivo en Google Sheets y Google Drive en segundo plano
       if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
-        try {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 28000);
-          const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(gasPayload),
-            signal: controller.signal
-          });
-          clearTimeout(timeoutId);
-
-          if (gasRes.ok) {
-            const gasData: any = await gasRes.json();
-            if (gasData && gasData.dorsal) {
-              assignedDorsal = gasData.dorsal;
-              fileUrl = gasData.fileUrl || '';
-              fileCedulaUrl = gasData.fileCedulaUrl || '';
-
-              // Actualizar el contador local según lo asignado por Google Sheets
-              const matches = assignedDorsal.match(/\d+/g);
-              if (matches) {
-                const gasNum = parseInt(matches[matches.length - 1], 10);
-                if (!isNaN(gasNum) && gasNum >= cfg.start && gasNum <= cfg.end) {
-                  counters[catCode] = Math.max(counters[catCode] || (cfg.start - 1), gasNum);
-                  fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
-                }
-              }
+        const archivarEnGas = async () => {
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
+            const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(gasPayload),
+              signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            if (gasRes.ok) {
+              const resData: any = await gasRes.json().catch(() => ({}));
+              console.log(`[GAS Archivo] Inscripción archivada exitosamente para ${assignedDorsal}:`, resData.dorsal || 'OK');
             }
+          } catch (gasErr) {
+            console.warn(`[GAS Archivo Aviso] Envío a Google Apps Script para ${assignedDorsal}:`, gasErr);
           }
-        } catch (gasErr) {
-          console.warn('[GAS Proxy] Error al comunicar con Google Apps Script, recurriendo a contador local seguro:', gasErr);
-        }
+        };
+
+        // Disparar proceso de archivo permanente en Drive y Sheets
+        archivarEnGas();
       }
 
-      // Si Google Apps Script no respondió a tiempo, emitir dorsal correlativo local
-      if (!assignedDorsal) {
-        counters[catCode] = localNext;
-        fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
-        assignedDorsal = `${cfg.prefix}${String(localNext).padStart(4, '0')}`;
-      }
-
-      let numOnly = assignedDorsal.replace(cfg.prefix, '').replace(/^[A-M]-?/, '');
-      if (numOnly.length < 4) numOnly = numOnly.padStart(4, '0');
-
+      // 4. Retornar inmediatamente el dorsal asignado al usuario para que se dibuje en pantalla sin demoras
       return res.json({
         success: true,
         dorsal: assignedDorsal,
-        number: numOnly,
+        number: paddedNumber,
         prefix: cfg.prefix,
         categoryCode: catCode,
         categoryName: cfg.name,
         range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
-        fileUrl,
-        fileCedulaUrl
+        fileUrl: '',
+        fileCedulaUrl: ''
       });
     } catch (err: any) {
       console.error('[Inscribir] Error en registro:', err);

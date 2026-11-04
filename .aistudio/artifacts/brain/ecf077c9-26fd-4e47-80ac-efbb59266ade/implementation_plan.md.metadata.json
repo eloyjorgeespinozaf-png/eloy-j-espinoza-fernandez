@@ -1,6 +1,6 @@
 {
-  "summary": "Plan de implementación para la subida y captura de la imagen de Cédula de Identidad en el formulario de inscripción, con validación condicional (obligatorio en 10 KM, opcional en infantiles), almacenamiento en carpeta dedicada 'Cedulas 10KM' en Google Drive y registro de columna independiente en Google Sheets.",
-  "updatedAt": "2026-11-04T09:41:13.380233396Z",
+  "summary": "Corrección de la generación correlativa automática y en tiempo real del Dorsal Oficial de Competidor en la Web App, sincronizada con Google Sheets y con respuesta inmediata para cada participante inscrito.",
+  "updatedAt": "2026-11-04T12:46:34.241848964Z",
   "requestFeedback": true,
   "userFacing": true
 }
