@@ -941,7 +941,7 @@
           </div>
 
           <!-- Contenido del Dorsal: Centro (Número de Corredor estructurado por Categoría) -->
-          <div class="my-3 sm:my-5 text-center py-3 sm:py-4 bg-stone-50/90 rounded-xl border border-stone-200/90 shadow-inner">
+          <div class="my-3 sm:my-5 text-center py-3.5 sm:py-5 bg-stone-50/95 rounded-xl border border-stone-200 shadow-inner">
             <div class="flex items-center justify-center gap-1 sm:gap-2">
               <span id="dorsalCategoryPrefix" class="font-display font-black text-5xl sm:text-6xl md:text-7xl tracking-tight text-stone-600 select-all">
                 A-
@@ -950,8 +950,12 @@
                 1001
               </span>
             </div>
-            <div class="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-stone-500 mt-1">
-              Dorsal Oficial de Competidor
+            <!-- Indicador Oficial del Dorsal Asignado -->
+            <div class="mt-2.5 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-black uppercase tracking-wider text-army-950">
+              <span class="text-stone-500 font-semibold text-[11px] tracking-normal">Dorsal Oficial de Competidor:</span>
+              <span id="dorsalFullText" class="px-2.5 py-0.5 rounded-md bg-army-950 text-gold-300 font-mono text-sm sm:text-base border border-gold-500/50 shadow-xs tracking-wider">
+                A-1001
+              </span>
             </div>
           </div>
 
@@ -1926,28 +1930,47 @@
 
             // 2. Procesar inscripción y obtener dorsal oficial confirmado
             const allocation = await procesarInscripcionOficial(catCode, catPrefix, catStart, catEnd);
-            let allocatedDorsal = allocation ? allocation.dorsal : '';
-            let allocatedNumber = allocation ? allocation.number : '';
-            let allocatedPrefix = (allocation && allocation.prefix) ? allocation.prefix : catPrefix;
+            let allocatedDorsal = (allocation && allocation.dorsal) ? String(allocation.dorsal).trim() : '';
+            let allocatedNumber = (allocation && allocation.number) ? String(allocation.number).trim() : '';
+            let allocatedPrefix = (allocation && allocation.prefix) ? String(allocation.prefix).trim() : catPrefix;
 
-            // Salvaguarda absoluta: garantizar que el número correlativo SIEMPRE exista y se muestre en pantalla
-            if (!allocatedNumber || !allocatedDorsal) {
+            // Extraer dígitos del dorsal asignado si allocatedNumber viniera vacío o truncado
+            if (!allocatedNumber && allocatedDorsal) {
+              const m = allocatedDorsal.match(/\d+/);
+              if (m) allocatedNumber = m[0];
+            }
+
+            // Salvaguarda absoluta: garantizar que el número correlativo SIEMPRE tenga dígitos y se muestre en pantalla
+            if (!allocatedNumber || !/\d+/.test(allocatedDorsal)) {
               const defaultPadded = String(catStart).padStart(4, '0');
               allocatedNumber = defaultPadded;
               allocatedPrefix = catPrefix;
               allocatedDorsal = `${catPrefix}${defaultPadded}`;
             }
 
-            // Actualizar elementos visuales del Dorsal Oficial
+            // Normalizar a 4 dígitos para categorías estándar
+            if (allocatedNumber && allocatedNumber.length < 4 && catStart >= 1000) {
+              allocatedNumber = allocatedNumber.padStart(4, '0');
+            }
+
+            // Actualizar elementos visuales del Dorsal Oficial en pantalla
             const dorsalCategoryPrefix = document.getElementById('dorsalCategoryPrefix');
+            const dorsalNumberEl = document.getElementById('dorsalNumber');
+            const dorsalFullText = document.getElementById('dorsalFullText');
             const dorsalRangoBadge = document.getElementById('dorsalRangoBadge');
 
             if (dorsalCategoryPrefix) {
               dorsalCategoryPrefix.textContent = allocatedPrefix;
               dorsalCategoryPrefix.style.color = (hexColor === '#111827' || hexColor === '#171717') ? '#374151' : hexColor;
             }
+            if (dorsalNumberEl) {
+              dorsalNumberEl.textContent = allocatedNumber;
+            }
             if (dorsalNumber) {
               dorsalNumber.textContent = allocatedNumber;
+            }
+            if (dorsalFullText) {
+              dorsalFullText.textContent = allocatedDorsal;
             }
             if (dorsalRangoBadge) {
               dorsalRangoBadge.textContent = `Control Oficial: Rango ${catRange}`;
