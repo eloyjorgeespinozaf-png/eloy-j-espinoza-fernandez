@@ -407,7 +407,43 @@ async function startServer() {
       const catCode = extractCatCode(payload.categoria || payload.categoryCode);
       const cfg = CATEGORY_CONFIG[catCode] || CATEGORY_CONFIG['A'];
 
-      // Preparar payload hacia Google Apps Script (dejando dorsal vacío para que Google Sheets registre su propio correlativo oficial exacto)
+      // 1. OBTENER Y RESERVAR EL NÚMERO CORRELATIVO OFICIAL EXACTO
+      const counters = getCounters();
+      let lastRecorded = counters[catCode] ?? (cfg.start - 1);
+      if (lastRecorded < cfg.start - 1 || lastRecorded >= cfg.end) {
+        lastRecorded = cfg.start - 1;
+      }
+
+      // Verificación rápida en tiempo real con Google Sheets (máximo 2.5s)
+      if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
+        try {
+          const syncRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
+            signal: AbortSignal.timeout(2500)
+          });
+          if (syncRes.ok) {
+            const syncData: any = await syncRes.json();
+            if (syncData && syncData.status === 'success' && syncData.dorsal) {
+              const remoteNum = parseInt(syncData.number || syncData.dorsal.replace(/\D/g, ''), 10);
+              if (!isNaN(remoteNum) && remoteNum >= cfg.start && remoteNum <= cfg.end) {
+                lastRecorded = Math.max(lastRecorded, remoteNum - 1);
+              }
+            }
+          }
+        } catch (e) {
+          // Si Google Sheets demora, utiliza el contador en disco que está sincronizado
+        }
+      }
+
+      // Asignar el siguiente correlativo oficial de forma atómica e irreversible
+      const assignedNum = lastRecorded + 1;
+      counters[catCode] = assignedNum;
+      fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
+
+      const paddedNumber = String(assignedNum).padStart(4, '0');
+      const assignedDorsal = `${cfg.prefix}${paddedNumber}`;
+      console.log(`[Dorsal Asignado] Categoría ${catCode}: ${assignedDorsal} para ${payload.nombres || 'Competidor'}`);
+
+      // Preparar payload hacia Google Apps Script CON EL DORSAL CORRELATIVO OFICIAL ASIGNADO
       const gasPayload = {
         nombres: payload.nombres || '',
         ci: payload.ci || '',
@@ -415,79 +451,60 @@ async function startServer() {
         unidad: payload.unidad || '',
         categoria: payload.categoria || cfg.name,
         genero: payload.genero || 'NO APLICA',
-        dorsal: '', // Vacío para cálculo correlativo oficial en Google Sheets
+        dorsal: assignedDorsal, // Dorsal oficial garantizado que coincidirá exactamente con la WebApp
         capturaCedula: payload.capturaCedula || '',
         nombreArchivoCedula: payload.nombreArchivoCedula || '',
         comprobante: payload.comprobante || '',
         nombreArchivo: payload.nombreArchivo || ''
       };
 
-      let assignedDorsal = '';
       let fileUrl = '';
       let fileCedulaUrl = '';
 
-      // 1. REGISTRAR DIRECTAMENTE EN GOOGLE SHEETS CON TIMEOUT ÓPTIMO
+      // 2. TRANSMITIR A GOOGLE SHEETS
+      // Esperar hasta 6.5 segundos para respuesta de URLs de Drive; si tarda más por fotos pesadas,
+      // la petición a Google Apps Script continuará en segundo plano asegurando que el corredor quede registrado en Google Sheets
       if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
-        try {
-          console.log(`[Google Sheets] Enviando inscripción a Google Sheets para categoría ${catCode} (${payload.nombres})...`);
-          const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(gasPayload),
-            signal: AbortSignal.timeout(22000)
-          });
+        const gasPromise = (async () => {
+          try {
+            console.log(`[Google Sheets] Transmitiendo ${assignedDorsal} a Google Sheets (${payload.nombres})...`);
+            const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(gasPayload),
+              signal: AbortSignal.timeout(45000)
+            });
 
-          if (gasRes.ok) {
-            const gasData: any = await gasRes.json().catch(() => ({}));
-            if (gasData && gasData.dorsal) {
-              assignedDorsal = gasData.dorsal;
-              fileUrl = gasData.fileUrl || '';
-              fileCedulaUrl = gasData.fileCedulaUrl || '';
-              console.log(`[Google Sheets MATCH] Dorsal oficial confirmado por Google Sheets: ${assignedDorsal}`);
+            if (gasRes.ok) {
+              const gasData: any = await gasRes.json().catch(() => ({}));
+              console.log(`[Google Sheets REGISTRADO] Confirmado ${assignedDorsal} en la hoja oficial`);
+              return gasData;
             }
+          } catch (gasErr) {
+            console.error('[Google Sheets Error]:', gasErr);
           }
-        } catch (gasErr) {
-          console.error('[Google Sheets Error / Timeout]:', gasErr);
+          return null;
+        })();
+
+        // Esperar hasta 6.5 segundos para responder al usuario de inmediato sin demoras
+        try {
+          const quickRes = await Promise.race([
+            gasPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout_inmediato')), 6500))
+          ]);
+          if (quickRes) {
+            fileUrl = quickRes.fileUrl || '';
+            fileCedulaUrl = quickRes.fileCedulaUrl || '';
+          }
+        } catch (raceErr) {
+          console.log(`[Respuesta Rápida] Dorsal ${assignedDorsal} entregado al usuario; Google Sheets archivando en segundo plano.`);
         }
       }
-
-      // 2. ACTUALIZAR CONTADORES SEGÚN LO CONFIRMADO POR GOOGLE SHEETS O CONTINGENCIA
-      const counters = getCounters();
-      if (assignedDorsal) {
-        const matches = assignedDorsal.match(/\d+/g);
-        if (matches) {
-          const sheetNum = parseInt(matches[matches.length - 1], 10);
-          if (!isNaN(sheetNum) && sheetNum >= cfg.start && sheetNum <= cfg.end) {
-            counters[catCode] = sheetNum;
-            fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
-          }
-        }
-      } else {
-        // Contingencia si Google Sheets demoró o estuvo momentáneamente saturado
-        let localNext = (counters[catCode] ?? (cfg.start - 1)) + 1;
-        if (localNext < cfg.start || localNext > cfg.end) localNext = cfg.start;
-        counters[catCode] = localNext;
-        fs.writeFileSync(COUNTERS_FILE, JSON.stringify(counters, null, 2), 'utf-8');
-        assignedDorsal = `${cfg.prefix}${String(localNext).padStart(4, '0')}`;
-        console.warn(`[Contingencia Local] Dorsal emitido y programado para sincronización en Google Sheets: ${assignedDorsal}`);
-
-        // Reintento en segundo plano hacia Google Sheets con el dorsal emitido para garantizar su archivado en la hoja
-        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
-          fetch(GOOGLE_SCRIPT_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ ...gasPayload, dorsal: assignedDorsal })
-          }).catch((bgErr) => console.warn('[Background Sync GAS Error]:', bgErr));
-        }
-      }
-
-      let numOnly = assignedDorsal.replace(cfg.prefix, '').replace(/^[A-M]-?/, '');
-      if (numOnly.length < 4) numOnly = numOnly.padStart(4, '0');
 
       return res.json({
         success: true,
         dorsal: assignedDorsal,
-        number: numOnly,
+        number: paddedNumber,
         prefix: cfg.prefix,
         categoryCode: catCode,
         categoryName: cfg.name,

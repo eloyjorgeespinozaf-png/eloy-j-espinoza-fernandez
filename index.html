@@ -1508,12 +1508,14 @@
             categoriaRangoText.innerHTML = `Control Categoría <strong>${catCode}</strong> · Rango oficial asignado:`;
           }
 
-          // Consultar el próximo número correlativo en tiempo real
+          // Consultar el próximo número correlativo en tiempo real directamente de la base de datos
           fetch('/api/dorsal/stats')
             .then((r) => r.json())
             .then((data) => {
               if (data && data.stats && data.stats[catCode]) {
                 const info = data.stats[catCode];
+                selected.dataset.nextDorsal = info.nextDorsal;
+                selected.dataset.nextNumber = info.nextDorsal.replace(/\D/g, '');
                 if (categoriaRangoBadge && categoriaSelect.value === selected.value) {
                   categoriaRangoBadge.textContent = `${catPrefix}${catRange.replace(' - ', ' al ')} · Próximo: ${info.nextDorsal}`;
                 }
@@ -1558,6 +1560,28 @@
       if (categoriaSelect) {
         categoriaSelect.addEventListener('change', updateCategoriaIndicator);
       }
+
+      // Sincronizar todos los contadores de categorías en background de inmediato
+      const preloadDorsalStats = () => {
+        fetch('/api/dorsal/stats')
+          .then((r) => r.json())
+          .then((data) => {
+            if (data && data.stats && categoriaSelect) {
+              Array.from(categoriaSelect.options).forEach((opt) => {
+                const cCode = opt.dataset.code;
+                if (cCode && data.stats[cCode]) {
+                  const info = data.stats[cCode];
+                  opt.dataset.nextDorsal = info.nextDorsal;
+                  opt.dataset.nextNumber = info.nextDorsal.replace(/\D/g, '');
+                }
+              });
+              updateCategoriaIndicator();
+            }
+          })
+          .catch(() => {});
+      };
+      preloadDorsalStats();
+      updateCategoriaIndicator();
 
       // Limpiar error de género inmediatamente cuando el usuario seleccione Damas o Varones
       document.querySelectorAll('input[name="generoCompetencia"]').forEach((radio) => {
@@ -1823,10 +1847,16 @@
 
         // 3. Salvaguarda infalible si la red estuvo completamente desconectada
         if (!result.dorsal) {
-          const numPadded = String(catStart).padStart(4, '0');
-          result.number = numPadded;
+          const selOpt = categoriaSelect ? categoriaSelect.options[categoriaSelect.selectedIndex] : null;
+          let safeNum = (selOpt && selOpt.dataset.nextNumber) ? selOpt.dataset.nextNumber : '';
+          let safeDorsal = (selOpt && selOpt.dataset.nextDorsal) ? selOpt.dataset.nextDorsal : '';
+          if (!safeNum || !safeDorsal) {
+            safeNum = String(catStart).padStart(4, '0');
+            safeDorsal = `${catPrefix}${safeNum}`;
+          }
+          result.number = safeNum;
           result.prefix = catPrefix;
-          result.dorsal = `${catPrefix}${numPadded}`;
+          result.dorsal = safeDorsal;
 
           if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
             fetch(GOOGLE_SCRIPT_URL, {
@@ -1942,10 +1972,18 @@
 
             // Salvaguarda absoluta: garantizar que el número correlativo SIEMPRE tenga dígitos y se muestre en pantalla
             if (!allocatedNumber || !/\d+/.test(allocatedDorsal)) {
-              const defaultPadded = String(catStart).padStart(4, '0');
-              allocatedNumber = defaultPadded;
-              allocatedPrefix = catPrefix;
-              allocatedDorsal = `${catPrefix}${defaultPadded}`;
+              const safeDorsal = (selectedOption && selectedOption.dataset.nextDorsal) ? selectedOption.dataset.nextDorsal : '';
+              const safeNum = (selectedOption && selectedOption.dataset.nextNumber) ? selectedOption.dataset.nextNumber : '';
+              if (safeDorsal && safeNum) {
+                allocatedNumber = safeNum;
+                allocatedPrefix = catPrefix;
+                allocatedDorsal = safeDorsal;
+              } else {
+                const defaultPadded = String(catStart).padStart(4, '0');
+                allocatedNumber = defaultPadded;
+                allocatedPrefix = catPrefix;
+                allocatedDorsal = `${catPrefix}${defaultPadded}`;
+              }
             }
 
             // Normalizar a 4 dígitos para categorías estándar
