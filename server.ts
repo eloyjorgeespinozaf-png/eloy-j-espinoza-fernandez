@@ -437,7 +437,7 @@ async function startServer() {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(gasPayload),
-            signal: AbortSignal.timeout(35000)
+            signal: AbortSignal.timeout(42000)
           });
 
           if (gasRes.ok) {

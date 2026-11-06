@@ -1409,6 +1409,12 @@
 
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
+    // =========================================================================
+    // ⚠️ CONFIGURACIÓN GOOGLE APPS SCRIPT (GAS):
+    // URL DE LA APLICACIÓN WEB PUBLICADA
+    // =========================================================================
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
+
     document.addEventListener('DOMContentLoaded', () => {
       // 0. CONTROLADOR MODAL DE QR BANCARIO
       const qrZoomModal = document.getElementById('qrZoomModal');
@@ -1508,20 +1514,49 @@
             categoriaRangoText.innerHTML = `Control Categoría <strong>${catCode}</strong> · Rango oficial asignado:`;
           }
 
-          // Consultar el próximo número correlativo en tiempo real directamente de la base de datos
-          fetch('/api/dorsal/stats')
-            .then((r) => r.json())
-            .then((data) => {
-              if (data && data.stats && data.stats[catCode]) {
-                const info = data.stats[catCode];
-                selected.dataset.nextDorsal = info.nextDorsal;
-                selected.dataset.nextNumber = info.nextDorsal.replace(/\D/g, '');
-                if (categoriaRangoBadge && categoriaSelect.value === selected.value) {
-                  categoriaRangoBadge.textContent = `${catPrefix}${catRange.replace(' - ', ' al ')} · Próximo: ${info.nextDorsal}`;
-                }
-              }
+          // Consultar el próximo número correlativo en tiempo real directamente de Google Sheets o localStorage
+          const applyNextDorsal = (dorsalStr) => {
+            if (!dorsalStr) return;
+            selected.dataset.nextDorsal = dorsalStr;
+            const numDigits = dorsalStr.replace(/\D/g, '');
+            selected.dataset.nextNumber = numDigits;
+            const intVal = parseInt(numDigits, 10);
+            if (!isNaN(intVal)) {
+              localStorage.setItem('eceme_counter_' + catCode, String(intVal - 1));
+            }
+            if (categoriaRangoBadge && categoriaSelect.value === selected.value) {
+              categoriaRangoBadge.textContent = `${catPrefix}${catRange.replace(' - ', ' al ')} · Próximo: ${dorsalStr}`;
+            }
+          };
+
+          // Intentar primero con la caché de localStorage para respuesta instantánea
+          const cachedCount = localStorage.getItem('eceme_counter_' + catCode);
+          if (cachedCount && !isNaN(parseInt(cachedCount, 10))) {
+            const nextCached = parseInt(cachedCount, 10) + 1;
+            applyNextDorsal(`${catPrefix}${String(nextCached).padStart(4, '0')}`);
+          }
+
+          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+            fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
+              signal: AbortSignal.timeout(6000)
             })
-            .catch(() => {});
+              .then((r) => r.json())
+              .then((data) => {
+                if (data && data.status === 'success' && data.dorsal) {
+                  applyNextDorsal(data.dorsal);
+                }
+              })
+              .catch(() => {
+                fetch('/api/dorsal/stats')
+                  .then((r) => r.json())
+                  .then((data) => {
+                    if (data && data.stats && data.stats[catCode]) {
+                      applyNextDorsal(data.stats[catCode].nextDorsal);
+                    }
+                  })
+                  .catch(() => {});
+              });
+          }
         }
 
         // Control condicional de Rama (Damas / Varones):
@@ -1561,24 +1596,46 @@
         categoriaSelect.addEventListener('change', updateCategoriaIndicator);
       }
 
-      // Sincronizar todos los contadores de categorías en background de inmediato
+      // Sincronizar todos los contadores de categorías en background directamente desde Google Sheets
       const preloadDorsalStats = () => {
-        fetch('/api/dorsal/stats')
-          .then((r) => r.json())
-          .then((data) => {
-            if (data && data.stats && categoriaSelect) {
-              Array.from(categoriaSelect.options).forEach((opt) => {
-                const cCode = opt.dataset.code;
-                if (cCode && data.stats[cCode]) {
-                  const info = data.stats[cCode];
-                  opt.dataset.nextDorsal = info.nextDorsal;
-                  opt.dataset.nextNumber = info.nextDorsal.replace(/\D/g, '');
-                }
-              });
-              updateCategoriaIndicator();
+        const updateOptionsWithData = (categoriesObj) => {
+          if (!categoriesObj || !categoriaSelect) return;
+          Array.from(categoriaSelect.options).forEach((opt) => {
+            const cCode = opt.dataset.code;
+            if (cCode && categoriesObj[cCode]) {
+              const info = categoriesObj[cCode];
+              const nextD = info.nextDorsal || (info.prefix + String(info.nextNumber).padStart(4, '0'));
+              const nextN = String(info.nextNumber || nextD.replace(/\D/g, '')).padStart(4, '0');
+              opt.dataset.nextDorsal = nextD;
+              opt.dataset.nextNumber = nextN;
+              const nInt = parseInt(nextN, 10);
+              if (!isNaN(nInt)) {
+                localStorage.setItem('eceme_counter_' + cCode, String(nInt - 1));
+              }
             }
+          });
+          updateCategoriaIndicator();
+        };
+
+        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+          fetch(`${GOOGLE_SCRIPT_URL}?action=get_counters`, {
+            signal: AbortSignal.timeout(8000)
           })
-          .catch(() => {});
+            .then((r) => r.json())
+            .then((data) => {
+              if (data && data.status === 'success' && data.categories) {
+                updateOptionsWithData(data.categories);
+              }
+            })
+            .catch(() => {
+              fetch('/api/dorsal/stats')
+                .then((r) => r.json())
+                .then((data) => {
+                  if (data && data.stats) updateOptionsWithData(data.stats);
+                })
+                .catch(() => {});
+            });
+        }
       };
       preloadDorsalStats();
       updateCategoriaIndicator();
@@ -1657,12 +1714,6 @@
           setTimeout(forzarMayusculas, 10);
         });
       });
-
-      // =========================================================================
-      // ⚠️ CONFIGURACIÓN GOOGLE APPS SCRIPT (GAS):
-      // URL DE LA APLICACIÓN WEB PUBLICADA
-      // =========================================================================
-      const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
 
       const btnFinalizar = document.getElementById('finalizeBtn');
       const vistaExito = document.getElementById('finalizeNotification');
@@ -1784,80 +1835,121 @@
           nombreArchivo: fileData.nombre
         };
 
-        let result = {
-          dorsal: '',
-          number: '',
-          prefix: catPrefix
-        };
+        // 1. OBTENER EL DORSAL CORRELATIVO OFICIAL EXACTO DIRECTAMENTE DE GOOGLE SHEETS
+        let assignedDorsal = '';
+        let assignedNumber = '';
 
-        // 1. Registro directo a través del servidor centralizado (/api/inscribir)
-        // El servidor asigna el siguiente dorsal correlativo oficial sincronizado con Google Sheets
+        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+          try {
+            const nextReq = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
+              signal: AbortSignal.timeout(10000)
+            });
+            if (nextReq.ok) {
+              const gasNext = await nextReq.json().catch(() => ({}));
+              if (gasNext && gasNext.status === 'success' && gasNext.dorsal) {
+                assignedDorsal = String(gasNext.dorsal).trim();
+                assignedNumber = gasNext.number ? String(gasNext.number).trim() : assignedDorsal.replace(/\D/g, '');
+              }
+            }
+          } catch (errSync) {
+            console.warn('[Sync Dorsal]', errSync);
+          }
+        }
+
+        // Si no se pudo contactar a Google Sheets en ese instante, usar localStorage o el dataset sincronizado
+        if (!assignedDorsal) {
+          const stored = localStorage.getItem('eceme_counter_' + catCode);
+          if (stored && !isNaN(parseInt(stored, 10))) {
+            const nextVal = parseInt(stored, 10) + 1;
+            assignedNumber = String(nextVal).padStart(4, '0');
+            assignedDorsal = `${catPrefix}${assignedNumber}`;
+          } else {
+            const selOpt = categoriaSelect ? categoriaSelect.options[categoriaSelect.selectedIndex] : null;
+            if (selOpt && selOpt.dataset.nextDorsal && selOpt.dataset.nextNumber) {
+              assignedDorsal = selOpt.dataset.nextDorsal;
+              assignedNumber = selOpt.dataset.nextNumber;
+            } else {
+              assignedNumber = String(catStart).padStart(4, '0');
+              assignedDorsal = `${catPrefix}${assignedNumber}`;
+            }
+          }
+        }
+
+        // Payload con el dorsal asignado para registrar
+        payload.dorsal = assignedDorsal;
+
+        // 2. TRANSMITIR A GOOGLE SHEETS (Exactamente UNA transmisión por registro)
+        let transmitted = false;
+
+        // A) Intentar vía backend local (tiempo de espera ampliado a 45s para procesar imágenes Base64 y Drive)
         try {
-          const resp = await fetch('/api/inscribir', {
+          const srvRes = await fetch('/api/inscribir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(38000)
+            signal: AbortSignal.timeout(45000)
           });
-          if (resp.ok) {
-            const data = await resp.json();
-            if (data && data.success && data.dorsal) {
-              result.dorsal = data.dorsal;
-              result.number = data.number || data.dorsal.replace(catPrefix, '').replace(/^[A-M]-?/, '');
-              result.prefix = data.prefix || catPrefix;
-              return result;
+          if (srvRes.ok) {
+            const srvData = await srvRes.json().catch(() => ({}));
+            if (srvData && srvData.success && srvData.dorsal) {
+              // USAR EL DORSAL OFICIAL QUE GOOGLE SHEETS REGISTRÓ EN LA CELDA DE LA HOJA
+              assignedDorsal = String(srvData.dorsal).trim();
+              assignedNumber = srvData.number ? String(srvData.number).trim() : assignedDorsal.replace(/\D/g, '');
+              transmitted = true;
             }
           }
-        } catch (err) {
-          console.warn('[Registro] Servidor /api/inscribir ocupado o en espera, activando contingencia segura:', err);
+        } catch (srvErr) {
+          console.warn('[Aviso conexión backend]', srvErr);
         }
 
-        // 2. Respaldo directo a Google Apps Script en caso de tiempo de espera prolongado
-        if (!result.dorsal && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
+        // B) Si el backend no respondió, transmitir directamente a Google Apps Script
+        if (!transmitted && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
           try {
-            const gasResp = await fetch(GOOGLE_SCRIPT_URL, {
+            const directRes = await fetch(GOOGLE_SCRIPT_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify(payload)
+              body: JSON.stringify(payload),
+              signal: AbortSignal.timeout(45000)
             });
-            if (gasResp.ok) {
-              const gasData = await gasResp.json().catch(() => ({}));
-              if (gasData && gasData.status === 'success' && gasData.dorsal) {
-                result.dorsal = gasData.dorsal;
-                result.number = gasData.number || gasData.dorsal.replace(catPrefix, '').replace(/^[A-M]-?/, '');
-                result.prefix = gasData.prefix || catPrefix;
-                return result;
+            if (directRes.ok) {
+              const directData = await directRes.json().catch(() => ({}));
+              if (directData && directData.status === 'success' && directData.dorsal) {
+                assignedDorsal = String(directData.dorsal).trim();
+                assignedNumber = directData.number ? String(directData.number).trim() : assignedDorsal.replace(/\D/g, '');
               }
             }
+            transmitted = true;
           } catch (e) {
-            console.warn('[Contingencia] Fallo al contactar Google Apps Script directo:', e);
+            console.warn('[GAS Direct Transmission Fallback]', e);
+            try {
+              await fetch(GOOGLE_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+              });
+              transmitted = true;
+            } catch (errNoCors) {}
           }
         }
 
-        // 3. Salvaguarda infalible si la red estuvo completamente desconectada
-        if (!result.dorsal) {
+        // Persistir el correlativo oficial confirmado para que avance correlativamente sin retrocesos
+        const confirmedNumInt = parseInt(assignedNumber, 10);
+        if (!isNaN(confirmedNumInt)) {
+          localStorage.setItem('eceme_counter_' + catCode, String(confirmedNumInt));
           const selOpt = categoriaSelect ? categoriaSelect.options[categoriaSelect.selectedIndex] : null;
-          let safeNum = (selOpt && selOpt.dataset.nextNumber) ? selOpt.dataset.nextNumber : '';
-          let safeDorsal = (selOpt && selOpt.dataset.nextDorsal) ? selOpt.dataset.nextDorsal : '';
-          if (!safeNum || !safeDorsal) {
-            safeNum = String(catStart).padStart(4, '0');
-            safeDorsal = `${catPrefix}${safeNum}`;
-          }
-          result.number = safeNum;
-          result.prefix = catPrefix;
-          result.dorsal = safeDorsal;
-
-          if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-            fetch(GOOGLE_SCRIPT_URL, {
-              method: 'POST',
-              mode: 'no-cors',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ ...payload, dorsal: result.dorsal })
-            }).catch(() => {});
+          if (selOpt) {
+            const nextUpcoming = confirmedNumInt + 1;
+            selOpt.dataset.nextNumber = String(nextUpcoming).padStart(4, '0');
+            selOpt.dataset.nextDorsal = `${catPrefix}${selOpt.dataset.nextNumber}`;
           }
         }
 
-        return result;
+        return {
+          dorsal: assignedDorsal,
+          number: assignedNumber,
+          prefix: catPrefix
+        };
       }
 
       // MÓDULO 1 & 2: Envío de Formulario, Transmisión Automática y Asignación Correlativa de Dorsal
@@ -1961,23 +2053,34 @@
 
             // Salvaguarda absoluta: garantizar que el número correlativo SIEMPRE tenga dígitos y se muestre en pantalla
             if (!allocatedNumber || !/\d+/.test(allocatedDorsal)) {
-              const safeDorsal = (selectedOption && selectedOption.dataset.nextDorsal) ? selectedOption.dataset.nextDorsal : '';
-              const safeNum = (selectedOption && selectedOption.dataset.nextNumber) ? selectedOption.dataset.nextNumber : '';
-              if (safeDorsal && safeNum) {
-                allocatedNumber = safeNum;
+              const storedCount = localStorage.getItem('eceme_counter_' + catCode);
+              if (storedCount && !isNaN(parseInt(storedCount, 10))) {
+                const nextN = parseInt(storedCount, 10) + 1;
+                allocatedNumber = String(nextN).padStart(4, '0');
                 allocatedPrefix = catPrefix;
-                allocatedDorsal = safeDorsal;
+                allocatedDorsal = `${catPrefix}${allocatedNumber}`;
               } else {
-                const defaultPadded = String(catStart).padStart(4, '0');
-                allocatedNumber = defaultPadded;
-                allocatedPrefix = catPrefix;
-                allocatedDorsal = `${catPrefix}${defaultPadded}`;
+                const safeDorsal = (selectedOption && selectedOption.dataset.nextDorsal) ? selectedOption.dataset.nextDorsal : '';
+                const safeNum = (selectedOption && selectedOption.dataset.nextNumber) ? selectedOption.dataset.nextNumber : '';
+                if (safeDorsal && safeNum) {
+                  allocatedNumber = safeNum;
+                  allocatedPrefix = catPrefix;
+                  allocatedDorsal = safeDorsal;
+                } else {
+                  const defaultPadded = String(catStart).padStart(4, '0');
+                  allocatedNumber = defaultPadded;
+                  allocatedPrefix = catPrefix;
+                  allocatedDorsal = `${catPrefix}${defaultPadded}`;
+                }
               }
             }
 
-            // Normalizar a 4 dígitos para categorías estándar
-            if (allocatedNumber && allocatedNumber.length < 4 && catStart >= 1000) {
+            // Normalizar siempre a 4 dígitos para presentación uniforme (ej. 1001 o 0401)
+            if (allocatedNumber && allocatedNumber.length < 4) {
               allocatedNumber = allocatedNumber.padStart(4, '0');
+            }
+            if (!allocatedDorsal || !allocatedDorsal.includes(allocatedNumber)) {
+              allocatedDorsal = `${allocatedPrefix}${allocatedNumber}`;
             }
 
             // Actualizar elementos visuales del Dorsal Oficial en pantalla
@@ -2136,6 +2239,7 @@
           if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
           if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
 
+          preloadDorsalStats();
           updateCategoriaIndicator();
           submitBtn.disabled = false;
           btnText.textContent = "Generar Dorsal y Proceder";
