@@ -116,8 +116,52 @@
         </div>
       </header>
 
-      <!-- CONTENEDOR MÓDULO 1: SECCIÓN DE REGISTRO (QR Y FORMULARIO) -->
-      <div id="registrationSection">
+      <!-- BARRA DE PESTAÑAS PRINCIPALES SUPERIOR (REGISTRARSE, CONVOCATORIA, RECORRIDO) -->
+      <nav id="topNavTabs" class="sticky top-2 z-30 mb-8 max-w-xl mx-auto backdrop-blur-md">
+        <div class="p-1 sm:p-1.5 rounded-2xl bg-army-950/95 border border-gold-500/50 shadow-[0_10px_30px_rgba(0,0,0,0.85)] ring-1 ring-black/60 flex items-center justify-between gap-1 sm:gap-1.5">
+          <button
+            type="button"
+            id="tabBtnRegistrarse"
+            data-target="tabPaneRegistrarse"
+            class="tab-nav-btn flex-1 py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer bg-gradient-to-r from-gold-500 to-gold-400 text-army-950 shadow-md ring-1 ring-gold-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span>REGISTRARSE</span>
+          </button>
+
+          <button
+            type="button"
+            id="tabBtnConvocatoria"
+            data-target="tabPaneConvocatoria"
+            class="tab-nav-btn flex-1 py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-stone-300 hover:text-gold-300 hover:bg-army-900/60"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>CONVOCATORIA</span>
+          </button>
+
+          <button
+            type="button"
+            id="tabBtnRecorrido"
+            data-target="tabPaneRecorrido"
+            class="tab-nav-btn flex-1 py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-stone-300 hover:text-gold-300 hover:bg-army-900/60"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+            <span>RECORRIDO</span>
+          </button>
+        </div>
+      </nav>
+
+      <!-- PESTAÑA 1: REGISTRARSE (INSCRIPCIÓN Y DORSAL) -->
+      <div id="tabPaneRegistrarse" class="tab-pane">
+
+        <!-- CONTENEDOR MÓDULO 1: SECCIÓN DE REGISTRO (QR Y FORMULARIO) -->
+        <div id="registrationSection">
         
         <!-- 3. SECCIÓN DE PAGO QR -->
         <section class="mb-10">
@@ -1010,6 +1054,503 @@
 
       </section>
 
+      </div> <!-- /#tabPaneRegistrarse -->
+
+      <!-- ========================================================================= -->
+      <!-- PESTAÑA 2: CONVOCATORIA OFICIAL (REGLAMENTACIÓN Y BASES DE LA COMPETENCIA) -->
+      <!-- ========================================================================= -->
+      <div id="tabPaneConvocatoria" class="tab-pane hidden space-y-6">
+        
+        <!-- Tarjeta Principal de Presentación -->
+        <div class="bg-army-900/95 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute -right-8 -top-8 w-36 h-36 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+          <div class="flex items-center gap-3 border-b border-army-800 pb-4 mb-5">
+            <div class="w-12 h-12 rounded-xl bg-army-950 border border-gold-500/50 flex items-center justify-center p-1.5 shrink-0 shadow-inner">
+              <img src="/assets/aistudio/ECEME_ESC_cad34ddd.png" alt="Escudo ECEME" class="w-full h-full object-contain" />
+            </div>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-widest text-gold-400">Escuela de Comando y Estado Mayor</span>
+              <h2 class="text-xl sm:text-2xl font-black font-display uppercase tracking-wide text-white">
+                CONVOCATORIA OFICIAL 2026
+              </h2>
+            </div>
+          </div>
+
+          <!-- Resumen de Datos Clave -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-center">
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Fecha Oficial</span>
+              <span class="text-xs sm:text-sm font-bold text-gold-300 font-display">Dom. 22 Noviembre</span>
+            </div>
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Concentración</span>
+              <span class="text-xs sm:text-sm font-bold text-stone-200 font-display">06:30 Horas</span>
+            </div>
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Partida Oficial</span>
+              <span class="text-xs sm:text-sm font-bold text-stone-200 font-display">07:30 Horas</span>
+            </div>
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Distancia Central</span>
+              <span class="text-xs sm:text-sm font-bold text-gold-400 font-display">10 Kilómetros</span>
+            </div>
+          </div>
+
+          <!-- Puntos y Bases Oficiales -->
+          <div class="space-y-5 text-stone-300 text-xs sm:text-sm leading-relaxed">
+            
+            <!-- 1. FINALIDAD -->
+            <div class="p-4 rounded-xl bg-army-950/60 border border-army-800/80 space-y-1.5">
+              <h3 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                1. Finalidad y Objetivos
+              </h3>
+              <p>
+                La Escuela de Comando y Estado Mayor del Ejército (ECEME) "Mcal. Andrés de Santa Cruz", en el marco de sus actividades institucionales, convoca a la juventud, deportistas, unidades militares, policiales y ciudadanía en general a participar de la <strong>Gran Carrera Pedestre 10 KM "Mariscales de Bolivia"</strong>, con el propósito de incentivar la práctica deportiva, el civismo, la salud física y la confraternización nacional.
+              </p>
+            </div>
+
+            <!-- 2. PARTICIPANTES Y CATEGORÍAS -->
+            <div class="p-4 rounded-xl bg-army-950/60 border border-army-800/80 space-y-3">
+              <h3 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                2. Categorías Oficiales y Control de Dorsales
+              </h3>
+              <p class="text-[11px] sm:text-xs text-stone-400">
+                Cada categoría cuenta con un rango oficial correlativo y distintivo de color exclusivo para control estricto de los jueces:
+              </p>
+
+              <!-- Grid de Categorías Civiles -->
+              <div>
+                <span class="text-[11px] font-bold text-gold-300 uppercase tracking-wider block mb-1.5">A. Categorías Civiles (10 KM - Damas y Varones)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-pink-500/30">
+                    <span class="w-3 h-3 rounded-full bg-pink-500 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. A (Rosado):</strong> Juvenil (14 a 17 años) [1001-1999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-blue-600/30">
+                    <span class="w-3 h-3 rounded-full bg-blue-600 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. B (Azul):</strong> Mayores (18 a 29 años) [2001-2999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-amber-800/30">
+                    <span class="w-3 h-3 rounded-full bg-amber-800 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. C (Café):</strong> Master A (30 a 37 años) [3001-3999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-gray-500/30">
+                    <span class="w-3 h-3 rounded-full bg-gray-500 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. D (Gris):</strong> Master B (38 a 45 años) [4001-4999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-yellow-500/30 sm:col-span-2">
+                    <span class="w-3 h-3 rounded-full bg-yellow-500 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. E (Amarillo):</strong> Master C (46 años en adelante) [5001-5999]</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Grid de Categorías Militar y Policial -->
+              <div>
+                <span class="text-[11px] font-bold text-gold-300 uppercase tracking-wider block mb-1.5">B. Categorías Militar y Policial (10 KM - Damas y Varones)</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-neutral-700">
+                    <span class="w-3 h-3 rounded-full bg-neutral-900 border border-neutral-600 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. F (Negro):</strong> SMO y Premilitares [6001-6999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-red-600/30">
+                    <span class="w-3 h-3 rounded-full bg-red-600 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. G (Rojo):</strong> Formación Cadetes/Alumnos [7001-7999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-yellow-400/30">
+                    <span class="w-3 h-3 rounded-full bg-yellow-400 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. H (Amarillo):</strong> Oficiales hasta 15 años [8001-8999]</span>
+                  </div>
+                  <div class="flex items-center gap-2 p-2 rounded-lg bg-army-900/80 border border-emerald-600/30">
+                    <span class="w-3 h-3 rounded-full bg-emerald-600 shrink-0"></span>
+                    <span class="truncate"><strong>Cat. I (Verde):</strong> Oficiales 16+ años [9001-9999]</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Grid de Categorías Infantiles -->
+              <div>
+                <span class="text-[11px] font-bold text-gold-300 uppercase tracking-wider block mb-1.5">C. Categorías Infantiles (Circuito Seguro Especial)</span>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                  <div class="p-2 rounded-lg bg-army-900/80 border border-cyan-500/30 text-center">
+                    <span class="text-cyan-400 font-bold block">J (Celeste)</span>
+                    <span class="text-[10px] text-stone-300">U-4 · 80 m</span>
+                  </div>
+                  <div class="p-2 rounded-lg bg-army-900/80 border border-orange-500/30 text-center">
+                    <span class="text-orange-400 font-bold block">K (Naranja)</span>
+                    <span class="text-[10px] text-stone-300">U-6 · 200 m</span>
+                  </div>
+                  <div class="p-2 rounded-lg bg-army-900/80 border border-purple-500/30 text-center">
+                    <span class="text-purple-400 font-bold block">L (Morado)</span>
+                    <span class="text-[10px] text-stone-300">U-8 · 400 m</span>
+                  </div>
+                  <div class="p-2 rounded-lg bg-army-900/80 border border-teal-500/30 text-center">
+                    <span class="text-teal-400 font-bold block">M (Turquesa)</span>
+                    <span class="text-[10px] text-stone-300">U-13 · 1000 m</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. REQUISITOS DE INSCRIPCIÓN -->
+            <div class="p-4 rounded-xl bg-army-950/60 border border-army-800/80 space-y-2">
+              <h3 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                3. Requisitos de Inscripción
+              </h3>
+              <ul class="list-disc list-inside space-y-1.5 text-stone-300">
+                <li>Realizar el depósito o transferencia mediante el <strong>Código QR Bancario Oficial</strong> habilitado en la plataforma.</li>
+                <li>Completar el formulario en línea con datos verídicos: Nombres, Cédula de Identidad, Celular y Unidad.</li>
+                <li>Adjuntar la <strong>fotografía clara del comprobante de depósito</strong> bancario.</li>
+                <li>Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (obligatorio para categorías 10 KM; opcional para infantiles).</li>
+                <li>Gozar de buena salud y condición física apta para pruebas pedestres de fondo.</li>
+              </ul>
+            </div>
+
+            <!-- 4. PREMIACIÓN Y RECONOCIMIENTOS -->
+            <div class="p-4 rounded-xl bg-army-950/60 border border-army-800/80 space-y-2">
+              <h3 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                4. Premiación y Reconocimientos
+              </h3>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 text-center">
+                <div class="p-3 rounded-lg bg-army-900/90 border border-gold-500/30">
+                  <span class="text-lg block mb-1">🥇</span>
+                  <strong class="text-xs uppercase text-gold-300 block">Primeros Lugares</strong>
+                  <span class="text-[11px] text-stone-400">Trofeo de Honor, Medalla de Oro y Diploma Oficial</span>
+                </div>
+                <div class="p-3 rounded-lg bg-army-900/90 border border-stone-500/30">
+                  <span class="text-lg block mb-1">🥈</span>
+                  <strong class="text-xs uppercase text-stone-300 block">Podio General</strong>
+                  <span class="text-[11px] text-stone-400">Trofeos al 2do y 3er puesto de cada categoría</span>
+                </div>
+                <div class="p-3 rounded-lg bg-army-900/90 border border-amber-600/30">
+                  <span class="text-lg block mb-1">🎖️</span>
+                  <strong class="text-xs uppercase text-amber-300 block">Medalla Finisher</strong>
+                  <span class="text-[11px] text-stone-400">Medalla conmemorativa a todos los corredores que crucen la meta</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. SEGURIDAD Y ASISTENCIA -->
+            <div class="p-4 rounded-xl bg-army-950/60 border border-army-800/80 space-y-1.5">
+              <h3 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+                5. Seguridad, Puestos Médicos y Cronometraje
+              </h3>
+              <p>
+                La prueba cuenta con el resguardo de efectivos de la Policía Militar y personal de tránsito en toda la ruta. Se instalarán <strong>4 puntos de hidratación</strong> oficial y ambulancias equipadas con médicos de la <strong>Sanidad Militar</strong> en la partida, punto medio y zona de meta.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Botón de Acción para Inscribirse Directamente -->
+          <div class="mt-8 pt-4 border-t border-army-800 text-center">
+            <button
+              type="button"
+              class="btn-switch-to-register inline-flex items-center justify-center gap-2 py-3 px-8 rounded-xl bg-gold-500 hover:bg-gold-400 text-army-950 font-display font-black uppercase tracking-wider text-sm sm:text-base shadow-xl transition-transform hover:scale-105 cursor-pointer ring-2 ring-gold-300/60"
+            >
+              <span>¡IR AL FORMULARIO DE INSCRIPCIÓN!</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ========================================================================= -->
+      <!-- PESTAÑA 3: RECORRIDO OFICIAL 10 KM Y PRUEBAS INFANTILES -->
+      <!-- ========================================================================= -->
+      <div id="tabPaneRecorrido" class="tab-pane hidden space-y-6">
+        
+        <!-- Tarjeta Principal del Recorrido -->
+        <div class="bg-army-900/95 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div class="absolute -left-8 -top-8 w-36 h-36 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+          <div class="flex items-center gap-3 border-b border-army-800 pb-4 mb-5">
+            <div class="w-12 h-12 rounded-xl bg-army-950 border border-gold-500/50 flex items-center justify-center p-2 shrink-0 shadow-inner text-gold-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </div>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-widest text-gold-400">Circuito Oficial Homologado</span>
+              <h2 class="text-xl sm:text-2xl font-black font-display uppercase tracking-wide text-white">
+                RUTA Y RECORRIDO TÉCNICO 10 KM
+              </h2>
+            </div>
+          </div>
+
+          <!-- Ficha Técnica del Trazado -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-center">
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Punto Partida</span>
+              <span class="text-xs sm:text-sm font-bold text-stone-200 font-display">Condominio Bolivia</span>
+              <span class="text-[10px] text-gold-400/90 block">Av. Ramón Rivero</span>
+            </div>
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Punto Llegada</span>
+              <span class="text-xs sm:text-sm font-bold text-stone-200 font-display">Frontis ECEME</span>
+              <span class="text-[10px] text-gold-400/90 block">Calama y Tumusla</span>
+            </div>
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Superficie</span>
+              <span class="text-xs sm:text-sm font-bold text-stone-200 font-display">100% Asfalto</span>
+              <span class="text-[10px] text-stone-400 block">Pavimento regular</span>
+            </div>
+            <div class="p-3 rounded-xl bg-army-950/80 border border-army-800">
+              <span class="text-[10px] text-stone-400 font-bold uppercase tracking-wider block">Altimetría</span>
+              <span class="text-xs sm:text-sm font-bold text-gold-400 font-display">2,558 m.s.n.m.</span>
+              <span class="text-[10px] text-stone-400 block">Trazado plano favorable</span>
+            </div>
+          </div>
+
+          <!-- ================================================================= -->
+          <!-- MAPA SATELITAL OFICIAL DEL CIRCUITO (IMAGEN ADJUNTA OFICIAL 10 KM) -->
+          <!-- ================================================================= -->
+          <div class="mb-8 bg-army-950/95 border-2 border-gold-500/50 rounded-2xl p-4 sm:p-6 shadow-2xl relative group overflow-hidden">
+            <div class="flex items-center justify-between flex-wrap gap-2 mb-3.5 pb-3 border-b border-army-800">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                <h3 class="font-bold text-gold-300 uppercase tracking-wider text-xs sm:text-sm font-display">
+                  MAPA SATELITAL OFICIAL Y TRAZADO GEORREFERENCIADO (GPS 10 KM)
+                </h3>
+              </div>
+              <span class="text-[10px] font-mono text-gold-400 bg-army-900 border border-gold-500/40 px-2.5 py-0.5 rounded-full font-bold">
+                CIRCUITO OFICIAL · COCHABAMBA
+              </span>
+            </div>
+
+            <!-- Contenedor Interactivo de la Imagen Satelital -->
+            <div
+              id="mapaRecorridoContainer"
+              class="relative rounded-xl overflow-hidden border-2 border-army-700/80 bg-neutral-950 cursor-pointer shadow-2xl group/map transition-all duration-300 hover:border-gold-400"
+              title="Haga clic para ampliar el mapa del recorrido en pantalla completa"
+            >
+              <img
+                id="mapaRecorridoImg"
+                src="/assets/aistudio/image_7747b957.png"
+                alt="Mapa Satelital Oficial de la Ruta 10 KM - Carrera Pedestre ECEME"
+                class="w-full h-auto max-h-[560px] object-contain mx-auto select-none transition-transform duration-300 group-hover/map:scale-[1.015]"
+                loading="eager"
+              />
+              
+              <!-- Overlay interactivo con botón de ampliación -->
+              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/map:opacity-100 transition-opacity flex items-center justify-center pointer-events-none p-4">
+                <span class="bg-gold-500 text-army-950 font-bold text-xs sm:text-sm uppercase px-5 py-2.5 rounded-xl shadow-2xl flex items-center gap-2 font-display tracking-wider border border-white/60">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                  </svg>
+                  <span>Clic para Ampliar en Pantalla Completa</span>
+                </span>
+              </div>
+
+              <!-- Badge en esquina inferior con instrucción táctil -->
+              <div class="absolute bottom-2.5 right-2.5 bg-army-950/90 backdrop-blur border border-gold-500/40 text-[10px] text-stone-200 px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <span>Tocar para ver en alta resolución</span>
+              </div>
+            </div>
+
+            <!-- Leyenda y Botones de Acción para el mapa satelital -->
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs pt-2">
+              <div class="flex flex-wrap items-center gap-2 text-[11px] text-stone-300">
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-950/80 border border-red-500/40 text-red-300 font-semibold">
+                  <span class="w-3 h-1 bg-red-500 rounded"></span> Ruta de Carrera
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 font-semibold">
+                  <span>🟢</span> Inicio: Muyurina
+                </span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-stone-900 border border-stone-600 text-stone-200 font-semibold">
+                  <span>🏁</span> Meta: ECEME
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  id="zoomMapaBtn"
+                  class="py-2 px-3.5 rounded-lg bg-army-900 hover:bg-army-800 border border-gold-500/40 text-gold-300 font-semibold text-[11px] flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  <span>Pantalla Completa</span>
+                </button>
+
+                <a
+                  href="/assets/aistudio/image_7747b957.png"
+                  download="Mapa_Recorrido_10KM_ECEME.png"
+                  class="py-2 px-3.5 rounded-lg bg-gold-500 hover:bg-gold-400 text-army-950 font-bold text-[11px] flex items-center gap-1.5 transition shadow-sm cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Descargar Mapa</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline Paso a Paso de la Carrera 10 KM -->
+          <div class="space-y-4 mb-8">
+            <h3 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-gold-400"></span>
+              Itinerario de Ruta y Puntos de Control Estratégicos
+            </h3>
+
+            <div class="relative pl-6 sm:pl-8 space-y-6 before:content-[''] before:absolute before:left-2.5 sm:before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-gold-500/40">
+              
+              <!-- Checkpoint 0: Partida -->
+              <div class="relative">
+                <div class="absolute -left-6 sm:-left-8 top-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-army-950 shadow-md flex items-center justify-center text-[10px] font-black text-white">
+                  🟢
+                </div>
+                <div class="p-3.5 rounded-xl bg-army-950/70 border border-army-800">
+                  <div class="flex items-center justify-between mb-1">
+                    <strong class="text-xs sm:text-sm text-gold-300 uppercase tracking-wide">Km 0.0 · Partida Oficial (Muyurina)</strong>
+                    <span class="text-[10px] bg-emerald-950/90 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">START 07:30 AM</span>
+                  </div>
+                  <p class="text-xs text-stone-300">
+                    Rotonda Muyurina / Av. Ramón Rivero (Frontis Condominio Bolivia). Zona oficial de concentración general, calentamiento táctico, chequeo de marbetes y formación de pelotones.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Checkpoint 1: Km 2.5 -->
+              <div class="relative">
+                <div class="absolute -left-6 sm:-left-8 top-1 w-5 h-5 rounded-full bg-blue-500 border-2 border-army-950 shadow-md flex items-center justify-center text-[10px] text-white">
+                  💧
+                </div>
+                <div class="p-3.5 rounded-xl bg-army-950/70 border border-army-800">
+                  <div class="flex items-center justify-between mb-1">
+                    <strong class="text-xs sm:text-sm text-blue-300 uppercase tracking-wide">Km 2.5 · Puesto de Hidratación 1 (Hospital Viedma)</strong>
+                    <span class="text-[10px] text-stone-400 font-mono">Sector Norte / Viedma</span>
+                  </div>
+                  <p class="text-xs text-stone-300">
+                    Trazado por el circuito norte y descenso hacia el sector Hospital Viedma y Av. Ballivián. Primer punto de abastecimiento de agua en sachets sellados.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Checkpoint 2: Km 5.0 -->
+              <div class="relative">
+                <div class="absolute -left-6 sm:-left-8 top-1 w-5 h-5 rounded-full bg-red-500 border-2 border-army-950 shadow-md flex items-center justify-center text-[10px] text-white">
+                  🚑
+                </div>
+                <div class="p-3.5 rounded-xl bg-army-950/70 border border-army-800">
+                  <div class="flex items-center justify-between mb-1">
+                    <strong class="text-xs sm:text-sm text-red-300 uppercase tracking-wide">Km 5.0 · Control Medio (Sky Box / Tribunal de Justicia)</strong>
+                    <span class="text-[10px] bg-red-950/90 text-red-300 border border-red-500/40 px-2 py-0.5 rounded-full font-bold">PUESTO MÉDICO 2</span>
+                  </div>
+                  <p class="text-xs text-stone-300">
+                    Tramo frente a Sky Box Cinemas & Entretenimiento hacia el Tribunal Departamental de Justicia - Cochabamba. Jueces de control con toma de tiempos, segundo puesto de hidratación y carpa de la Sanidad Militar.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Checkpoint 3: Km 7.5 -->
+              <div class="relative">
+                <div class="absolute -left-6 sm:-left-8 top-1 w-5 h-5 rounded-full bg-blue-500 border-2 border-army-950 shadow-md flex items-center justify-center text-[10px] text-white">
+                  💧
+                </div>
+                <div class="p-3.5 rounded-xl bg-army-950/70 border border-army-800">
+                  <div class="flex items-center justify-between mb-1">
+                    <strong class="text-xs sm:text-sm text-blue-300 uppercase tracking-wide">Km 7.5 · Hidratación 3 (Sector Las Cuadras / Oquendo)</strong>
+                    <span class="text-[10px] text-stone-400 font-mono">Sector Las Cuadras</span>
+                  </div>
+                  <p class="text-xs text-stone-300">
+                    Circuito sur por Las Cuadras y aproximación hacia el centro histórico. Punto de reposición de electrolitos e hidratación para encarar el remate final.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Checkpoint 4: Llegada Km 10 -->
+              <div class="relative">
+                <div class="absolute -left-6 sm:-left-8 top-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-army-950 shadow-md flex items-center justify-center text-[10px] text-white">
+                  🏁
+                </div>
+                <div class="p-3.5 rounded-xl bg-army-950/90 border border-emerald-500/50 shadow-md">
+                  <div class="flex items-center justify-between mb-1">
+                    <strong class="text-xs sm:text-sm text-emerald-300 uppercase tracking-wide">Km 10.0 · META TRIUNFAL (ECEME)</strong>
+                    <span class="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-full font-bold">FINISH & PODIO</span>
+                  </div>
+                  <p class="text-xs text-stone-300">
+                    Frontis Histórico del Cuartel de la Escuela de Comando y Estado Mayor (Calle Calama esquina Tumusla). Bandera a cuadros, arco oficial de meta, registro de llegadas, entrega de Medalla Finisher, área médica de recuperación y ceremonia de premiación militar.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Sección: Pruebas Infantiles Seguras -->
+          <div class="p-4 rounded-xl bg-army-950/80 border border-gold-500/30 mb-6 space-y-2">
+            <h4 class="font-bold text-gold-400 uppercase tracking-wider text-xs sm:text-sm flex items-center gap-2">
+              <span>🚸</span>
+              Circuitos Especiales Infantiles (Perímetro Protegido ECEME)
+            </h4>
+            <p class="text-xs text-stone-300 leading-relaxed">
+              Para garantizar la absoluta integridad física de las niñas y niños competidores, las pruebas de categorías infantiles se llevarán a cabo en un <strong>circuito cerrado acordonado por la Policía Militar</strong> en inmediaciones de la meta (Calle Calama):
+            </p>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-center text-xs">
+              <div class="p-2.5 rounded-lg bg-army-900 border border-cyan-500/30">
+                <strong class="text-cyan-400 block">U-4 (80 m)</strong>
+                <span class="text-[10px] text-stone-400">Recta con acompañamiento</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-army-900 border border-orange-500/30">
+                <strong class="text-orange-400 block">U-6 (200 m)</strong>
+                <span class="text-[10px] text-stone-400">Circuito plano guiado</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-army-900 border border-purple-500/30">
+                <strong class="text-purple-400 block">U-8 (400 m)</strong>
+                <span class="text-[10px] text-stone-400">1 vuelta perimetral</span>
+              </div>
+              <div class="p-2.5 rounded-lg bg-army-900 border border-teal-500/30">
+                <strong class="text-teal-400 block">U-13 (1000 m)</strong>
+                <span class="text-[10px] text-stone-400">Circuito cerrado 1 KM</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recomendaciones para el Día de la Competencia -->
+          <div class="p-4 rounded-xl bg-army-950/60 border border-army-800 text-xs text-stone-300 space-y-2">
+            <strong class="text-gold-400 uppercase tracking-wider block">Recomendaciones Oficiales al Competidor:</strong>
+            <ul class="list-disc list-inside space-y-1">
+              <li>Presentarse con al menos 45 minutos de antelación en el punto de partida (Condominio Bolivia).</li>
+              <li>Asegurar el dorsal oficial en el pecho con 4 alfileres para su visibilidad inmediata ante los jueces.</li>
+              <li>Mantenerse hidratado durante los puestos habilitados a lo largo de los 10 kilómetros.</li>
+              <li>En caso de malestar físico o calambre, solicitar asistencia inmediata a los puestos de auxilio militar identificados.</li>
+            </ul>
+          </div>
+
+          <!-- Botón de Acción para Inscribirse Directamente -->
+          <div class="mt-8 pt-4 border-t border-army-800 text-center">
+            <button
+              type="button"
+              class="btn-switch-to-register inline-flex items-center justify-center gap-2 py-3 px-8 rounded-xl bg-gold-500 hover:bg-gold-400 text-army-950 font-display font-black uppercase tracking-wider text-sm sm:text-base shadow-xl transition-transform hover:scale-105 cursor-pointer ring-2 ring-gold-300/60"
+            >
+              <span>¡ASEGURA TU DORSAL DE COMPETIDOR!</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
 
     <!-- Pie de página Institucional -->
@@ -1407,6 +1948,72 @@
     </div>
   </div>
 
+  <!-- MODAL DE PANTALLA COMPLETA PARA MAPA SATELITAL DE RECORRIDO -->
+  <div
+    id="mapaZoomModal"
+    class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fadeIn"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div class="relative w-full max-w-4xl max-h-[92vh] bg-army-950 border-2 border-gold-500/60 rounded-2xl p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.95)] text-center flex flex-col my-auto">
+      <!-- Botón de Cerrar Modal -->
+      <button
+        type="button"
+        id="closeMapaZoomModalBtn"
+        class="absolute top-3 right-3 sm:top-4 sm:right-4 w-9 h-9 rounded-full bg-army-900 hover:bg-gold-500 text-stone-300 hover:text-army-950 flex items-center justify-center transition shadow-lg z-10 cursor-pointer border border-army-700"
+        aria-label="Cerrar vista completa"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <div class="flex items-center justify-between border-b border-army-800 pb-3 mb-3 pr-10 text-left">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-gold-400">Trazado Georreferenciado Oficial</span>
+          <h3 class="text-base sm:text-lg font-black font-display uppercase tracking-wide text-white">
+            MAPA SATELITAL 10 KM - CARRERA PEDESTRE ECEME
+          </h3>
+        </div>
+      </div>
+
+      <!-- Contenedor scrollable y con zoom de la imagen satelital -->
+      <div class="relative flex-1 overflow-auto rounded-xl bg-black border border-army-800 max-h-[72vh] flex items-center justify-center p-1">
+        <img
+          src="/assets/aistudio/image_7747b957.png"
+          alt="Mapa Oficial de la Ruta 10 KM - Vista Completa Satelital"
+          class="max-w-full max-h-[70vh] object-contain mx-auto select-none rounded-lg"
+        />
+      </div>
+
+      <!-- Botones de Acción dentro del modal -->
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs pt-3 border-t border-army-800">
+        <div class="text-[11px] text-stone-400 text-left">
+          <span class="text-gold-400 font-bold">Referencias:</span> Línea roja (Ruta) · Bandera verde (Inicio Muyurina) · Bandera a cuadros (Meta ECEME)
+        </div>
+        <div class="flex items-center gap-2">
+          <a
+            href="/assets/aistudio/image_7747b957.png"
+            download="Mapa_Satelital_Recorrido_10KM_ECEME.png"
+            class="py-2 px-4 rounded-xl bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Descargar Mapa Original</span>
+          </a>
+          <button
+            type="button"
+            id="closeMapaZoomModalBtn2"
+            class="py-2 px-4 rounded-xl bg-army-900 hover:bg-army-800 text-stone-200 border border-army-700 font-bold uppercase tracking-wider text-xs transition cursor-pointer"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
     // =========================================================================
@@ -1439,6 +2046,80 @@
           if (e.target === qrZoomModal) closeQrModal();
         });
       }
+
+      // 0.1 CONTROLADOR MODAL DE MAPA SATELITAL DE RECORRIDO
+      const mapaZoomModal = document.getElementById('mapaZoomModal');
+      const mapaRecorridoContainer = document.getElementById('mapaRecorridoContainer');
+      const zoomMapaBtn = document.getElementById('zoomMapaBtn');
+      const closeMapaZoomModalBtn = document.getElementById('closeMapaZoomModalBtn');
+      const closeMapaZoomModalBtn2 = document.getElementById('closeMapaZoomModalBtn2');
+
+      const openMapaModal = () => {
+        if (mapaZoomModal) mapaZoomModal.classList.remove('hidden');
+      };
+      const closeMapaModal = () => {
+        if (mapaZoomModal) mapaZoomModal.classList.add('hidden');
+      };
+
+      if (mapaRecorridoContainer) mapaRecorridoContainer.addEventListener('click', openMapaModal);
+      if (zoomMapaBtn) zoomMapaBtn.addEventListener('click', openMapaModal);
+      if (closeMapaZoomModalBtn) closeMapaZoomModalBtn.addEventListener('click', closeMapaModal);
+      if (closeMapaZoomModalBtn2) closeMapaZoomModalBtn2.addEventListener('click', closeMapaModal);
+      if (mapaZoomModal) {
+        mapaZoomModal.addEventListener('click', (e) => {
+          if (e.target === mapaZoomModal) closeMapaModal();
+        });
+      }
+
+      // =========================================================================
+      // CONTROLADOR DE PESTAÑAS SUPERIORES (REGISTRARSE, CONVOCATORIA, RECORRIDO)
+      // =========================================================================
+      const tabButtons = document.querySelectorAll('.tab-nav-btn');
+      const tabPanes = document.querySelectorAll('.tab-pane');
+
+      const switchTab = (targetPaneId) => {
+        tabPanes.forEach((pane) => {
+          if (pane.id === targetPaneId) {
+            pane.classList.remove('hidden');
+          } else {
+            pane.classList.add('hidden');
+          }
+        });
+
+        tabButtons.forEach((btn) => {
+          const isTarget = btn.dataset.target === targetPaneId;
+          if (isTarget) {
+            btn.className = 'tab-nav-btn flex-1 py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-black uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer bg-gradient-to-r from-gold-500 to-gold-400 text-army-950 shadow-md ring-1 ring-gold-300';
+          } else {
+            btn.className = 'tab-nav-btn flex-1 py-2.5 px-2 sm:px-4 rounded-xl text-xs sm:text-sm font-display font-bold uppercase tracking-wider transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer text-stone-300 hover:text-gold-300 hover:bg-army-900/60';
+          }
+        });
+
+        const topTabsEl = document.getElementById('topNavTabs');
+        if (topTabsEl) {
+          topTabsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      };
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.target;
+          if (target) switchTab(target);
+        });
+      });
+
+      // Conexión para botones internos que llevan a la inscripción
+      document.querySelectorAll('.btn-switch-to-register').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          switchTab('tabPaneRegistrarse');
+          const nombresInput = document.getElementById('nombresApellidos');
+          if (nombresInput) {
+            setTimeout(() => {
+              nombresInput.focus();
+            }, 350);
+          }
+        });
+      });
 
       const form = document.getElementById('inscriptionForm');
       const registrationSection = document.getElementById('registrationSection');
