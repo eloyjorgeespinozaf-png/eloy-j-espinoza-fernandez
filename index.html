@@ -10,9 +10,9 @@
   <meta property="og:type" content="website" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="theme-color" content="#0b140a" />
-  <link rel="icon" id="appFavicon" type="image/png" href="/assets/aistudio/ECEME_ESC_cad34ddd.png" />
-  <link rel="apple-touch-icon" id="appAppleTouchIcon" href="/assets/aistudio/ECEME_ESC_cad34ddd.png" />
-  <link rel="shortcut icon" id="appShortcutIcon" href="/assets/aistudio/ECEME_ESC_cad34ddd.png" />
+  <link rel="icon" id="appFavicon" type="image/jpeg" href="/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg" />
+  <link rel="apple-touch-icon" id="appAppleTouchIcon" href="/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg" />
+  <link rel="shortcut icon" id="appShortcutIcon" href="/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -88,8 +88,8 @@
       <header class="text-center mb-10">
         <!-- Escudo / Ícono Institucional Oficial de la ECEME -->
         <div class="inline-flex items-center justify-center mb-4 relative group">
-          <div id="appHeaderIconWrapper" class="h-20 w-20 sm:h-24 sm:w-24 rounded-full border-2 border-gold-400 bg-army-950/95 flex items-center justify-center text-gold-400 shadow-[0_8px_25px_rgba(0,0,0,0.7)] overflow-hidden p-2 ring-4 ring-gold-500/30 transition-transform duration-300 hover:scale-105">
-            <img id="appHeaderIconImg" src="/assets/aistudio/ECEME_ESC_cad34ddd.png" alt="Escudo Oficial ECEME" class="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] contrast-110" />
+          <div id="appHeaderIconWrapper" class="h-24 w-28 sm:h-28 sm:w-36 rounded-2xl border-2 border-gold-400 bg-army-950/95 flex items-center justify-center text-gold-400 shadow-[0_8px_25px_rgba(0,0,0,0.7)] overflow-hidden p-1.5 ring-4 ring-gold-500/30 transition-transform duration-300 hover:scale-105 backdrop-blur">
+            <img id="appHeaderIconImg" src="/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg" alt="Escudo Oficial ECEME - Ser Antes Que Parecer" class="w-full h-full object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] contrast-105" />
           </div>
         </div>
 
@@ -972,7 +972,7 @@
 
           <!-- Contenido del Dorsal: Parte Superior -->
           <div class="text-center border-b border-stone-200 pb-2.5 flex items-center justify-center gap-2">
-            <img id="dorsalIconImg" src="/assets/aistudio/ECEME_ESC_cad34ddd.png" alt="Escudo ECEME" class="w-7 h-7 sm:w-8 sm:h-8 object-contain filter drop-shadow-sm" />
+            <img id="dorsalIconImg" src="/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg" alt="Escudo ECEME" class="w-8 h-8 sm:w-10 sm:h-9 object-contain filter drop-shadow-sm" />
             <span class="font-display font-extrabold text-base sm:text-lg tracking-[0.2em] text-army-900 uppercase">
               EJÉRCITO - ECEME
             </span>
@@ -1083,8 +1083,8 @@
           <div class="absolute -right-8 -top-8 w-36 h-36 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
           <div class="flex items-center gap-3 border-b border-army-800 pb-4 mb-5">
-            <div class="w-12 h-12 rounded-xl bg-army-950 border border-gold-500/50 flex items-center justify-center p-1.5 shrink-0 shadow-inner">
-              <img src="/assets/aistudio/ECEME_ESC_cad34ddd.png" alt="Escudo ECEME" class="w-full h-full object-contain" />
+            <div class="w-14 h-12 rounded-xl bg-army-950 border border-gold-500/50 flex items-center justify-center p-1 shrink-0 shadow-inner">
+              <img src="/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg" alt="Escudo ECEME" class="w-full h-full object-contain" />
             </div>
             <div>
               <span class="text-[11px] font-bold uppercase tracking-widest text-gold-400">Escuela de Comando y Estado Mayor</span>
@@ -3198,7 +3198,7 @@
       const LOCKED_BG_OPACITY = 88;
       const LOCKED_BG_BLUR = 0;
       const LOCKED_OVERLAY_DARKNESS = 28;
-      const LOCKED_ICON_SOURCE = "/assets/aistudio/ECEME_ESC_cad34ddd.png";
+      const LOCKED_ICON_SOURCE = "/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg";
 
       // Estado activo en memoria fijado e inmutable
       let currentBgSource = LOCKED_BG_SOURCE;
@@ -3593,7 +3593,7 @@
       // Restaurar Escudo Oficial ECEME
       if (adminResetIconBtn) {
         adminResetIconBtn.addEventListener('click', () => {
-          currentIconSource = "/assets/aistudio/ECEME_ESC_cad34ddd.png";
+          currentIconSource = "/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg";
           applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);
         });
       }
@@ -3745,8 +3745,8 @@
             if (typeof cached.bgOpacity === 'number' && cached.bgOpacity < 70) {
               cached.bgOpacity = LOCKED_BG_OPACITY;
             }
-            if (typeof cached.overlayDarkness === 'number' && cached.overlayDarkness > 45) {
-              cached.overlayDarkness = LOCKED_OVERLAY_DARKNESS;
+            if (!cached.iconSource || !cached.iconSource.startsWith('data:image/')) {
+              cached.iconSource = LOCKED_ICON_SOURCE;
             }
             applyVisualState(cached.bgSource, cached.bgOpacity, cached.bgBlur, cached.overlayDarkness, cached.iconSource);
           }

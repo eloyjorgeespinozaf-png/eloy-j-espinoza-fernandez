@@ -112,7 +112,7 @@ async function startServer() {
       bgOpacity: 88,
       bgBlur: 0,
       overlayDarkness: 28,
-      iconSource: '/assets/aistudio/ECEME_ESC_cad34ddd.png',
+      iconSource: '/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg',
       qrSource: '/qr-oficial.png',
       requiresAuth: true,
       updatedAt: Date.now()
