@@ -108,8 +108,8 @@ async function startServer() {
       console.error('Error al leer visual-settings.json:', err);
     }
     return {
-      bgSource: '/fondo-oficial.jpeg',
-      bgOpacity: 40,
+      bgSource: '/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg',
+      bgOpacity: 45,
       bgBlur: 0,
       overlayDarkness: 70,
       iconSource: '/assets/aistudio/ECEME_ESC_cad34ddd.png',

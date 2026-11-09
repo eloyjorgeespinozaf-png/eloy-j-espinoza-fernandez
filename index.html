@@ -60,8 +60,8 @@
 </head>
 <body class="relative bg-army-950 text-stone-100 font-sans min-h-screen antialiased flex flex-col selection:bg-gold-500 selection:text-army-950">
 
-  <!-- Capa de Fondo Institucional Oficial (Afiche Oficial Carrera Pedestre 10KM ECEME) -->
-  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 bg-cover bg-top sm:bg-center bg-no-repeat transition-all duration-500" style="min-height: 100dvh; background-image: url('/fondo-oficial.jpeg'); opacity: 0.38; filter: saturate(1.15) contrast(1.08);"></div>
+  <!-- Capa de Fondo Institucional Oficial (Afiche Oficial Carrera Pedestre 10KM ECEME: Cristo de la Concordia, Bandera y Soldados) -->
+  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 bg-cover bg-top sm:bg-center bg-no-repeat transition-all duration-500" style="min-height: 100dvh; background-image: url('/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg'); opacity: 0.45; filter: saturate(1.18) contrast(1.10);"></div>
   <!-- Overlay Táctico con Gradiente para Alto Contraste y Legibilidad Absoluta con el fondo militar -->
   <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300" style="min-height: 100dvh; background: radial-gradient(circle at 50% 20%, rgba(20, 35, 18, 0.50) 0%, rgba(11, 20, 10, 0.85) 60%, rgba(6, 11, 5, 0.96) 100%); opacity: 0.70;"></div>
 
@@ -3083,8 +3083,8 @@
       const dorsalIconImg = document.getElementById('dorsalIconImg');
 
       // CONFIGURACIÓN VISUAL OFICIAL: AFICHE OFICIAL DE LA CARRERA ECEME
-      const LOCKED_BG_SOURCE = "/fondo-oficial.jpeg";
-      const LOCKED_BG_OPACITY = 38;
+      const LOCKED_BG_SOURCE = "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg";
+      const LOCKED_BG_OPACITY = 45;
       const LOCKED_BG_BLUR = 0;
       const LOCKED_OVERLAY_DARKNESS = 70;
       const LOCKED_ICON_SOURCE = "/assets/aistudio/ECEME_ESC_cad34ddd.png";
@@ -3418,8 +3418,8 @@
       // Restaurar Fondo Oficial Predeterminado (Afiche Oficial)
       if (adminResetBgBtn) {
         adminResetBgBtn.addEventListener('click', () => {
-          currentBgSource = "/fondo-oficial.jpeg";
-          currentBgOpacity = 38;
+          currentBgSource = "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg";
+          currentBgOpacity = 45;
           currentBgBlur = 0;
           currentOverlayDarkness = 70;
           applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);

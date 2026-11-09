@@ -1,12 +1,12 @@
 {
-  "bgSource": "/assets/aistudio/WhatsApp_Image_2026-11-02_at_22.28.07_3916c1b9.jpeg",
-  "bgOpacity": 40,
+  "bgSource": "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg",
+  "bgOpacity": 45,
   "bgBlur": 0,
   "overlayDarkness": 70,
   "iconSource": "/assets/aistudio/ECEME_ESC_cad34ddd.png",
   "qrSource": "/qr-oficial.png",
-  "bgUrl": "/fondo-oficial.jpeg",
+  "bgUrl": "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg",
   "iconUrl": "/assets/aistudio/ECEME_ESC_cad34ddd.png",
   "qrUrl": "/qr-oficial.png",
-  "updatedAt": 1793735000000
+  "updatedAt": 1793736000000
 }
