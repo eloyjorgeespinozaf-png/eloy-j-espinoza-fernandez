@@ -109,9 +109,9 @@ async function startServer() {
     }
     return {
       bgSource: '/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg',
-      bgOpacity: 45,
+      bgOpacity: 88,
       bgBlur: 0,
-      overlayDarkness: 70,
+      overlayDarkness: 28,
       iconSource: '/assets/aistudio/ECEME_ESC_cad34ddd.png',
       qrSource: '/qr-oficial.png',
       requiresAuth: true,

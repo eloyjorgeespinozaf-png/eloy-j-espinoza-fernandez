@@ -61,17 +61,23 @@
 <body class="relative bg-army-950 text-stone-100 font-sans min-h-screen antialiased flex flex-col selection:bg-gold-500 selection:text-army-950">
 
   <!-- Capa de Fondo Institucional Oficial (Afiche Oficial Carrera Pedestre 10KM ECEME: Cristo de la Concordia, Bandera y Soldados) -->
-  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 bg-cover bg-top sm:bg-center bg-no-repeat transition-all duration-500" style="min-height: 100dvh; background-image: url('/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg'); opacity: 0.45; filter: saturate(1.18) contrast(1.10);"></div>
+  <div id="appBackgroundLayer" class="fixed inset-0 pointer-events-none z-0 bg-cover bg-top sm:bg-center bg-no-repeat transition-all duration-500" style="min-height: 100dvh; background-image: url('/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg'); opacity: 0.88; filter: saturate(1.22) contrast(1.10) brightness(1.03); background-attachment: fixed;"></div>
   <!-- Overlay Táctico con Gradiente para Alto Contraste y Legibilidad Absoluta con el fondo militar -->
-  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300" style="min-height: 100dvh; background: radial-gradient(circle at 50% 20%, rgba(20, 35, 18, 0.50) 0%, rgba(11, 20, 10, 0.85) 60%, rgba(6, 11, 5, 0.96) 100%); opacity: 0.70;"></div>
+  <div id="appOverlayLayer" class="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300" style="min-height: 100dvh; background: radial-gradient(ellipse at 50% 15%, rgba(12, 22, 12, 0.10) 0%, rgba(8, 16, 8, 0.35) 60%, rgba(4, 9, 4, 0.65) 100%); opacity: 0.28;"></div>
 
-  <!-- Insignia Oficial Institucional (Fija y Permanente - Sin opciones de modificación) -->
-  <div class="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 bg-army-950/85 border border-gold-500/40 py-1.5 px-3 rounded-full shadow-2xl flex items-center gap-2 text-xs font-semibold backdrop-blur select-none pointer-events-none ring-1 ring-black/40">
+  <!-- Insignia Oficial Institucional (Fija y Permanente - Permite ver el afiche completo) -->
+  <div class="fixed top-3 right-3 sm:top-4 sm:right-4 z-40 bg-army-950/85 border border-gold-500/40 py-1.5 px-3 rounded-full shadow-2xl flex items-center gap-2 text-xs font-semibold backdrop-blur ring-1 ring-black/40">
     <span class="relative flex h-2 w-2">
       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-gold-400 opacity-75"></span>
       <span class="relative inline-flex rounded-full h-2 w-2 bg-gold-500"></span>
     </span>
-    <span class="text-gold-300 font-display uppercase tracking-wider text-[11px] sm:text-xs">ECEME · 10 KM OFICIAL</span>
+    <button type="button" id="badgeViewBgBtn" class="text-gold-300 hover:text-gold-100 font-display uppercase tracking-wider text-[11px] sm:text-xs cursor-pointer flex items-center gap-1.5 transition">
+      <span>ECEME · 10 KM OFICIAL</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gold-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+      </svg>
+    </button>
   </div>
 
   <!-- Contenedor Principal (Mobile-First) -->
@@ -100,19 +106,30 @@
         </p>
 
         <div class="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-army-700/80 bg-army-900/95 text-stone-300 text-xs sm:text-sm font-medium shadow-md backdrop-blur">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-army-700/80 bg-army-950/80 text-stone-300 text-xs sm:text-sm font-medium shadow-md backdrop-blur">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gold-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span>Domingo 22 de Noviembre</span>
           </div>
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-army-700/80 bg-army-900/95 text-stone-300 text-xs sm:text-sm font-medium shadow-md backdrop-blur">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-army-700/80 bg-army-950/80 text-stone-300 text-xs sm:text-sm font-medium shadow-md backdrop-blur">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gold-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span>Puntos: Condominio Bolivia (Av. Ramón Rivero) · ECEME (Calama y Tumusla)</span>
           </div>
+          <button
+            type="button"
+            id="viewBgFullBtn"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-gold-500/60 bg-gold-500/20 hover:bg-gold-500/30 text-gold-300 hover:text-gold-200 text-xs sm:text-sm font-semibold shadow-md backdrop-blur transition cursor-pointer"
+            title="Visualizar el afiche oficial de fondo en alta resolución"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gold-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>Ver Imagen de Fondo Oficial</span>
+          </button>
         </div>
       </header>
 
@@ -165,7 +182,7 @@
         
         <!-- 3. SECCIÓN DE PAGO QR -->
         <section class="mb-10">
-          <div class="bg-army-900/90 border border-army-800 rounded-xl p-6 sm:p-8 shadow-xl text-center">
+          <div class="bg-army-950/85 backdrop-blur-md border border-gold-500/30 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.7)] text-center">
             <div class="text-xs uppercase tracking-widest text-gold-400/90 font-semibold mb-3">
               Paso 1: Pago de Inscripción
             </div>
@@ -242,7 +259,7 @@
 
         <!-- 4. FORMULARIO DE INSCRIPCIÓN -->
         <section class="mb-10">
-          <div class="bg-army-900/90 border border-army-800 rounded-xl p-6 sm:p-8 shadow-xl">
+          <div class="bg-army-950/85 backdrop-blur-md border border-gold-500/30 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.7)]">
             <div class="mb-6">
               <h2 class="text-xl sm:text-2xl font-bold font-display uppercase tracking-wide text-white">
                 Formulario de Inscripción
@@ -1062,7 +1079,7 @@
       <div id="tabPaneConvocatoria" class="tab-pane hidden space-y-6">
         
         <!-- Tarjeta Principal de Presentación -->
-        <div class="bg-army-900/95 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="bg-army-950/85 backdrop-blur-md border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.7)] relative overflow-hidden">
           <div class="absolute -right-8 -top-8 w-36 h-36 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
           <div class="flex items-center gap-3 border-b border-army-800 pb-4 mb-5">
@@ -1271,7 +1288,7 @@
       <div id="tabPaneRecorrido" class="tab-pane hidden space-y-6">
         
         <!-- Tarjeta Principal del Recorrido -->
-        <div class="bg-army-900/95 border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+        <div class="bg-army-950/85 backdrop-blur-md border border-gold-500/40 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.7)] relative overflow-hidden">
           <div class="absolute -left-8 -top-8 w-36 h-36 bg-gold-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
           <div class="flex items-center gap-3 border-b border-army-800 pb-4 mb-5">
@@ -1704,14 +1721,14 @@
             <div>
               <div class="flex justify-between text-stone-300 mb-1">
                 <span>Opacidad de la foto de fondo:</span>
-                <span id="adminBgOpacityVal" class="font-mono text-gold-400 font-bold">50%</span>
+                <span id="adminBgOpacityVal" class="font-mono text-gold-400 font-bold">88%</span>
               </div>
               <input
                 type="range"
                 id="adminBgOpacityRange"
                 min="10"
                 max="100"
-                value="50"
+                value="88"
                 class="w-full h-1.5 bg-army-950 rounded-lg appearance-none cursor-pointer accent-gold-500"
               />
             </div>
@@ -1719,14 +1736,14 @@
             <div>
               <div class="flex justify-between text-stone-300 mb-1">
                 <span>Desenfoque (Efecto Blur):</span>
-                <span id="adminBgBlurVal" class="font-mono text-gold-400 font-bold">1px</span>
+                <span id="adminBgBlurVal" class="font-mono text-gold-400 font-bold">0px</span>
               </div>
               <input
                 type="range"
                 id="adminBgBlurRange"
                 min="0"
                 max="8"
-                value="1"
+                value="0"
                 class="w-full h-1.5 bg-army-950 rounded-lg appearance-none cursor-pointer accent-gold-500"
               />
             </div>
@@ -1734,14 +1751,14 @@
             <div>
               <div class="flex justify-between text-stone-300 mb-1">
                 <span>Filtro de Oscuridad (Contraste):</span>
-                <span id="adminOverlayDarknessVal" class="font-mono text-gold-400 font-bold">65%</span>
+                <span id="adminOverlayDarknessVal" class="font-mono text-gold-400 font-bold">28%</span>
               </div>
               <input
                 type="range"
                 id="adminOverlayDarknessRange"
-                min="20"
+                min="10"
                 max="95"
-                value="65"
+                value="28"
                 class="w-full h-1.5 bg-army-950 rounded-lg appearance-none cursor-pointer accent-gold-500"
               />
             </div>
@@ -2014,6 +2031,76 @@
     </div>
   </div>
 
+  <!-- MODAL DE VISUALIZACIÓN EN PANTALLA COMPLETA DEL AFICHE / IMAGEN DE FONDO OFICIAL -->
+  <div
+    id="bgZoomModal"
+    class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden flex items-center justify-center p-3 sm:p-6 transition-all duration-300"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Afiche Oficial de la Carrera Pedestre 10KM ECEME"
+  >
+    <div class="relative w-full max-w-4xl max-h-[95vh] bg-army-950/95 border-2 border-gold-500/80 rounded-2xl p-4 sm:p-6 shadow-[0_20px_50px_rgba(0,0,0,0.9)] flex flex-col ring-2 ring-gold-400/40 overflow-hidden">
+      
+      <!-- Botón de Cierre Superior -->
+      <button
+        type="button"
+        id="closeBgZoomModalBtn"
+        class="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-9 h-9 rounded-full bg-army-900/90 text-stone-300 hover:text-white hover:bg-rose-900/80 border border-gold-500/40 flex items-center justify-center transition cursor-pointer shadow-lg"
+        title="Cerrar vista"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </button>
+
+      <div class="flex items-center justify-between border-b border-army-800 pb-3 mb-3 pr-10 text-left">
+        <div>
+          <span class="text-[10px] font-bold uppercase tracking-widest text-gold-400">Afiche Oficial Institucional</span>
+          <h3 class="text-base sm:text-lg font-black font-display uppercase tracking-wide text-white">
+            IMAGEN DE FONDO OFICIAL · CARRERA PEDESTRE 10 KM ECEME
+          </h3>
+        </div>
+      </div>
+
+      <!-- Contenedor scrollable y con zoom de la imagen de fondo -->
+      <div class="relative flex-1 overflow-auto rounded-xl bg-black/80 border border-army-800 max-h-[72vh] flex items-center justify-center p-2">
+        <img
+          id="bgModalPreviewImg"
+          src="/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg"
+          alt="Afiche Oficial de la Carrera Pedestre 10KM ECEME"
+          class="max-w-full max-h-[70vh] object-contain mx-auto select-none rounded-lg shadow-2xl"
+        />
+      </div>
+
+      <!-- Botones de Acción dentro del modal -->
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs pt-3 border-t border-army-800">
+        <div class="text-[11px] text-stone-400 text-left">
+          <span class="text-gold-400 font-bold">Detalle:</span> Cristo de la Concordia · Monumento Histórico · Bandera de Bolivia · Pelotón ECEME · Medalla Finisher 10K
+        </div>
+        <div class="flex items-center gap-2">
+          <a
+            id="downloadBgModalLink"
+            href="/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg"
+            download="Afiche_Oficial_10KM_ECEME.jpeg"
+            class="py-2 px-4 rounded-xl bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Descargar Afiche Original</span>
+          </a>
+          <button
+            type="button"
+            id="closeBgZoomModalBtn2"
+            class="py-2 px-4 rounded-xl bg-army-900 hover:bg-army-800 text-stone-200 border border-army-700 font-bold uppercase tracking-wider text-xs transition cursor-pointer"
+          >
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- LÓGICA FRONTEND (JS): MÓDULOS 1, 2 Y 3 -->
   <script>
     // =========================================================================
@@ -2068,6 +2155,30 @@
       if (mapaZoomModal) {
         mapaZoomModal.addEventListener('click', (e) => {
           if (e.target === mapaZoomModal) closeMapaModal();
+        });
+      }
+
+      // 0.2 CONTROLADOR MODAL DE AFICHE E IMAGEN DE FONDO OFICIAL
+      const bgZoomModal = document.getElementById('bgZoomModal');
+      const viewBgFullBtn = document.getElementById('viewBgFullBtn');
+      const badgeViewBgBtn = document.getElementById('badgeViewBgBtn');
+      const closeBgZoomModalBtn = document.getElementById('closeBgZoomModalBtn');
+      const closeBgZoomModalBtn2 = document.getElementById('closeBgZoomModalBtn2');
+
+      const openBgModal = () => {
+        if (bgZoomModal) bgZoomModal.classList.remove('hidden');
+      };
+      const closeBgModal = () => {
+        if (bgZoomModal) bgZoomModal.classList.add('hidden');
+      };
+
+      if (viewBgFullBtn) viewBgFullBtn.addEventListener('click', openBgModal);
+      if (badgeViewBgBtn) badgeViewBgBtn.addEventListener('click', openBgModal);
+      if (closeBgZoomModalBtn) closeBgZoomModalBtn.addEventListener('click', closeBgModal);
+      if (closeBgZoomModalBtn2) closeBgZoomModalBtn2.addEventListener('click', closeBgModal);
+      if (bgZoomModal) {
+        bgZoomModal.addEventListener('click', (e) => {
+          if (e.target === bgZoomModal) closeBgModal();
         });
       }
 
@@ -3084,9 +3195,9 @@
 
       // CONFIGURACIÓN VISUAL OFICIAL: AFICHE OFICIAL DE LA CARRERA ECEME
       const LOCKED_BG_SOURCE = "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg";
-      const LOCKED_BG_OPACITY = 45;
+      const LOCKED_BG_OPACITY = 88;
       const LOCKED_BG_BLUR = 0;
-      const LOCKED_OVERLAY_DARKNESS = 70;
+      const LOCKED_OVERLAY_DARKNESS = 28;
       const LOCKED_ICON_SOURCE = "/assets/aistudio/ECEME_ESC_cad34ddd.png";
 
       // Estado activo en memoria fijado e inmutable
@@ -3235,7 +3346,8 @@
         if (appBackgroundLayer) {
           appBackgroundLayer.style.backgroundImage = `url("${currentBgSource}")`;
           appBackgroundLayer.style.opacity = (currentBgOpacity / 100).toString();
-          appBackgroundLayer.style.filter = currentBgBlur > 0 ? `blur(${currentBgBlur}px)` : 'none';
+          const blurCss = currentBgBlur > 0 ? `blur(${currentBgBlur}px) ` : '';
+          appBackgroundLayer.style.filter = `${blurCss}saturate(1.22) contrast(1.10) brightness(1.03)`;
         }
         if (appOverlayLayer) {
           appOverlayLayer.style.opacity = (currentOverlayDarkness / 100).toString();
@@ -3245,6 +3357,15 @@
         if (appShortcutIcon) appShortcutIcon.href = currentIconSource;
         if (appHeaderIconImg) appHeaderIconImg.src = currentIconSource;
         if (dorsalIconImg) dorsalIconImg.src = currentIconSource;
+
+        const bgModalPreviewImg = document.getElementById('bgModalPreviewImg');
+        const downloadBgModalLink = document.getElementById('downloadBgModalLink');
+        if (bgModalPreviewImg && currentBgSource) {
+          bgModalPreviewImg.src = currentBgSource;
+        }
+        if (downloadBgModalLink && currentBgSource) {
+          downloadBgModalLink.href = currentBgSource;
+        }
 
         syncAdminModalUI();
       }
@@ -3419,9 +3540,9 @@
       if (adminResetBgBtn) {
         adminResetBgBtn.addEventListener('click', () => {
           currentBgSource = "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg";
-          currentBgOpacity = 45;
+          currentBgOpacity = 88;
           currentBgBlur = 0;
-          currentOverlayDarkness = 70;
+          currentOverlayDarkness = 28;
           applyVisualState(currentBgSource, currentBgOpacity, currentBgBlur, currentOverlayDarkness, currentIconSource);
         });
       }
@@ -3611,29 +3732,38 @@
 
       // 5. Carga Inicial de Configuración Visual al abrir la WebApp
       async function inicializarVisuales() {
-        // Primero aplicar valores por defecto de alta velocidad
+        // Primero aplicar valores por defecto de alta visibilidad y nitidez
         applyVisualState(LOCKED_BG_SOURCE, LOCKED_BG_OPACITY, LOCKED_BG_BLUR, LOCKED_OVERLAY_DARKNESS, LOCKED_ICON_SOURCE);
 
-        // Luego consultar almacenamiento local (IndexedDB)
+        // Sanear cualquier configuración local anterior en IndexedDB para asegurar máxima visibilidad
         try {
           const cached = await EcemeDB.get('eceme_visual_settings');
-          if (cached && (cached.bgSource || cached.iconSource)) {
+          if (cached) {
+            if (!cached.bgSource || !cached.bgSource.startsWith('data:image/')) {
+              cached.bgSource = LOCKED_BG_SOURCE;
+            }
+            if (typeof cached.bgOpacity === 'number' && cached.bgOpacity < 70) {
+              cached.bgOpacity = LOCKED_BG_OPACITY;
+            }
+            if (typeof cached.overlayDarkness === 'number' && cached.overlayDarkness > 45) {
+              cached.overlayDarkness = LOCKED_OVERLAY_DARKNESS;
+            }
             applyVisualState(cached.bgSource, cached.bgOpacity, cached.bgBlur, cached.overlayDarkness, cached.iconSource);
           }
         } catch (e) {}
 
-        // Finalmente consultar servidor para sincronizar cualquier cambio hecho por el administrador
+        // Sincronizar desde el servidor
         try {
           const res = await fetch('/api/visual-settings', { cache: 'no-store' });
           if (res.ok) {
             const serverSettings = await res.json();
             if (serverSettings) {
               applyVisualState(
-                serverSettings.bgSource,
-                serverSettings.bgOpacity,
-                serverSettings.bgBlur,
-                serverSettings.overlayDarkness,
-                serverSettings.iconSource
+                serverSettings.bgSource || LOCKED_BG_SOURCE,
+                typeof serverSettings.bgOpacity === 'number' ? serverSettings.bgOpacity : LOCKED_BG_OPACITY,
+                serverSettings.bgBlur || 0,
+                typeof serverSettings.overlayDarkness === 'number' ? serverSettings.overlayDarkness : LOCKED_OVERLAY_DARKNESS,
+                serverSettings.iconSource || LOCKED_ICON_SOURCE
               );
             }
           }
