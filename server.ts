@@ -302,7 +302,7 @@ async function startServer() {
     if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) return;
     try {
       const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_counters`, {
-        signal: AbortSignal.timeout(12000)
+        signal: AbortSignal.timeout(35000)
       });
       if (res.ok) {
         const data: any = await res.json();
@@ -327,8 +327,11 @@ async function startServer() {
           }
         }
       }
-    } catch (err) {
-      console.warn('[CounterSync] Aviso al sincronizar contadores con Google Sheets:', err);
+    } catch (err: any) {
+      // Manejo silencioso de timeout o desconexión transitoria de Google Apps Script; se reintentará en el próximo ciclo
+      if (err?.name !== 'TimeoutError' && !err?.message?.includes('timeout') && err?.name !== 'AbortError') {
+        console.warn('[CounterSync] Aviso de conexión con Google Sheets:', err?.message || err);
+      }
     }
   };
 
@@ -347,7 +350,7 @@ async function startServer() {
       if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
         try {
           const gasRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${code}`, {
-            signal: AbortSignal.timeout(6000)
+            signal: AbortSignal.timeout(25000)
           });
           if (gasRes.ok) {
             const gasData: any = await gasRes.json();

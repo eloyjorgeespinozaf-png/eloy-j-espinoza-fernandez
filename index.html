@@ -373,23 +373,6 @@
                 </span>
               </div>
 
-              <!-- Unidad / Repartición -->
-              <div>
-                <label for="unidadReparticion" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
-                  <span>Unidad / Repartición <span class="text-gold-400">*</span></span>
-                  <span class="text-[10px] text-gold-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-gold-500/30">SOLO MAYÚSCULAS</span>
-                </label>
-                <input
-                  type="text"
-                  id="unidadReparticion"
-                  name="unidadReparticion"
-                  required
-                  placeholder="EJ. ECEME / REGIMIENTO / PARTICULAR"
-                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase font-medium"
-                  style="text-transform: uppercase;"
-                />
-                <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
-              </div>
 
               <!-- Número de Celular -->
               <div>
@@ -1220,7 +1203,7 @@
               </h3>
               <ul class="list-disc list-inside space-y-1.5 text-stone-300">
                 <li>Realizar el depósito o transferencia mediante el <strong>Código QR Bancario Oficial</strong> habilitado en la plataforma.</li>
-                <li>Completar el formulario en línea con datos verídicos: Nombres, Cédula de Identidad, Celular y Unidad.</li>
+                <li>Completar el formulario en línea con datos verídicos: Nombres, Cédula de Identidad y Celular.</li>
                 <li>Adjuntar la <strong>fotografía clara del comprobante de depósito</strong> bancario.</li>
                 <li>Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (obligatorio para categorías 10 KM; opcional para infantiles).</li>
                 <li>Gozar de buena salud y condición física apta para pruebas pedestres de fondo.</li>
@@ -2330,7 +2313,7 @@
 
           if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
             fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
-              signal: AbortSignal.timeout(6000)
+              signal: AbortSignal.timeout(20000)
             })
               .then((r) => r.json())
               .then((data) => {
@@ -2411,7 +2394,7 @@
 
         if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
           fetch(`${GOOGLE_SCRIPT_URL}?action=get_counters`, {
-            signal: AbortSignal.timeout(8000)
+            signal: AbortSignal.timeout(25000)
           })
             .then((r) => r.json())
             .then((data) => {
@@ -2608,7 +2591,7 @@
         const nombres = document.getElementById('nombresApellidos') ? document.getElementById('nombresApellidos').value.trim().toUpperCase() : '';
         const ci = document.getElementById('cedulaIdentidad') ? document.getElementById('cedulaIdentidad').value.trim().toUpperCase() : '';
         const celular = document.getElementById('numeroCelular') ? document.getElementById('numeroCelular').value.trim().toUpperCase() : '';
-        const unidad = document.getElementById('unidadReparticion') ? document.getElementById('unidadReparticion').value.trim().toUpperCase() : '';
+        const unidad = '';
         const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value.trim().toUpperCase() : '';
         const generoRadio = document.querySelector('input[name="generoCompetencia"]:checked');
         const genero = generoRadio ? generoRadio.value : '';
@@ -2634,7 +2617,7 @@
         if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
           try {
             const nextReq = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
-              signal: AbortSignal.timeout(10000)
+              signal: AbortSignal.timeout(25000)
             });
             if (nextReq.ok) {
               const gasNext = await nextReq.json().catch(() => ({}));
