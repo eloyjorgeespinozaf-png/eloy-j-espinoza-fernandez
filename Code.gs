@@ -57,7 +57,7 @@ function testSetup() {
         "Nombres y Apellidos",
         "Cédula de Identidad",
         "Número de Celular",
-        "Unidad / Repartición",
+        "Inscrito Por",
         "Categoría",
         "Rama (Damas / Varones)",
         "URL Cédula Identidad (Drive)",
@@ -72,6 +72,7 @@ function testSetup() {
     } else {
       asegurarColumnaRama(sheet);
       asegurarColumnaCedula(sheet);
+      asegurarColumnaInscritoPor(sheet);
     }
   } else {
     Logger.log("⚠️ Advertencia: Este script no está vinculado directamente a un Google Sheet.");
@@ -152,6 +153,31 @@ function asegurarColumnaCedula(sheet) {
     cell.setFontColor("#ffffff");
     cell.setHorizontalAlignment("center");
     Logger.log("✅ Columna 'URL Cédula Identidad (Drive)' insertada automáticamente en columna " + insertPos);
+  }
+}
+
+/**
+ * Verifica si la columna existente contiene "Unidad" o "Unidad / Repartición".
+ * Si es así, renombra automáticamente la celda del encabezado en fila 1 a "Inscrito Por"
+ * manteniendo todo el formato visual militar intacto.
+ */
+function asegurarColumnaInscritoPor(sheet) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol === 0) return;
+
+  var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  for (var i = 0; i < headers.length; i++) {
+    var val = headers[i] ? headers[i].toString().toUpperCase() : "";
+    if (val.indexOf("UNIDAD") !== -1 || val.indexOf("REPARTICIÓN") !== -1 || val.indexOf("REPARTICION") !== -1) {
+      var cell = sheet.getRange(1, i + 1);
+      cell.setValue("Inscrito Por");
+      cell.setFontWeight("bold");
+      cell.setBackground("#1e341b");
+      cell.setFontColor("#ffffff");
+      cell.setHorizontalAlignment("center");
+      Logger.log("✅ Encabezado de celda actualizado automáticamente a 'Inscrito Por' en columna " + (i + 1));
+      break;
+    }
   }
 }
 
@@ -327,7 +353,7 @@ function doPost(e) {
     var nombres = data.nombres || "Sin Nombre";
     var ci = data.ci || "Sin CI";
     var celular = data.celular || "Sin Celular";
-    var unidad = data.unidad || "Sin Unidad";
+    var unidad = data.inscritoPor || data.unidad || "";
     var categoria = data.categoria || "Sin Categoría";
     var dorsal = data.dorsal || "0000";
     var comprobanteBase64 = data.comprobante || "";
@@ -444,7 +470,7 @@ function doPost(e) {
           "Nombres y Apellidos",
           "Cédula de Identidad",
           "Número de Celular",
-          "Unidad / Repartición",
+          "Inscrito Por",
           "Categoría",
           "Rama (Damas / Varones)",
           "URL Cédula Identidad (Drive)",
@@ -458,9 +484,10 @@ function doPost(e) {
         headerRange.setFontColor("#ffffff");
         headerRange.setHorizontalAlignment("center");
       } else {
-        // Asegurar que las columnas de Rama y Cédula existan para evitar desfases
+        // Asegurar que las columnas de Rama, Cédula e Inscrito Por existan y estén actualizadas
         asegurarColumnaRama(sheet);
         asegurarColumnaCedula(sheet);
+        asegurarColumnaInscritoPor(sheet);
       }
 
       // Garantizar número de dorsal oficial correlativo según los registros reales de la hoja

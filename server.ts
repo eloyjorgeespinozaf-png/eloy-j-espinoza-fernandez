@@ -417,7 +417,8 @@ async function startServer() {
         nombres: payload.nombres || '',
         ci: payload.ci || '',
         celular: payload.celular || '',
-        unidad: payload.unidad || '',
+        unidad: payload.inscritoPor || payload.unidad || '',
+        inscritoPor: payload.inscritoPor || payload.unidad || '',
         categoria: payload.categoria || cfg.name,
         genero: payload.genero || 'NO APLICA',
         dorsal: payload.dorsal || '', // Si viene vacío, GAS calcula el siguiente correlativo oficial en la hoja

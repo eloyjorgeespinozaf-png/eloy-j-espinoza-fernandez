@@ -373,6 +373,27 @@
                 </span>
               </div>
 
+              <!-- Campo Opcional: Inscrito Por -->
+              <div>
+                <label for="inscritoPor" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
+                  <span class="flex items-center gap-1.5">
+                    <span>INSCRITO POR</span>
+                    <span class="text-[10px] text-stone-400 font-normal font-sans tracking-normal">(OPCIONAL)</span>
+                  </span>
+                  <span class="text-[10px] text-stone-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-stone-600/40">OPCIONAL · SOLO MAYÚSCULAS</span>
+                </label>
+                <input
+                  type="text"
+                  id="inscritoPor"
+                  name="inscritoPor"
+                  placeholder="EJ. NOMBRE DEL REGISTRADOR, TUTOR, CLUB O PARTICULAR"
+                  class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase font-medium"
+                  style="text-transform: uppercase;"
+                />
+                <p class="text-[11px] text-stone-400 mt-1 leading-snug">
+                  Indique el nombre de la persona, tutor o club que realiza la inscripción (campo opcional).
+                </p>
+              </div>
 
               <!-- Número de Celular -->
               <div>
@@ -1813,7 +1834,7 @@
               <span class="truncate">3. Nombres y Apellidos</span>
               <span class="truncate">4. Cédula Identidad</span>
               <span class="truncate">5. Número Celular</span>
-              <span class="truncate">6. Unidad / Repartición</span>
+              <span class="truncate">6. Inscrito Por (Opcional)</span>
               <span class="truncate">7. Categoría</span>
               <span class="truncate text-pink-300 font-bold bg-pink-950/70 px-1 rounded border border-pink-500/40">8. Rama (Damas / Varones)</span>
               <span class="truncate text-amber-300 font-bold bg-amber-950/70 px-1 rounded border border-amber-500/40">9. URL Cédula (Drive) ✨</span>
@@ -2591,7 +2612,7 @@
         const nombres = document.getElementById('nombresApellidos') ? document.getElementById('nombresApellidos').value.trim().toUpperCase() : '';
         const ci = document.getElementById('cedulaIdentidad') ? document.getElementById('cedulaIdentidad').value.trim().toUpperCase() : '';
         const celular = document.getElementById('numeroCelular') ? document.getElementById('numeroCelular').value.trim().toUpperCase() : '';
-        const unidad = '';
+        const inscritoPor = document.getElementById('inscritoPor') ? document.getElementById('inscritoPor').value.trim().toUpperCase() : '';
         const categoria = document.getElementById('categoria') ? document.getElementById('categoria').value.trim().toUpperCase() : '';
         const generoRadio = document.querySelector('input[name="generoCompetencia"]:checked');
         const genero = generoRadio ? generoRadio.value : '';
@@ -2600,7 +2621,8 @@
           nombres: nombres,
           ci: ci,
           celular: celular,
-          unidad: unidad,
+          unidad: inscritoPor,
+          inscritoPor: inscritoPor,
           categoria: genero ? `${categoria} · RAMA: ${genero}` : categoria,
           categoryCode: catCode,
           genero: genero || 'NO APLICA (INFANTIL)',
