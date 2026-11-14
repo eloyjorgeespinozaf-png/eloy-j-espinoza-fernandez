@@ -302,22 +302,23 @@
                 <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
 
-              <!-- Cédula de Identidad -->
+              <!-- Cédula de Identidad (Opcional) -->
               <div>
                 <label for="cedulaIdentidad" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex items-center justify-between">
-                  <span>Cédula de Identidad <span class="text-gold-400">*</span></span>
-                  <span class="text-[10px] text-gold-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-gold-500/30">SOLO MAYÚSCULAS</span>
+                  <span class="flex items-center gap-1.5">
+                    <span>Cédula de Identidad</span>
+                    <span class="text-[10px] text-stone-400 font-normal font-sans tracking-normal">(OPCIONAL)</span>
+                  </span>
+                  <span class="text-[10px] text-stone-400 font-mono font-normal tracking-normal bg-army-950/80 px-2 py-0.5 rounded border border-stone-600/40">OPCIONAL · SOLO MAYÚSCULAS</span>
                 </label>
                 <input
                   type="text"
                   id="cedulaIdentidad"
                   name="cedulaIdentidad"
-                  required
-                  placeholder="EJ. 1234567 CB"
+                  placeholder="EJ. 1234567 CB (OPCIONAL)"
                   class="w-full bg-army-950 border border-army-700/80 rounded-lg px-4 py-2.5 text-sm text-white placeholder-stone-500 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500 transition-colors uppercase font-medium"
                   style="text-transform: uppercase;"
                 />
-                <span class="error-msg hidden text-xs text-rose-400 mt-1 block">Este campo es requerido.</span>
               </div>
 
               <!-- Captura o Fotografía de Cédula de Identidad -->
@@ -1224,7 +1225,7 @@
               </h3>
               <ul class="list-disc list-inside space-y-1.5 text-stone-300">
                 <li>Realizar el depósito o transferencia mediante el <strong>Código QR Bancario Oficial</strong> habilitado en la plataforma.</li>
-                <li>Completar el formulario en línea con datos verídicos: Nombres, Cédula de Identidad y Celular.</li>
+                <li>Completar el formulario en línea con datos verídicos: Nombres y Celular (Cédula de Identidad opcional).</li>
                 <li>Adjuntar la <strong>fotografía clara del comprobante de depósito</strong> bancario.</li>
                 <li id="reglamentoCedulaBullet">Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (opcional; recomendada para agilizar verificación).</li>
                 <li>Gozar de buena salud y condición física apta para pruebas pedestres de fondo.</li>
@@ -1853,7 +1854,7 @@
               <span class="truncate">1. Marca Temporal</span>
               <span class="truncate">2. Dorsal Asignado</span>
               <span class="truncate">3. Nombres y Apellidos</span>
-              <span class="truncate">4. Cédula Identidad</span>
+              <span class="truncate">4. Cédula Identidad (Opcional)</span>
               <span class="truncate">5. Número Celular</span>
               <span class="truncate">6. Inscrito Por (Opcional)</span>
               <span class="truncate">7. Categoría</span>
