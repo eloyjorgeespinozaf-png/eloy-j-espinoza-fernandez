@@ -101,6 +101,7 @@ async function startServer() {
         const parsed = JSON.parse(raw);
         return {
           ...parsed,
+          cedulaPolicy: parsed.cedulaPolicy || 'optional',
           requiresAuth: true
         };
       }
@@ -114,6 +115,7 @@ async function startServer() {
       overlayDarkness: 28,
       iconSource: '/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg',
       qrSource: '/qr-oficial.png',
+      cedulaPolicy: 'optional',
       requiresAuth: true,
       updatedAt: Date.now()
     };
@@ -164,7 +166,8 @@ async function startServer() {
         bgOpacity,
         bgBlur,
         overlayDarkness,
-        iconSource
+        iconSource,
+        cedulaPolicy
       } = req.body || {};
 
       let finalBgSource = bgSource;
@@ -186,7 +189,12 @@ async function startServer() {
         finalIconSource = persistedUrl;
       }
 
+      const validCedulaPolicies = ['optional', 'required_10k', 'required_all'];
       const current = getVisualSettings();
+      const finalCedulaPolicy = validCedulaPolicies.includes(cedulaPolicy)
+        ? cedulaPolicy
+        : (current.cedulaPolicy || 'optional');
+
       const newSettings = {
         bgSource: finalBgSource || current.bgSource,
         bgOpacity: typeof bgOpacity === 'number' ? bgOpacity : (current.bgOpacity ?? 50),
@@ -195,6 +203,7 @@ async function startServer() {
         iconSource: finalIconSource || current.iconSource,
         bgUrl: bgUrl || current.bgUrl || '',
         iconUrl: iconUrl || current.iconUrl || '',
+        cedulaPolicy: finalCedulaPolicy,
         updatedAt: Date.now()
       };
 

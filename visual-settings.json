@@ -8,5 +8,6 @@
   "bgUrl": "/assets/aistudio/WhatsApp_Image_2026-11-09_at_08.23.27_b10092cb.jpeg",
   "iconUrl": "/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg",
   "qrUrl": "/qr-oficial.png",
+  "cedulaPolicy": "optional",
   "updatedAt": 1793738000000
 }

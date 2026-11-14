@@ -329,8 +329,8 @@
                     </svg>
                     <span>Captura / Foto de Cédula de Identidad</span>
                   </label>
-                  <span id="cedulaRequiredBadge" class="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50">
-                    * Requerido (10 KM)
+                  <span id="cedulaRequiredBadge" class="text-[10px] font-medium uppercase tracking-wider text-stone-400 bg-army-900/60 px-2 py-0.5 rounded border border-stone-600/40">
+                    Opcional
                   </span>
                 </div>
 
@@ -366,7 +366,7 @@
                 </div>
 
                 <p id="cedulaHelperText" class="text-[11px] text-stone-400 leading-snug">
-                  Adjunte una captura o foto clara de su documento de identidad (anverso o ambas caras) para verificar su categoría de competencia.
+                  Opcional: Puede adjuntar una captura o foto clara de su documento de identidad (anverso o ambas caras) para agilizar la verificación de su categoría.
                 </p>
                 <span id="cedulaErrorMsg" class="error-msg hidden text-xs text-rose-400 mt-1 block font-medium">
                   Debe adjuntar la fotografía o captura de su cédula de identidad.
@@ -1226,7 +1226,7 @@
                 <li>Realizar el depósito o transferencia mediante el <strong>Código QR Bancario Oficial</strong> habilitado en la plataforma.</li>
                 <li>Completar el formulario en línea con datos verídicos: Nombres, Cédula de Identidad y Celular.</li>
                 <li>Adjuntar la <strong>fotografía clara del comprobante de depósito</strong> bancario.</li>
-                <li>Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (obligatorio para categorías 10 KM; opcional para infantiles).</li>
+                <li id="reglamentoCedulaBullet">Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (opcional; recomendada para agilizar verificación).</li>
                 <li>Gozar de buena salud y condición física apta para pruebas pedestres de fondo.</li>
               </ul>
             </div>
@@ -1812,6 +1812,27 @@
           </div>
         </div>
 
+        <!-- SECCIÓN 2.5: REGLA DE CAPTURA DE CÉDULA (OPCIONAL / REQUERIDO) -->
+        <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label for="adminCedulaPolicySelect" class="text-xs font-bold uppercase tracking-wider text-stone-200">
+              Foto de Cédula de Identidad (Requisito)
+            </label>
+            <span class="text-[10px] text-gold-400 font-mono">Tiempo Real</span>
+          </div>
+          <select
+            id="adminCedulaPolicySelect"
+            class="w-full px-3 py-2.5 rounded-lg bg-army-950 border border-army-700 text-stone-100 text-xs font-medium focus:outline-none focus:border-gold-500 cursor-pointer"
+          >
+            <option value="optional">Opcional (Todas las categorías)</option>
+            <option value="required_10k">Requerido en 10 KM / Opcional en Infantiles</option>
+            <option value="required_all">Requerido en todas las categorías</option>
+          </select>
+          <p class="text-[10px] text-stone-400 leading-snug">
+            Define si los participantes pueden omitir o deben adjuntar obligatoriamente la fotografía de su cédula al inscribirse.
+          </p>
+        </div>
+
         <!-- SECCIÓN 3: ESTRUCTURA GOOGLE SHEETS & CÓDIGO BACKEND APPS SCRIPT -->
         <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
@@ -2267,7 +2288,68 @@
         });
       }
 
-      // 2. AUTOMATIZACIÓN DE COLOR Y RANGO (INDICADOR EN TIEMPO REAL)
+      // Política dinámica de fotografía de cédula: 'optional' | 'required_10k' | 'required_all'
+      let currentCedulaPolicy = 'optional';
+
+      const isCedulaRequiredForCategory = (catCode) => {
+        const REQUIRES_10K_CODES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+        if (currentCedulaPolicy === 'required_all') return true;
+        if (currentCedulaPolicy === 'required_10k') return REQUIRES_10K_CODES.includes(catCode);
+        return false;
+      };
+
+      const updateCedulaPolicyUI = () => {
+        const cedulaRequiredBadge = document.getElementById('cedulaRequiredBadge');
+        const cedulaHelperText = document.getElementById('cedulaHelperText');
+        const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
+        const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
+        const reglamentoCedulaBullet = document.getElementById('reglamentoCedulaBullet');
+
+        const selected = categoriaSelect && categoriaSelect.selectedIndex >= 0
+          ? categoriaSelect.options[categoriaSelect.selectedIndex]
+          : null;
+        const catCode = selected && selected.dataset && selected.dataset.code ? selected.dataset.code : '';
+        const isCivilOrMilitar = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'].includes(catCode);
+        const isRequiredNow = currentCedulaPolicy === 'required_all' || (currentCedulaPolicy === 'required_10k' && (!catCode || isCivilOrMilitar));
+
+        if (cedulaRequiredBadge) {
+          if (currentCedulaPolicy === 'optional') {
+            cedulaRequiredBadge.textContent = 'Opcional';
+            cedulaRequiredBadge.className = 'text-[10px] font-medium uppercase tracking-wider text-stone-400 bg-army-900/60 px-2 py-0.5 rounded border border-stone-600/40';
+          } else if (currentCedulaPolicy === 'required_all') {
+            cedulaRequiredBadge.textContent = '* Requerido';
+            cedulaRequiredBadge.className = 'text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50';
+          } else if (!catCode || isCivilOrMilitar) {
+            cedulaRequiredBadge.textContent = '* Requerido (10 KM)';
+            cedulaRequiredBadge.className = 'text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50';
+          } else {
+            cedulaRequiredBadge.textContent = 'Opcional (Infantil)';
+            cedulaRequiredBadge.className = 'text-[10px] font-medium tracking-normal text-stone-400 bg-army-900/60 px-2 py-0.5 rounded border border-stone-600/40';
+          }
+        }
+
+        if (cedulaHelperText) {
+          cedulaHelperText.textContent = isRequiredNow
+            ? 'Adjunte una captura o foto clara de su documento de identidad (anverso o ambas caras) para verificar su categoría de competencia.'
+            : 'Opcional: Puede adjuntar una captura o foto clara de su documento de identidad (anverso o ambas caras) para agilizar la verificación de su categoría.';
+        }
+
+        if (!isRequiredNow) {
+          if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
+          if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
+        }
+
+        if (reglamentoCedulaBullet) {
+          if (currentCedulaPolicy === 'optional') {
+            reglamentoCedulaBullet.innerHTML = 'Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (opcional; recomendada para agilizar verificación).';
+          } else if (currentCedulaPolicy === 'required_all') {
+            reglamentoCedulaBullet.innerHTML = 'Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (obligatorio para todas las categorías).';
+          } else {
+            reglamentoCedulaBullet.innerHTML = 'Adjuntar la <strong>captura o foto de Cédula de Identidad</strong> (obligatorio para categorías 10 KM; opcional para infantiles).';
+          }
+        }
+      };
+
       // 2. AUTOMATIZACIÓN DE COLOR Y RANGO (INDICADOR EN TIEMPO REAL)
       const updateCategoriaIndicator = () => {
         if (!categoriaSelect) return;
@@ -2284,6 +2366,7 @@
           categoriaColorDot.style.backgroundColor = '';
           if (categoriaRangoInfo) categoriaRangoInfo.classList.add('hidden');
           if (generoSelectionContainer) generoSelectionContainer.classList.add('hidden');
+          updateCedulaPolicyUI();
           return;
         }
 
@@ -2371,21 +2454,8 @@
             if (generoErrorMsg) generoErrorMsg.classList.add('hidden');
           }
         }
-        // Control condicional de Cédula de Identidad (Obligatorio para 10 KM, Opcional para Infantiles)
-        const cedulaRequiredBadge = document.getElementById('cedulaRequiredBadge');
-        const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
-        const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
-        if (cedulaRequiredBadge) {
-          if (isCivilOrMilitar) {
-            cedulaRequiredBadge.textContent = '* Requerido (10 KM)';
-            cedulaRequiredBadge.className = 'text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-950/90 px-2 py-0.5 rounded border border-amber-500/50';
-          } else {
-            cedulaRequiredBadge.textContent = 'Opcional (Infantil)';
-            cedulaRequiredBadge.className = 'text-[10px] font-medium tracking-normal text-stone-400 bg-army-900/60 px-2 py-0.5 rounded border border-stone-600/40';
-            if (cedulaErrorMsg) cedulaErrorMsg.classList.add('hidden');
-            if (cedulaCaptureContainer) cedulaCaptureContainer.classList.remove('border-rose-500');
-          }
-        }
+        // Control condicional de Cédula de Identidad según política activa (Opcional / Requerido)
+        updateCedulaPolicyUI();
       };
 
       if (categoriaSelect) {
@@ -2799,13 +2869,14 @@
             if (generoErrorMsg) generoErrorMsg.classList.add('hidden');
           }
 
-          // Validación condicional de Cédula de Identidad (Obligatorio para 10 KM, Opcional para Infantiles)
+          // Validación dinámica de Cédula de Identidad según política configurada
           const cedulaInput = document.getElementById('capturaCedula');
           const cedulaErrorMsg = document.getElementById('cedulaErrorMsg');
           const cedulaCaptureContainer = document.getElementById('cedulaCaptureContainer');
           const hasCedulaFile = cedulaInput && cedulaInput.files && cedulaInput.files.length > 0;
+          const cedulaEsRequerida = isCedulaRequiredForCategory(catCode);
 
-          if (isCivilOrMilitar && !hasCedulaFile) {
+          if (cedulaEsRequerida && !hasCedulaFile) {
             isValid = false;
             if (cedulaErrorMsg) cedulaErrorMsg.classList.remove('hidden');
             if (cedulaCaptureContainer) {
@@ -3341,12 +3412,16 @@
       };
 
       // 3. Sistema Dinámico de Aplicación Visual
-      function applyVisualState(bg, op, bl, dark, icon) {
+      function applyVisualState(bg, op, bl, dark, icon, cedulaPolicy) {
         currentBgSource = bg || currentBgSource;
         currentBgOpacity = typeof op === 'number' ? op : currentBgOpacity;
         currentBgBlur = typeof bl === 'number' ? bl : currentBgBlur;
         currentOverlayDarkness = typeof dark === 'number' ? dark : currentOverlayDarkness;
         currentIconSource = icon || currentIconSource;
+        if (cedulaPolicy === 'optional' || cedulaPolicy === 'required_10k' || cedulaPolicy === 'required_all') {
+          currentCedulaPolicy = cedulaPolicy;
+        }
+        updateCedulaPolicyUI();
 
         if (appBackgroundLayer) {
           appBackgroundLayer.style.backgroundImage = `url("${currentBgSource}")`;
@@ -3410,6 +3485,10 @@
         if (darkVal && darkRange) {
           darkVal.textContent = `${currentOverlayDarkness}%`;
           darkRange.value = currentOverlayDarkness;
+        }
+        const cedulaPolicySelect = document.getElementById('adminCedulaPolicySelect');
+        if (cedulaPolicySelect) {
+          cedulaPolicySelect.value = currentCedulaPolicy;
         }
 
         if (typeof cargarMonitorDorsales === 'function') {
@@ -3603,6 +3682,15 @@
         });
       }
 
+      // Selector de requisito de Cédula de Identidad en tiempo real
+      const adminCedulaPolicySelect = document.getElementById('adminCedulaPolicySelect');
+      if (adminCedulaPolicySelect) {
+        adminCedulaPolicySelect.addEventListener('change', (e) => {
+          currentCedulaPolicy = e.target.value || 'optional';
+          updateCedulaPolicyUI();
+        });
+      }
+
       // Guardar y Publicar en el Servidor (con Contraseña)
       if (adminSaveVisualsBtn) {
         adminSaveVisualsBtn.addEventListener('click', async () => {
@@ -3622,7 +3710,8 @@
             bgOpacity: currentBgOpacity,
             bgBlur: currentBgBlur,
             overlayDarkness: currentOverlayDarkness,
-            iconSource: currentIconSource
+            iconSource: currentIconSource,
+            cedulaPolicy: currentCedulaPolicy
           };
 
           try {
@@ -3738,7 +3827,7 @@
       // 5. Carga Inicial de Configuración Visual al abrir la WebApp
       async function inicializarVisuales() {
         // Primero aplicar valores por defecto de alta visibilidad y nitidez
-        applyVisualState(LOCKED_BG_SOURCE, LOCKED_BG_OPACITY, LOCKED_BG_BLUR, LOCKED_OVERLAY_DARKNESS, LOCKED_ICON_SOURCE);
+        applyVisualState(LOCKED_BG_SOURCE, LOCKED_BG_OPACITY, LOCKED_BG_BLUR, LOCKED_OVERLAY_DARKNESS, LOCKED_ICON_SOURCE, 'optional');
 
         // Sanear cualquier configuración local anterior en IndexedDB para asegurar máxima visibilidad
         try {
@@ -3753,7 +3842,7 @@
             if (!cached.iconSource || !cached.iconSource.startsWith('data:image/')) {
               cached.iconSource = LOCKED_ICON_SOURCE;
             }
-            applyVisualState(cached.bgSource, cached.bgOpacity, cached.bgBlur, cached.overlayDarkness, cached.iconSource);
+            applyVisualState(cached.bgSource, cached.bgOpacity, cached.bgBlur, cached.overlayDarkness, cached.iconSource, cached.cedulaPolicy || 'optional');
           }
         } catch (e) {}
 
@@ -3768,7 +3857,8 @@
                 typeof serverSettings.bgOpacity === 'number' ? serverSettings.bgOpacity : LOCKED_BG_OPACITY,
                 serverSettings.bgBlur || 0,
                 typeof serverSettings.overlayDarkness === 'number' ? serverSettings.overlayDarkness : LOCKED_OVERLAY_DARKNESS,
-                serverSettings.iconSource || LOCKED_ICON_SOURCE
+                serverSettings.iconSource || LOCKED_ICON_SOURCE,
+                serverSettings.cedulaPolicy || 'optional'
               );
             }
           }
@@ -3791,7 +3881,8 @@
                     streamData.bgOpacity,
                     streamData.bgBlur,
                     streamData.overlayDarkness,
-                    streamData.iconSource
+                    streamData.iconSource,
+                    streamData.cedulaPolicy
                   );
                 }
               } catch (parseErr) {}
