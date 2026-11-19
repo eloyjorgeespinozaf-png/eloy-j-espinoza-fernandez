@@ -586,7 +586,7 @@
                           <div class="truncate"><strong class="text-teal-300">M (Turquesa):</strong> U-13 (Hasta 13 años) · 1000 metros</div>
                         </div>
                         <span class="text-[10px] font-mono font-bold bg-teal-950/90 text-teal-300 border border-teal-500/40 px-1.5 py-0.5 rounded shrink-0">
-                          M-1301 a 1399
+                          M-1301 a 1599
                         </span>
                       </div>
                     </div>
@@ -823,9 +823,9 @@
                           value="M.- Categoría niñas y niños U-13 (TURQUESA): hasta los 13 años de edad (1000 metros)"
                           data-code="M"
                           data-prefix="M-"
-                          data-rango="1301 - 1399"
+                          data-rango="1301 - 1599"
                           data-start="1301"
-                          data-end="1399"
+                          data-end="1599"
                           data-color="teal-500"
                           data-base="teal"
                           data-bg="bg-teal-500"
@@ -834,7 +834,7 @@
                           data-distancia="CARRERA INFANTIL · 1000 METROS"
                           class="bg-army-900 text-stone-100 font-normal py-1"
                         >
-                          M.- Niñas y niños U-13 (TURQUESA): hasta los 13 años — 1000 metros [Dorsales M-1301 al M-1399]
+                          M.- Niñas y niños U-13 (TURQUESA): hasta los 13 años — 1000 metros [Dorsales M-1301 al M-1599]
                         </option>
                       </optgroup>
                     </select>
@@ -1034,7 +1034,7 @@
         </div>
 
         <!-- Elemento Post-Registro: Botón Inferior y Acciones -->
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 max-w-md mx-auto">
+        <div class="mt-8 flex items-center justify-center max-w-xs mx-auto">
           <button
             type="button"
             id="printBtn"
@@ -1045,17 +1045,6 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
             </svg>
             <span>Imprimir Marbete</span>
-          </button>
-
-          <button
-            type="button"
-            id="finalizeBtn"
-            class="w-full py-3.5 px-5 rounded-lg bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-sm sm:text-base transition duration-150 ease-in-out shadow-lg hover:shadow-gold-500/20 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <span>Reenviar al Servidor</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-            </svg>
           </button>
         </div>
 
@@ -2270,7 +2259,6 @@
       const submitBtn = document.getElementById('submitBtn');
       const btnText = document.getElementById('btnText');
       const btnIcon = document.getElementById('btnIcon');
-      const finalizeBtn = document.getElementById('finalizeBtn');
       const finalizeNotification = document.getElementById('finalizeNotification');
 
       // Botón para mostrar / ocultar cuadro guía de categorías
@@ -2394,18 +2382,41 @@
             categoriaRangoText.innerHTML = `Control Categoría <strong>${catCode}</strong> · Rango oficial asignado:`;
           }
 
-          // Consultar el próximo número correlativo en tiempo real directamente de Google Sheets o localStorage
+          // Registro local de dorsales emitidos para evitar repeticiones incluso en modo contingencia
+          const getLocalIssuedSet = (cCode) => {
+            try {
+              const raw = JSON.parse(localStorage.getItem('eceme_issued_dorsals') || '{}');
+              const arr = Array.isArray(raw[cCode]) ? raw[cCode] : [];
+              return new Set(arr.map((n) => parseInt(n, 10)).filter((n) => !isNaN(n)));
+            } catch {
+              return new Set();
+            }
+          };
+
+          // Consultar el próximo número correlativo en tiempo real directamente del backend/Sheets sin retroceder
           const applyNextDorsal = (dorsalStr) => {
             if (!dorsalStr) return;
-            selected.dataset.nextDorsal = dorsalStr;
             const numDigits = dorsalStr.replace(/\D/g, '');
-            selected.dataset.nextNumber = numDigits;
-            const intVal = parseInt(numDigits, 10);
-            if (!isNaN(intVal)) {
-              localStorage.setItem('eceme_counter_' + catCode, String(intVal - 1));
+            let intVal = parseInt(numDigits, 10);
+            if (isNaN(intVal)) return;
+
+            const issuedLocal = getLocalIssuedSet(catCode);
+            const cachedLast = parseInt(localStorage.getItem('eceme_counter_' + catCode) || '0', 10);
+            if (!isNaN(cachedLast) && cachedLast >= intVal) {
+              intVal = cachedLast + 1;
             }
+            while (issuedLocal.has(intVal)) {
+              intVal += 1;
+            }
+
+            const padded = String(intVal).padStart(4, '0');
+            const finalStr = `${catPrefix}${padded}`;
+            selected.dataset.nextDorsal = finalStr;
+            selected.dataset.nextNumber = padded;
+            localStorage.setItem('eceme_counter_' + catCode, String(intVal - 1));
+
             if (categoriaRangoBadge && categoriaSelect.value === selected.value) {
-              categoriaRangoBadge.textContent = `${catPrefix}${catRange.replace(' - ', ' al ')} · Próximo: ${dorsalStr}`;
+              categoriaRangoBadge.textContent = `${catPrefix}${catRange.replace(' - ', ' al ')} · Próximo: ${finalStr}`;
             }
           };
 
@@ -2415,6 +2426,16 @@
             const nextCached = parseInt(cachedCount, 10) + 1;
             applyNextDorsal(`${catPrefix}${String(nextCached).padStart(4, '0')}`);
           }
+
+          // Consultar /api/dorsal/stats (rápido y con registro persistente) y Google Sheets
+          fetch('/api/dorsal/stats', { cache: 'no-store' })
+            .then((r) => r.json())
+            .then((data) => {
+              if (data && data.stats && data.stats[catCode]) {
+                applyNextDorsal(data.stats[catCode].nextDorsal);
+              }
+            })
+            .catch(() => {});
 
           if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
             fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
@@ -2426,16 +2447,7 @@
                   applyNextDorsal(data.dorsal);
                 }
               })
-              .catch(() => {
-                fetch('/api/dorsal/stats')
-                  .then((r) => r.json())
-                  .then((data) => {
-                    if (data && data.stats && data.stats[catCode]) {
-                      applyNextDorsal(data.stats[catCode].nextDorsal);
-                    }
-                  })
-                  .catch(() => {});
-              });
+              .catch(() => {});
           }
         }
 
@@ -2463,26 +2475,49 @@
         categoriaSelect.addEventListener('change', updateCategoriaIndicator);
       }
 
-      // Sincronizar todos los contadores de categorías en background directamente desde Google Sheets
+      // Sincronizar todos los contadores de categorías en background (monotónico, nunca retrocede)
       const preloadDorsalStats = () => {
         const updateOptionsWithData = (categoriesObj) => {
           if (!categoriesObj || !categoriaSelect) return;
+          let issuedAll = {};
+          try {
+            issuedAll = JSON.parse(localStorage.getItem('eceme_issued_dorsals') || '{}');
+          } catch {}
+
           Array.from(categoriaSelect.options).forEach((opt) => {
             const cCode = opt.dataset.code;
             if (cCode && categoriesObj[cCode]) {
               const info = categoriesObj[cCode];
-              const nextD = info.nextDorsal || (info.prefix + String(info.nextNumber).padStart(4, '0'));
-              const nextN = String(info.nextNumber || nextD.replace(/\D/g, '')).padStart(4, '0');
-              opt.dataset.nextDorsal = nextD;
-              opt.dataset.nextNumber = nextN;
-              const nInt = parseInt(nextN, 10);
-              if (!isNaN(nInt)) {
-                localStorage.setItem('eceme_counter_' + cCode, String(nInt - 1));
+              const prefix = opt.dataset.prefix || info.prefix || `${cCode}-`;
+              const rawD = info.nextDorsal || (prefix + String(info.nextNumber).padStart(4, '0'));
+              let nInt = parseInt(String(info.nextNumber || rawD.replace(/\D/g, '')), 10);
+              if (isNaN(nInt)) return;
+
+              const cachedLast = parseInt(localStorage.getItem('eceme_counter_' + cCode) || '0', 10);
+              if (!isNaN(cachedLast) && cachedLast >= nInt) {
+                nInt = cachedLast + 1;
               }
+              const issuedArr = Array.isArray(issuedAll[cCode]) ? issuedAll[cCode] : [];
+              const issuedSet = new Set(issuedArr.map((x) => parseInt(x, 10)).filter((x) => !isNaN(x)));
+              while (issuedSet.has(nInt)) {
+                nInt += 1;
+              }
+
+              const nextN = String(nInt).padStart(4, '0');
+              opt.dataset.nextNumber = nextN;
+              opt.dataset.nextDorsal = `${prefix}${nextN}`;
+              localStorage.setItem('eceme_counter_' + cCode, String(nInt - 1));
             }
           });
           updateCategoriaIndicator();
         };
+
+        fetch('/api/dorsal/stats', { cache: 'no-store' })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data && data.stats) updateOptionsWithData(data.stats);
+          })
+          .catch(() => {});
 
         if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
           fetch(`${GOOGLE_SCRIPT_URL}?action=get_counters`, {
@@ -2494,14 +2529,7 @@
                 updateOptionsWithData(data.categories);
               }
             })
-            .catch(() => {
-              fetch('/api/dorsal/stats')
-                .then((r) => r.json())
-                .then((data) => {
-                  if (data && data.stats) updateOptionsWithData(data.stats);
-                })
-                .catch(() => {});
-            });
+            .catch(() => {});
         }
       };
       preloadDorsalStats();
@@ -2582,7 +2610,6 @@
         });
       });
 
-      const btnFinalizar = document.getElementById('finalizeBtn');
       const vistaExito = document.getElementById('finalizeNotification');
       const newInscriptionBtn = document.getElementById('newInscriptionBtn');
       const comprobanteInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
@@ -2656,7 +2683,50 @@
         return { base64, nombre };
       }
 
-      // Función unificada de transmisión e inscripción con garantía correlativa y respaldo
+      // Auxiliar para registrar localmente cada número asignado y garantizar que nunca se repita
+      function registrarDorsalEmitidoLocal(catCode, numInt) {
+        if (isNaN(numInt)) return;
+        try {
+          const prevCounter = parseInt(localStorage.getItem('eceme_counter_' + catCode) || '0', 10);
+          if (isNaN(prevCounter) || numInt > prevCounter) {
+            localStorage.setItem('eceme_counter_' + catCode, String(numInt));
+          }
+          const rawIssued = JSON.parse(localStorage.getItem('eceme_issued_dorsals') || '{}');
+          if (!Array.isArray(rawIssued[catCode])) rawIssued[catCode] = [];
+          if (!rawIssued[catCode].includes(numInt)) {
+            rawIssued[catCode].push(numInt);
+            localStorage.setItem('eceme_issued_dorsals', JSON.stringify(rawIssued));
+          }
+        } catch {}
+      }
+
+      function obtenerSiguienteLibreLocal(catCode, catPrefix, catStart) {
+        let issuedSet = new Set();
+        try {
+          const rawIssued = JSON.parse(localStorage.getItem('eceme_issued_dorsals') || '{}');
+          const arr = Array.isArray(rawIssued[catCode]) ? rawIssued[catCode] : [];
+          issuedSet = new Set(arr.map((x) => parseInt(x, 10)).filter((x) => !isNaN(x)));
+        } catch {}
+
+        const stored = parseInt(localStorage.getItem('eceme_counter_' + catCode) || '0', 10);
+        let maxLocal = !isNaN(stored) && stored >= catStart - 1 ? stored : (catStart - 1);
+        issuedSet.forEach((n) => {
+          if (n > maxLocal) maxLocal = n;
+        });
+
+        let candidate = maxLocal + 1;
+        while (issuedSet.has(candidate)) {
+          candidate += 1;
+        }
+        registrarDorsalEmitidoLocal(catCode, candidate);
+        const padded = String(candidate).padStart(4, '0');
+        return {
+          dorsal: `${catPrefix}${padded}`,
+          number: padded
+        };
+      }
+
+      // Función unificada de transmisión e inscripción con garantía correlativa, idempotencia y cero duplicados
       async function procesarInscripcionOficial(catCode, catPrefix, catStart, catEnd) {
         const fileInput = document.getElementById('comprobantePago') || document.getElementById('comprobante');
         const file = fileInput && fileInput.files ? fileInput.files[0] : null;
@@ -2688,7 +2758,11 @@
         const generoRadio = document.querySelector('input[name="generoCompetencia"]:checked');
         const genero = generoRadio ? generoRadio.value : '';
 
+        // ID único de envío para idempotencia estricta (impide duplicados si hay reintentos o latencia)
+        const submissionId = `SUB-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
         const payload = {
+          submissionId: submissionId,
           nombres: nombres,
           ci: ci,
           celular: celular,
@@ -2697,70 +2771,28 @@
           categoria: genero ? `${categoria} · RAMA: ${genero}` : categoria,
           categoryCode: catCode,
           genero: genero || 'NO APLICA (INFANTIL)',
+          dorsal: "", // Dejar que el servidor bajo bloqueo atómico asigne el dorsal único oficial
           capturaCedula: fileCedulaData.base64,
           nombreArchivoCedula: fileCedulaData.nombre,
           comprobante: fileData.base64,
           nombreArchivo: fileData.nombre
         };
 
-        // 1. OBTENER EL DORSAL CORRELATIVO OFICIAL EXACTO DIRECTAMENTE DE GOOGLE SHEETS
         let assignedDorsal = '';
         let assignedNumber = '';
-
-        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
-          try {
-            const nextReq = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${catCode}`, {
-              signal: AbortSignal.timeout(25000)
-            });
-            if (nextReq.ok) {
-              const gasNext = await nextReq.json().catch(() => ({}));
-              if (gasNext && gasNext.status === 'success' && gasNext.dorsal) {
-                assignedDorsal = String(gasNext.dorsal).trim();
-                assignedNumber = gasNext.number ? String(gasNext.number).trim() : assignedDorsal.replace(/\D/g, '');
-              }
-            }
-          } catch (errSync) {
-            console.warn('[Sync Dorsal]', errSync);
-          }
-        }
-
-        // Si no se pudo contactar a Google Sheets en ese instante, usar localStorage o el dataset sincronizado
-        if (!assignedDorsal) {
-          const stored = localStorage.getItem('eceme_counter_' + catCode);
-          if (stored && !isNaN(parseInt(stored, 10))) {
-            const nextVal = parseInt(stored, 10) + 1;
-            assignedNumber = String(nextVal).padStart(4, '0');
-            assignedDorsal = `${catPrefix}${assignedNumber}`;
-          } else {
-            const selOpt = categoriaSelect ? categoriaSelect.options[categoriaSelect.selectedIndex] : null;
-            if (selOpt && selOpt.dataset.nextDorsal && selOpt.dataset.nextNumber) {
-              assignedDorsal = selOpt.dataset.nextDorsal;
-              assignedNumber = selOpt.dataset.nextNumber;
-            } else {
-              assignedNumber = String(catStart).padStart(4, '0');
-              assignedDorsal = `${catPrefix}${assignedNumber}`;
-            }
-          }
-        }
-
-        // Payload con el dorsal asignado para registrar
-        payload.dorsal = assignedDorsal;
-
-        // 2. TRANSMITIR A GOOGLE SHEETS (Exactamente UNA transmisión por registro)
         let transmitted = false;
 
-        // A) Intentar vía backend local (tiempo de espera ampliado a 45s para procesar imágenes Base64 y Drive)
+        // 1. TRANSMISIÓN PRINCIPAL AL BACKEND (con Mutex por categoría + LockService de Google Sheets)
         try {
           const srvRes = await fetch('/api/inscribir', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
-            signal: AbortSignal.timeout(45000)
+            signal: AbortSignal.timeout(60000)
           });
           if (srvRes.ok) {
             const srvData = await srvRes.json().catch(() => ({}));
             if (srvData && srvData.success && srvData.dorsal) {
-              // USAR EL DORSAL OFICIAL QUE GOOGLE SHEETS REGISTRÓ EN LA CELDA DE LA HOJA
               assignedDorsal = String(srvData.dorsal).trim();
               assignedNumber = srvData.number ? String(srvData.number).trim() : assignedDorsal.replace(/\D/g, '');
               transmitted = true;
@@ -2770,7 +2802,7 @@
           console.warn('[Aviso conexión backend]', srvErr);
         }
 
-        // B) Si el backend no respondió, transmitir directamente a Google Apps Script
+        // 2. RESPALDO DIRECTO A GOOGLE APPS SCRIPT (solo si el backend local no respondió)
         if (!transmitted && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) {
           try {
             const directRes = await fetch(GOOGLE_SCRIPT_URL, {
@@ -2784,27 +2816,56 @@
               if (directData && directData.status === 'success' && directData.dorsal) {
                 assignedDorsal = String(directData.dorsal).trim();
                 assignedNumber = directData.number ? String(directData.number).trim() : assignedDorsal.replace(/\D/g, '');
+                transmitted = true;
               }
             }
-            transmitted = true;
           } catch (e) {
             console.warn('[GAS Direct Transmission Fallback]', e);
+            // Último recurso: asignar número único local/atómico y enviarlo con submissionId en modo no-cors
+            try {
+              const nextRes = await fetch('/api/dorsal/next', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ categoryCode: catCode })
+              });
+              if (nextRes.ok) {
+                const nextData = await nextRes.json().catch(() => ({}));
+                if (nextData && nextData.success && nextData.dorsal) {
+                  assignedDorsal = String(nextData.dorsal).trim();
+                  assignedNumber = nextData.number ? String(nextData.number).trim() : assignedDorsal.replace(/\D/g, '');
+                }
+              }
+            } catch {}
+
+            if (!assignedDorsal) {
+              const localAlloc = obtenerSiguienteLibreLocal(catCode, catPrefix, catStart);
+              assignedDorsal = localAlloc.dorsal;
+              assignedNumber = localAlloc.number;
+            }
+
             try {
               await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ ...payload, dorsal: assignedDorsal })
               });
               transmitted = true;
             } catch (errNoCors) {}
           }
         }
 
-        // Persistir el correlativo oficial confirmado para que avance correlativamente sin retrocesos
+        // 3. Salvaguarda absoluta en caso de desconexión total (garantiza número correlativo irrepetible)
+        if (!assignedDorsal) {
+          const localAlloc = obtenerSiguienteLibreLocal(catCode, catPrefix, catStart);
+          assignedDorsal = localAlloc.dorsal;
+          assignedNumber = localAlloc.number;
+        }
+
+        // Persistir el correlativo oficial confirmado para que avance sin retrocesos ni repeticiones
         const confirmedNumInt = parseInt(assignedNumber, 10);
         if (!isNaN(confirmedNumInt)) {
-          localStorage.setItem('eceme_counter_' + catCode, String(confirmedNumInt));
+          registrarDorsalEmitidoLocal(catCode, confirmedNumInt);
           const selOpt = categoriaSelect ? categoriaSelect.options[categoriaSelect.selectedIndex] : null;
           if (selOpt) {
             const nextUpcoming = confirmedNumInt + 1;
@@ -2820,10 +2881,13 @@
         };
       }
 
+      let isSubmittingForm = false;
+
       // MÓDULO 1 & 2: Envío de Formulario, Transmisión Automática y Asignación Correlativa de Dorsal
       if (form) {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
+          if (isSubmittingForm) return;
 
           // Validación de campos requeridos
           const inputs = form.querySelectorAll('input[required], select[required]');
@@ -2890,6 +2954,7 @@
           }
 
           if (isValid) {
+            isSubmittingForm = true;
             submitBtn.disabled = true;
             btnText.textContent = "Registrando en Google Sheets y asignando dorsal...";
             btnIcon.innerHTML = `
@@ -2899,6 +2964,7 @@
               </svg>
             `;
 
+            try {
             // 1. Extraer configuración y rango de la categoría seleccionada
             const catPrefix = selectedOption ? (selectedOption.dataset.prefix || `${catCode}-`) : 'A-';
             const catRange = selectedOption ? (selectedOption.dataset.rango || '1001 - 1999') : '1001 - 1999';
@@ -2920,28 +2986,12 @@
               if (m) allocatedNumber = m[0];
             }
 
-            // Salvaguarda absoluta: garantizar que el número correlativo SIEMPRE tenga dígitos y se muestre en pantalla
+            // Salvaguarda absoluta: garantizar número correlativo irrepetible si llegara vacío
             if (!allocatedNumber || !/\d+/.test(allocatedDorsal)) {
-              const storedCount = localStorage.getItem('eceme_counter_' + catCode);
-              if (storedCount && !isNaN(parseInt(storedCount, 10))) {
-                const nextN = parseInt(storedCount, 10) + 1;
-                allocatedNumber = String(nextN).padStart(4, '0');
-                allocatedPrefix = catPrefix;
-                allocatedDorsal = `${catPrefix}${allocatedNumber}`;
-              } else {
-                const safeDorsal = (selectedOption && selectedOption.dataset.nextDorsal) ? selectedOption.dataset.nextDorsal : '';
-                const safeNum = (selectedOption && selectedOption.dataset.nextNumber) ? selectedOption.dataset.nextNumber : '';
-                if (safeDorsal && safeNum) {
-                  allocatedNumber = safeNum;
-                  allocatedPrefix = catPrefix;
-                  allocatedDorsal = safeDorsal;
-                } else {
-                  const defaultPadded = String(catStart).padStart(4, '0');
-                  allocatedNumber = defaultPadded;
-                  allocatedPrefix = catPrefix;
-                  allocatedDorsal = `${catPrefix}${defaultPadded}`;
-                }
-              }
+              const localAlloc = obtenerSiguienteLibreLocal(catCode, catPrefix, catStart);
+              allocatedNumber = localAlloc.number;
+              allocatedPrefix = catPrefix;
+              allocatedDorsal = localAlloc.dorsal;
             }
 
             // Normalizar siempre a 4 dígitos para presentación uniforme (ej. 1001 o 0401)
@@ -3070,6 +3120,9 @@
 
             // Desplaza la vista suavemente al dorsal
             dorsalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } finally {
+              isSubmittingForm = false;
+            }
           }
         });
 
@@ -3083,15 +3136,6 @@
 
           field.addEventListener('input', clearError);
           field.addEventListener('change', clearError);
-        });
-      }
-
-      // Botón secundario para reconfirmación si se requiere
-      if (btnFinalizar) {
-        btnFinalizar.addEventListener('click', () => {
-          btnFinalizar.innerHTML = `<span>✓ Inscripción Oficial Archivada en Google Sheets</span>`;
-          btnFinalizar.disabled = true;
-          if (vistaExito) vistaExito.classList.remove('hidden');
         });
       }
 
@@ -3117,6 +3161,7 @@
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 9H7a1 1 0 100 2h3.586l-1.293 1.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z" clip-rule="evenodd" />
             </svg>
           `;
+          if (vistaExito) vistaExito.classList.add('hidden');
           dorsalSection.classList.add('hidden');
           registrationSection.classList.remove('hidden');
           window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3793,7 +3838,7 @@
       async function cargarMonitorDorsales() {
         if (!adminDorsalesList) return;
         try {
-          const res = await fetch('/api/dorsal/stats');
+          const res = await fetch('/api/dorsal/stats', { cache: 'no-store' });
           const data = await res.json();
           if (data && data.stats) {
             adminDorsalesList.innerHTML = '';

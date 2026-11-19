@@ -197,7 +197,7 @@ var CATEGORIAS_CONTROL = {
   "J": { start: 401, end: 499, prefix: "J-", name: "Niñas y Niños U-4 (80m)" },
   "K": { start: 601, end: 699, prefix: "K-", name: "Niñas y Niños U-6 (200m)" },
   "L": { start: 801, end: 899, prefix: "L-", name: "Niñas y Niños U-8 (400m)" },
-  "M": { start: 1301, end: 1399, prefix: "M-", name: "Niñas y Niños U-13 (1000m)" }
+  "M": { start: 1301, end: 1599, prefix: "M-", name: "Niñas y Niños U-13 (1000m)" }
 };
 
 /**
@@ -211,6 +211,10 @@ function extraerCodigoCategoria(str) {
   if (match) return match[1];
   var match2 = s.match(/CATEGOR[IÍ]A\s+([A-M])\b/);
   if (match2) return match2[1];
+  if (s.indexOf("U-13") !== -1) return "M";
+  if (s.indexOf("U-8") !== -1) return "L";
+  if (s.indexOf("U-6") !== -1) return "K";
+  if (s.indexOf("U-4") !== -1) return "J";
   var first = s.charAt(0);
   if (first >= "A" && first <= "M") return first;
   return "A";
@@ -234,79 +238,132 @@ function obtenerColumnaDorsal(sheet) {
 }
 
 /**
- * Calcula y asigna de manera estrictamente correlativa y sucesiva el dorsal para una categoría
- * Inspecciona todos los dorsales reales registrados en la hoja para evitar duplicados o desfases.
+ * Obtiene el índice (1-based) de la columna que contiene la Categoría
  */
-function asignarDorsalCorrelativoOficial(sheet, categoriaTexto, dorsalPropuesto) {
+function obtenerColumnaCategoria(sheet) {
+  var lastCol = sheet.getLastColumn();
+  if (lastCol > 0) {
+    var headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    for (var c = 0; c < headers.length; c++) {
+      var h = headers[c] ? headers[c].toString().toUpperCase() : "";
+      if (h.indexOf("CATEGORIA") !== -1 || h.indexOf("CATEGORÍA") !== -1) {
+        return c + 1;
+      }
+    }
+  }
+  return 7; // Por defecto columna 7: "Categoría"
+}
+
+/**
+ * Extrae el número entero de un dorsal SOLO si pertenece estrictamente a la categoría indicada.
+ * Evita que categorías con rangos numéricos superpuestos (ej. A: 1001-1999 y M: 1301-1599) se contaminen entre sí.
+ */
+function extraerNumeroDorsalDeCategoria(dorsalCellVal, categoriaCellVal, code) {
+  if (!dorsalCellVal) return null;
+  var d = dorsalCellVal.toString().trim().toUpperCase().replace(/^#+\s*/, "");
+  if (!d) return null;
+
+  // Detectar si el dorsal tiene prefijo alfabético explícito (ej. "A-1384", "M-1305", "J0410")
+  var prefixMatch = d.match(/^([A-M])[\s\-_]*(\d+)$/);
+  if (prefixMatch) {
+    if (prefixMatch[1] !== code) {
+      return null; // Pertenece a OTRA categoría
+    }
+    var nPref = parseInt(prefixMatch[2], 10);
+    return isNaN(nPref) ? null : nPref;
+  }
+
+  // Si empieza con cualquier otra letra de categoría (aunque tenga texto extra), descartar si no es `code`
+  var anyLetterMatch = d.match(/^([A-Z])/);
+  if (anyLetterMatch) {
+    if (anyLetterMatch[1] !== code) {
+      return null;
+    }
+    var digitsOnly = d.match(/\d+/);
+    if (digitsOnly) {
+      var nCode = parseInt(digitsOnly[0], 10);
+      return isNaN(nCode) ? null : nCode;
+    }
+    return null;
+  }
+
+  // Si el dorsal es puramente numérico (sin prefijo), verificar la columna Categoría de esa fila
+  var purelyNum = d.match(/^\d+$/);
+  if (purelyNum) {
+    if (categoriaCellVal && extraerCodigoCategoria(categoriaCellVal) === code) {
+      var nPure = parseInt(purelyNum[0], 10);
+      return isNaN(nPure) ? null : nPure;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Calcula y asigna de manera estrictamente correlativa, única e irrepetible el dorsal para una categoría.
+ * Inspecciona TODOS los dorsales registrados en la hoja para esa categoría y la marca monotónica persistente,
+ * garantizando que ningún número ya generado vuelva a repetirse jamás.
+ */
+function asignarDorsalCorrelativoOficial(sheet, categoriaTexto, dorsalPropuesto, persistirMarca) {
   var code = extraerCodigoCategoria(categoriaTexto);
   var cfg = CATEGORIAS_CONTROL[code] || CATEGORIAS_CONTROL["A"];
   var maxNum = cfg.start - 1;
 
+  // Marca de agua monotónica persistida en ScriptProperties (evita repetir números incluso si se borran filas)
+  var props = PropertiesService.getScriptProperties();
+  var propKey = "LAST_DORSAL_NUM_" + code;
+  var savedPropVal = parseInt(props.getProperty(propKey) || "0", 10);
+  if (!isNaN(savedPropVal) && savedPropVal > maxNum) {
+    maxNum = savedPropVal;
+  }
+
   var lastRow = sheet.getLastRow();
-  var dorsalesExistentes = {};
+  var usedNumbers = {};
 
   if (lastRow > 1) {
     var colDorsal = obtenerColumnaDorsal(sheet);
-    var values = sheet.getRange(2, colDorsal, lastRow - 1, 1).getValues();
-    for (var i = 0; i < values.length; i++) {
-      var cellVal = values[i][0];
-      if (!cellVal) continue;
-      var d = cellVal.toString().trim().toUpperCase();
-      if (!d) continue;
+    var colCat = obtenerColumnaCategoria(sheet);
+    var dorsalValues = sheet.getRange(2, colDorsal, lastRow - 1, 1).getValues();
+    var catValues = colCat <= sheet.getLastColumn()
+      ? sheet.getRange(2, colCat, lastRow - 1, 1).getValues()
+      : [];
 
-      dorsalesExistentes[d] = true;
-
-      // 1. Detección por coincidencia de prefijo
-      var numStr = "";
-      if (d.indexOf(cfg.prefix) === 0) {
-        numStr = d.substring(cfg.prefix.length);
-      } else if (d.indexOf(code + "-") === 0) {
-        numStr = d.substring(2);
-      } else if (d.indexOf(code) === 0 && d.length > 1 && !isNaN(parseInt(d.substring(1), 10))) {
-        numStr = d.substring(1);
-      }
-
-      if (numStr) {
-        var val = parseInt(numStr, 10);
-        if (!isNaN(val) && val > maxNum && val <= cfg.end) {
-          maxNum = val;
-        }
-      }
-
-      // 2. Detección profunda de números dentro del texto de la celda (resiliente a espacios o formatos alternos)
-      var matches = d.match(/\d+/g);
-      if (matches) {
-        for (var m = 0; m < matches.length; m++) {
-          var numVal = parseInt(matches[m], 10);
-          if (!isNaN(numVal) && numVal >= cfg.start && numVal <= cfg.end) {
-            if (numVal > maxNum) {
-              maxNum = numVal;
-            }
-          }
+    for (var i = 0; i < dorsalValues.length; i++) {
+      var cellVal = dorsalValues[i][0];
+      var catVal = (catValues[i] && catValues[i][0]) ? catValues[i][0] : "";
+      var parsedNum = extraerNumeroDorsalDeCategoria(cellVal, catVal, code);
+      if (parsedNum !== null && parsedNum >= cfg.start) {
+        usedNumbers[parsedNum] = true;
+        if (parsedNum > maxNum) {
+          maxNum = parsedNum;
         }
       }
     }
   }
 
-  // Si el cliente propuso un dorsal correlativo oficial válido dentro del rango de la categoría y no está usado en la hoja, respetarlo
-  if (dorsalPropuesto && dorsalPropuesto !== "0000" && dorsalPropuesto !== "undefined" && dorsalPropuesto !== "") {
-    var propuestoClean = dorsalPropuesto.toString().trim().toUpperCase();
-    if (!dorsalesExistentes[propuestoClean]) {
-      var matchP = propuestoClean.match(/\d+/g);
-      if (matchP) {
-        var pNum = parseInt(matchP[matchP.length - 1], 10);
-        if (!isNaN(pNum) && pNum >= cfg.start && pNum <= cfg.end && pNum >= maxNum + 1) {
-          return propuestoClean;
-        }
-      }
-    }
-  }
-
-  // Si no, asignar forzosamente el siguiente correlativo oficial (maxNum + 1)
+  // Calcular el siguiente número estrictamente mayor al máximo usado y nunca presente en usedNumbers
   var nextNum = maxNum + 1;
-  if (nextNum > cfg.end) {
-    nextNum = cfg.start;
+
+  // Si se propuso un dorsal específico de contingencia (ej. tras reconexión), aceptarlo SOLO si es estrictamente
+  // mayor o igual a nextNum y no ha sido usado ni registrado antes
+  if (dorsalPropuesto && dorsalPropuesto !== "0000" && dorsalPropuesto !== "undefined" && dorsalPropuesto !== "") {
+    var pNum = extraerNumeroDorsalDeCategoria(dorsalPropuesto, categoriaTexto, code);
+    if (pNum !== null && pNum >= nextNum && !usedNumbers[pNum]) {
+      nextNum = pNum;
+    }
   }
+
+  while (usedNumbers[nextNum]) {
+    nextNum++;
+  }
+
+  // Nunca reiniciar al inicio del rango (cfg.start) al superar cfg.end, para no repetir números ya emitidos
+  if (persistirMarca) {
+    try {
+      props.setProperty(propKey, String(nextNum));
+    } catch (eProp) {}
+  }
+
   return cfg.prefix + ("0000" + nextNum).slice(-4);
 }
 
@@ -314,7 +371,7 @@ function asignarDorsalCorrelativoOficial(sheet, categoriaTexto, dorsalPropuesto)
  * Alias de compatibilidad hacia atrás
  */
 function calcularSiguienteDorsal(sheet, categoria) {
-  return asignarDorsalCorrelativoOficial(sheet, categoria, "");
+  return asignarDorsalCorrelativoOficial(sheet, categoria, "", false);
 }
 
 function doPost(e) {
@@ -451,83 +508,128 @@ function doPost(e) {
       }
     }
 
-    // 4. Lógica de Sheets: Insertar fila en la hoja de cálculo activa
+    // 4. Lógica de Sheets: Bloqueo estricto + Idempotencia + Inserción correlativa sin duplicados
+    var submissionId = data.submissionId ? data.submissionId.toString().trim() : "";
+    var cache = CacheService.getScriptCache();
+
+    // Si ya se procesó este mismo submissionId antes de adquirir lock, devolver respuesta exacta
+    if (submissionId) {
+      try {
+        var cachedEarly = cache.get("SUB_" + submissionId);
+        if (cachedEarly) {
+          return ContentService.createTextOutput(cachedEarly).setMimeType(ContentService.MimeType.JSON);
+        }
+      } catch (cacheEarlyErr) {}
+    }
+
     var lock = LockService.getScriptLock();
     var lockAcquired = false;
     try {
-      lockAcquired = lock.tryLock(10000); // Esperar hasta 10 segundos para garantizar correlatividad sin duplicados
+      lockAcquired = lock.tryLock(25000);
+      if (!lockAcquired) {
+        Utilities.sleep(500);
+        lockAcquired = lock.tryLock(15000);
+      }
     } catch (lockErr) {}
 
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (ss) {
-      var sheet = ss.getActiveSheet();
+    if (!lockAcquired) {
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "error",
+        message: "Sistema ocupado procesando inscripciones simultáneas. Por favor reintente."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
 
-      // Si la hoja es nueva o no tiene filas, generar encabezados institucionales (10 columnas)
-      if (sheet.getLastRow() === 0) {
-        sheet.appendRow([
-          "Marca Temporal",
-          "Dorsal Asignado",
-          "Nombres y Apellidos",
-          "Cédula de Identidad",
-          "Número de Celular",
-          "Inscrito Por",
-          "Categoría",
-          "Rama (Damas / Varones)",
-          "URL Cédula Identidad (Drive)",
-          "URL Comprobante (Drive)"
-        ]);
-
-        // Formato visual militar al encabezado
-        var headerRange = sheet.getRange(1, 1, 1, 10);
-        headerRange.setFontWeight("bold");
-        headerRange.setBackground("#1e341b");
-        headerRange.setFontColor("#ffffff");
-        headerRange.setHorizontalAlignment("center");
-      } else {
-        // Asegurar que las columnas de Rama, Cédula e Inscrito Por existan y estén actualizadas
-        asegurarColumnaRama(sheet);
-        asegurarColumnaCedula(sheet);
-        asegurarColumnaInscritoPor(sheet);
+    try {
+      // Re-verificar idempotencia dentro del bloqueo para evitar duplicados por reintentos simultáneos
+      if (submissionId) {
+        try {
+          var cachedInside = cache.get("SUB_" + submissionId);
+          if (cachedInside) {
+            return ContentService.createTextOutput(cachedInside).setMimeType(ContentService.MimeType.JSON);
+          }
+        } catch (cacheErr) {}
       }
 
-      // Garantizar número de dorsal oficial correlativo según los registros reales de la hoja
-      dorsal = asignarDorsalCorrelativoOficial(sheet, categoria, dorsal);
+      var ss = SpreadsheetApp.getActiveSpreadsheet();
+      if (ss) {
+        var sheet = ss.getActiveSheet();
 
-      var timestamp = new Date();
-      sheet.appendRow([
-        timestamp,
-        dorsal,
-        nombres,
-        ci,
-        celular,
-        unidad,
-        categoria,
-        genero,
-        fileCedulaUrl,
-        fileUrl
-      ]);
+        // Si la hoja es nueva o no tiene filas, generar encabezados institucionales (10 columnas)
+        if (sheet.getLastRow() === 0) {
+          sheet.appendRow([
+            "Marca Temporal",
+            "Dorsal Asignado",
+            "Nombres y Apellidos",
+            "Cédula de Identidad",
+            "Número de Celular",
+            "Inscrito Por",
+            "Categoría",
+            "Rama (Damas / Varones)",
+            "URL Cédula Identidad (Drive)",
+            "URL Comprobante (Drive)"
+          ]);
+
+          // Formato visual militar al encabezado
+          var headerRange = sheet.getRange(1, 1, 1, 10);
+          headerRange.setFontWeight("bold");
+          headerRange.setBackground("#1e341b");
+          headerRange.setFontColor("#ffffff");
+          headerRange.setHorizontalAlignment("center");
+        } else {
+          // Asegurar que las columnas de Rama, Cédula e Inscrito Por existan y estén actualizadas
+          asegurarColumnaRama(sheet);
+          asegurarColumnaCedula(sheet);
+          asegurarColumnaInscritoPor(sheet);
+        }
+
+        // Garantizar número de dorsal oficial correlativo e irrepetible según la hoja y marca persistente
+        dorsal = asignarDorsalCorrelativoOficial(sheet, categoria, dorsal, true);
+
+        var timestamp = new Date();
+        sheet.appendRow([
+          timestamp,
+          dorsal,
+          nombres,
+          ci,
+          celular,
+          unidad,
+          categoria,
+          genero,
+          fileCedulaUrl,
+          fileUrl
+        ]);
+        SpreadsheetApp.flush();
+      }
+
+      // 5. Retorno de respuesta JSON de éxito usando ContentService
+      var cfgCode = extraerCodigoCategoria(categoria);
+      var cfgFound = CATEGORIAS_CONTROL[cfgCode] || CATEGORIAS_CONTROL["A"];
+      var cleanNumber = dorsal ? dorsal.replace(cfgFound.prefix, "").replace(/^[A-M]-?/, "") : "";
+
+      var resultJson = JSON.stringify({
+        status: "success",
+        message: "Inscripción registrada correctamente en el sistema.",
+        dorsal: dorsal,
+        number: cleanNumber,
+        prefix: cfgFound.prefix,
+        categoria: categoria,
+        genero: genero,
+        fileCedulaUrl: fileCedulaUrl,
+        fileUrl: fileUrl
+      });
+
+      if (submissionId) {
+        try {
+          cache.put("SUB_" + submissionId, resultJson, 21600);
+        } catch (cachePutErr) {}
+      }
+
+      return ContentService.createTextOutput(resultJson).setMimeType(ContentService.MimeType.JSON);
+    } finally {
+      if (lockAcquired) {
+        try { lock.releaseLock(); } catch (eRel) {}
+      }
     }
-
-    if (lockAcquired) {
-      try { lock.releaseLock(); } catch (e) {}
-    }
-
-    // 5. Retorno de respuesta JSON de éxito usando ContentService
-    var cfgCode = extraerCodigoCategoria(categoria);
-    var cfgFound = CATEGORIAS_CONTROL[cfgCode] || CATEGORIAS_CONTROL["A"];
-    var cleanNumber = dorsal ? dorsal.replace(cfgFound.prefix, "").replace(/^[A-M]-?/, "") : "";
-
-    return ContentService.createTextOutput(JSON.stringify({
-      status: "success",
-      message: "Inscripción registrada correctamente en el sistema.",
-      dorsal: dorsal,
-      number: cleanNumber,
-      prefix: cfgFound.prefix,
-      categoria: categoria,
-      genero: genero,
-      fileCedulaUrl: fileCedulaUrl,
-      fileUrl: fileUrl
-    })).setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({
@@ -551,7 +653,7 @@ function doGet(e) {
       var catParam = (e && e.parameter && (e.parameter.category || e.parameter.categoria)) ? (e.parameter.category || e.parameter.categoria) : "A";
       var code = extraerCodigoCategoria(catParam);
       var cfg = CATEGORIAS_CONTROL[code] || CATEGORIAS_CONTROL["A"];
-      var nextD = asignarDorsalCorrelativoOficial(sheet, code, "");
+      var nextD = asignarDorsalCorrelativoOficial(sheet, code, "", false);
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
         dorsal: nextD,
@@ -573,7 +675,7 @@ function doGet(e) {
       for (var cIdx = 0; cIdx < codes.length; cIdx++) {
         var cCode = codes[cIdx];
         var cCfg = CATEGORIAS_CONTROL[cCode];
-        var cNext = asignarDorsalCorrelativoOficial(sheetAll, cCode, "");
+        var cNext = asignarDorsalCorrelativoOficial(sheetAll, cCode, "", false);
         countersObj[cCode] = {
           code: cCode,
           name: cCfg.name,
