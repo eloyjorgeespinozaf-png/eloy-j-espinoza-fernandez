@@ -9,5 +9,8 @@
   "iconUrl": "/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg",
   "qrUrl": "/qr-oficial.png",
   "cedulaPolicy": "optional",
-  "updatedAt": 1793738000000
+  "registrationsClosed": false,
+  "closedMessage": "Las inscripciones para la Carrera Pedestre 10 KM ECEME han finalizado. Muchas gracias por su participación.",
+  "updatedAt": 1795229088567,
+  "requiresAuth": true
 }

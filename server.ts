@@ -1,6 +1,7 @@
 import express from 'express';
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -91,9 +92,53 @@ async function startServer() {
     }
   };
 
-  const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ECEME2026";
+  const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "ECEME2026";
+  const ADMIN_CONFIG_FILE = path.resolve(__dirname, 'admin-config.json');
+  const DEFAULT_CLOSED_MESSAGE = "Las inscripciones para la Carrera Pedestre 10 KM ECEME han finalizado. Muchas gracias por su participación.";
 
-  // Función para leer la configuración visual persistida
+  const hashAdminPassword = (plain: string, salt?: string) => {
+    const usedSalt = salt || crypto.randomBytes(16).toString('hex');
+    const hash = crypto.scryptSync(plain, usedSalt, 64).toString('hex');
+    return { salt: usedSalt, hash };
+  };
+
+  const ensureAdminConfig = (): { salt: string; hash: string; updatedAt: number } => {
+    try {
+      if (fs.existsSync(ADMIN_CONFIG_FILE)) {
+        const parsed = JSON.parse(fs.readFileSync(ADMIN_CONFIG_FILE, 'utf-8'));
+        if (parsed?.salt && parsed?.hash) {
+          return parsed;
+        }
+      }
+    } catch {}
+    const initial = hashAdminPassword(DEFAULT_ADMIN_PASSWORD);
+    const config = { ...initial, updatedAt: Date.now() };
+    try {
+      fs.writeFileSync(ADMIN_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Error al inicializar admin-config.json:', err);
+    }
+    return config;
+  };
+
+  const verifyAdminPassword = (candidate?: string): boolean => {
+    if (!candidate || typeof candidate !== 'string') return false;
+    const config = ensureAdminConfig();
+    const candidateHash = crypto.scryptSync(candidate, config.salt, 64);
+    const storedHash = Buffer.from(config.hash, 'hex');
+    if (candidateHash.length !== storedHash.length) return false;
+    return crypto.timingSafeEqual(candidateHash, storedHash);
+  };
+
+  const setNewAdminPassword = (newPlain: string) => {
+    const hashed = hashAdminPassword(newPlain);
+    const config = { ...hashed, updatedAt: Date.now() };
+    fs.writeFileSync(ADMIN_CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+  };
+
+  ensureAdminConfig();
+
+  // Función para leer la configuración visual y de control de inscripciones persistida
   const getVisualSettings = () => {
     try {
       if (fs.existsSync(DATA_FILE)) {
@@ -102,6 +147,8 @@ async function startServer() {
         return {
           ...parsed,
           cedulaPolicy: parsed.cedulaPolicy || 'optional',
+          registrationsClosed: Boolean(parsed.registrationsClosed),
+          closedMessage: parsed.closedMessage || DEFAULT_CLOSED_MESSAGE,
           requiresAuth: true
         };
       }
@@ -116,6 +163,8 @@ async function startServer() {
       iconSource: '/assets/aistudio/WhatsApp_Image_2026-11-08_at_17.32.07_26f348b5.jpeg',
       qrSource: '/qr-oficial.png',
       cedulaPolicy: 'optional',
+      registrationsClosed: false,
+      closedMessage: DEFAULT_CLOSED_MESSAGE,
       requiresAuth: true,
       updatedAt: Date.now()
     };
@@ -143,16 +192,101 @@ async function startServer() {
   // 2. Endpoint POST: Verificar contraseña de administrador
   app.post('/api/admin/verify', (req, res) => {
     const { password } = req.body || {};
-    if (password === ADMIN_PASSWORD) {
+    if (verifyAdminPassword(password)) {
       return res.json({ success: true, message: 'Acceso de administrador autorizado' });
     }
     return res.status(401).json({ success: false, error: 'Contraseña incorrecta. Acceso restringido a administradores autorizados.' });
   });
 
+  // 2.1 Endpoint POST: Cambiar contraseña de administrador
+  app.post('/api/admin/change-password', (req, res) => {
+    const currentPassword = (req.body?.currentPassword as string) || (req.headers['x-admin-password'] as string) || '';
+    const newPassword = (req.body?.newPassword as string) || '';
+    const confirmPassword = req.body?.confirmPassword as string | undefined;
+
+    if (!verifyAdminPassword(currentPassword)) {
+      return res.status(401).json({
+        success: false,
+        error: 'La contraseña actual es incorrecta.'
+      });
+    }
+
+    const trimmedNew = newPassword.trim();
+    if (trimmedNew.length < 4) {
+      return res.status(400).json({
+        success: false,
+        error: 'La nueva contraseña debe tener al menos 4 caracteres.'
+      });
+    }
+
+    if (typeof confirmPassword === 'string' && trimmedNew !== confirmPassword.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'La confirmación no coincide con la nueva contraseña.'
+      });
+    }
+
+    try {
+      setNewAdminPassword(trimmedNew);
+      console.log('[Admin] Contraseña de administrador actualizada correctamente.');
+      return res.json({
+        success: true,
+        message: 'Contraseña de administrador actualizada correctamente.'
+      });
+    } catch (err: any) {
+      console.error('Error al actualizar contraseña:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // 2.2 Endpoint POST: Cerrar o reabrir inscripciones en tiempo real
+  app.post('/api/admin/registration-status', (req, res) => {
+    const providedPassword = (req.headers['x-admin-password'] as string) || req.body?.adminPassword;
+    if (!verifyAdminPassword(providedPassword)) {
+      return res.status(401).json({
+        success: false,
+        error: 'Contraseña de administrador incorrecta o ausente. Acción denegada.'
+      });
+    }
+
+    try {
+      const { registrationsClosed, closedMessage } = req.body || {};
+      const current = getVisualSettings();
+      const nextClosed = typeof registrationsClosed === 'boolean' ? registrationsClosed : !current.registrationsClosed;
+      const nextMessage = typeof closedMessage === 'string' && closedMessage.trim()
+        ? closedMessage.trim()
+        : (current.closedMessage || DEFAULT_CLOSED_MESSAGE);
+
+      const newSettings = {
+        ...current,
+        registrationsClosed: nextClosed,
+        closedMessage: nextMessage,
+        updatedAt: Date.now()
+      };
+
+      fs.writeFileSync(DATA_FILE, JSON.stringify(newSettings, null, 2), 'utf-8');
+      broadcastSettings(newSettings);
+      console.log(`[Admin] Estado de inscripciones actualizado: ${nextClosed ? 'CERRADAS' : 'ABIERTAS'}`);
+
+      return res.json({
+        success: true,
+        registrationsClosed: nextClosed,
+        closedMessage: nextMessage,
+        message: nextClosed
+          ? 'Inscripciones cerradas. El formulario quedó bloqueado en todos los dispositivos.'
+          : 'Inscripciones habilitadas nuevamente.',
+        settings: newSettings
+      });
+    } catch (err: any) {
+      console.error('Error al cambiar estado de inscripciones:', err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
   // 3. Endpoint POST: Guardar configuración visual protegida con contraseña
   app.post('/api/visual-settings', (req, res) => {
     const providedPassword = (req.headers['x-admin-password'] as string) || req.body?.adminPassword;
-    if (providedPassword !== ADMIN_PASSWORD) {
+    if (!verifyAdminPassword(providedPassword)) {
       console.warn('[Security] Intento de modificación no autorizado rechazado');
       return res.status(401).json({
         success: false,
@@ -167,7 +301,9 @@ async function startServer() {
         bgBlur,
         overlayDarkness,
         iconSource,
-        cedulaPolicy
+        cedulaPolicy,
+        registrationsClosed,
+        closedMessage
       } = req.body || {};
 
       let finalBgSource = bgSource;
@@ -204,6 +340,10 @@ async function startServer() {
         bgUrl: bgUrl || current.bgUrl || '',
         iconUrl: iconUrl || current.iconUrl || '',
         cedulaPolicy: finalCedulaPolicy,
+        registrationsClosed: typeof registrationsClosed === 'boolean' ? registrationsClosed : Boolean(current.registrationsClosed),
+        closedMessage: typeof closedMessage === 'string' && closedMessage.trim()
+          ? closedMessage.trim()
+          : (current.closedMessage || DEFAULT_CLOSED_MESSAGE),
         updatedAt: Date.now()
       };
 
@@ -436,6 +576,14 @@ async function startServer() {
   // Endpoint atómico para reservar el siguiente dorsal único según la categoría (nunca repite números)
   app.post('/api/dorsal/next', async (req, res) => {
     try {
+      const currentSettings = getVisualSettings();
+      if (currentSettings.registrationsClosed) {
+        return res.status(403).json({
+          success: false,
+          registrationsClosed: true,
+          error: currentSettings.closedMessage || DEFAULT_CLOSED_MESSAGE
+        });
+      }
       const { categoryCode } = req.body || {};
       const code = extractCatCode(categoryCode);
       const cfg = CATEGORY_CONFIG[code] || CATEGORY_CONFIG['A'];
@@ -492,6 +640,14 @@ async function startServer() {
   // Endpoint principal de registro e inscripción sincronizado DIRECTAMENTE con Google Sheets
   app.post('/api/inscribir', async (req, res) => {
     try {
+      const currentSettings = getVisualSettings();
+      if (currentSettings.registrationsClosed) {
+        return res.status(403).json({
+          success: false,
+          registrationsClosed: true,
+          error: currentSettings.closedMessage || DEFAULT_CLOSED_MESSAGE
+        });
+      }
       const payload = req.body || {};
       const catCode = extractCatCode(payload.categoria || payload.categoryCode);
       const cfg = CATEGORY_CONFIG[catCode] || CATEGORY_CONFIG['A'];
@@ -639,7 +795,7 @@ async function startServer() {
   // Endpoint de administración para sincronizar o ajustar contadores manualmente
   app.post('/api/dorsal/update-counter', async (req, res) => {
     const providedPassword = (req.headers['x-admin-password'] as string) || req.body?.adminPassword;
-    if (providedPassword !== ADMIN_PASSWORD) {
+    if (!verifyAdminPassword(providedPassword)) {
       return res.status(401).json({ success: false, error: 'No autorizado' });
     }
     const { categoryCode, nextValue } = req.body || {};

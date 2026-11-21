@@ -179,9 +179,29 @@
 
         <!-- CONTENEDOR MÓDULO 1: SECCIÓN DE REGISTRO (QR Y FORMULARIO) -->
         <div id="registrationSection">
+
+        <!-- AVISO OFICIAL DE INSCRIPCIONES CERRADAS (CONTROLADO POR ADMINISTRADOR) -->
+        <section id="registrationsClosedBanner" class="hidden mb-10">
+          <div class="bg-army-950/90 backdrop-blur-md border-2 border-rose-500/60 rounded-2xl p-6 sm:p-10 shadow-[0_12px_40px_rgba(0,0,0,0.75)] text-center space-y-4">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-rose-950/90 border border-rose-500/60 text-rose-400 shadow-lg mx-auto">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div class="inline-block px-3 py-1 rounded-full bg-rose-950/90 border border-rose-500/50 text-rose-300 text-[11px] font-bold uppercase tracking-widest">
+              Registro Finalizado
+            </div>
+            <h2 class="text-xl sm:text-2xl font-display font-black uppercase tracking-wide text-white">
+              Inscripciones Cerradas
+            </h2>
+            <p id="registrationsClosedMessageText" class="text-sm sm:text-base text-stone-300 max-w-lg mx-auto leading-relaxed">
+              Las inscripciones para la Carrera Pedestre 10 KM ECEME han finalizado. Muchas gracias por su participación.
+            </p>
+          </div>
+        </section>
         
         <!-- 3. SECCIÓN DE PAGO QR -->
-        <section class="mb-10">
+        <section id="qrPaymentSection" class="mb-10">
           <div class="bg-army-950/85 backdrop-blur-md border border-gold-500/30 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.7)] text-center">
             <div class="text-xs uppercase tracking-widest text-gold-400/90 font-semibold mb-3">
               Paso 1: Pago de Inscripción
@@ -258,7 +278,7 @@
         </section>
 
         <!-- 4. FORMULARIO DE INSCRIPCIÓN -->
-        <section class="mb-10">
+        <section id="inscriptionFormSection" class="mb-10">
           <div class="bg-army-950/85 backdrop-blur-md border border-gold-500/30 rounded-2xl p-6 sm:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.7)]">
             <div class="mb-6">
               <h2 class="text-xl sm:text-2xl font-bold font-display uppercase tracking-wide text-white">
@@ -1579,7 +1599,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-gold-400" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
           </svg>
-          <span>Acceso Administrador (Subir Fondo e Ícono)</span>
+          <span>Panel de Control · Administrador</span>
         </button>
       </div>
     </footer>
@@ -1587,7 +1607,7 @@
   </div>
 
   <!-- ========================================================================= -->
-  <!-- MODAL DE ADMINISTRACIÓN VISUAL: PROTEGIDO POR CONTRASEÑA (MÉTODO 3)       -->
+  <!-- MODAL PANEL DE CONTROL DEL ADMINISTRADOR (PROTEGIDO POR CONTRASEÑA)       -->
   <!-- ========================================================================= -->
   <div id="adminModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
     <div class="relative w-full max-w-lg bg-army-950 border border-gold-500/50 rounded-2xl shadow-2xl p-5 sm:p-7 overflow-hidden max-h-[92vh] flex flex-col">
@@ -1613,18 +1633,17 @@
             </svg>
           </div>
           <h3 class="text-lg sm:text-xl font-bold font-display uppercase tracking-wide text-white">
-            Acceso de Administrador
+            Panel de Control · Administrador
           </h3>
           <p class="text-xs text-stone-400 mt-1 max-w-sm mx-auto">
-            Ingrese la contraseña autorizada para insertar o modificar las imágenes institucionales (fondo de pantalla y escudo).
+            Ingrese su contraseña autorizada para controlar el cierre de inscripciones, cambiar la contraseña de acceso, administrar dorsales y personalizar la aplicación.
           </p>
         </div>
 
         <form id="adminAuthForm" class="space-y-4">
           <div>
             <label for="adminPasswordInput" class="block text-xs uppercase tracking-wider font-semibold text-stone-300 mb-1.5 flex justify-between items-center">
-              <span>Contraseña de Seguridad</span>
-              <span class="text-[10px] text-stone-400">Por defecto: <code class="text-gold-400 bg-army-900 px-1 py-0.5 rounded">ECEME2026</code></span>
+              <span>Contraseña de Administrador</span>
             </label>
             <input
               type="password"
@@ -1643,7 +1662,7 @@
             id="adminLoginSubmitBtn"
             class="w-full py-3 rounded-lg bg-gold-500 hover:bg-gold-400 active:bg-gold-600 text-army-950 font-display font-bold uppercase tracking-wider text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer"
           >
-            <span>Verificar y Acceder al Panel</span>
+            <span>Ingresar al Panel de Control</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
             </svg>
@@ -1651,12 +1670,12 @@
         </form>
       </div>
 
-      <!-- PANTALLA 2: PANEL DE CONTROL VISUAL (FONDOS E ÍCONOS) -->
+      <!-- PANTALLA 2: PANEL DE CONTROL DEL ADMINISTRADOR -->
       <div id="adminPanelScreen" class="hidden flex-1 overflow-y-auto space-y-5 pr-1 text-left">
-        <div class="border-b border-army-800 pb-3 flex items-center justify-between">
+        <div class="border-b border-army-800 pb-3 flex items-center justify-between gap-2">
           <div>
-            <h3 class="text-base sm:text-lg font-bold font-display uppercase tracking-wide text-gold-300 flex items-center gap-2">
-              <span>Panel Visual de la WebApp</span>
+            <h3 class="text-base sm:text-lg font-bold font-display uppercase tracking-wide text-gold-300 flex flex-wrap items-center gap-2">
+              <span>Panel de Control · Administrador</span>
               <span class="text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-500/40 px-2 py-0.5 rounded font-mono font-semibold">ADMIN AUTORIZADO</span>
             </h3>
             <p class="text-xs text-stone-400 mt-0.5">Los cambios se aplican y sincronizan en tiempo real en móviles y PC.</p>
@@ -1664,10 +1683,95 @@
           <button
             type="button"
             id="adminLogoutBtn"
-            class="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer"
+            class="text-xs text-stone-400 hover:text-rose-400 underline cursor-pointer shrink-0"
           >
             Cerrar sesión
           </button>
+        </div>
+
+        <!-- SECCIÓN 0: CONTROL DE INSCRIPCIONES (CERRAR / REABRIR) -->
+        <div class="bg-army-900/90 border border-gold-500/40 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-100">Control de Inscripciones</span>
+            <span id="adminRegStatusBadge" class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/50">
+              Inscripciones Abiertas
+            </span>
+          </div>
+
+          <p class="text-[11px] text-stone-300 leading-relaxed">
+            Use este botón para cerrar inmediatamente las inscripciones cuando finalice el plazo o se agoten los cupos. El bloqueo impide nuevos registros tanto en la pantalla como en el servidor.
+          </p>
+
+          <div>
+            <label for="adminClosedMessageInput" class="block text-[10px] uppercase tracking-wider font-semibold text-stone-400 mb-1">
+              Mensaje mostrado al público cuando estén cerradas
+            </label>
+            <textarea
+              id="adminClosedMessageInput"
+              rows="2"
+              class="w-full bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-xs text-stone-100 placeholder-stone-500 focus:outline-none focus:border-gold-500"
+              placeholder="Ej: Las inscripciones han finalizado. Muchas gracias por su participación."
+            ></textarea>
+          </div>
+
+          <button
+            type="button"
+            id="adminToggleRegistrationsBtn"
+            class="w-full py-3 px-4 rounded-lg bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-display font-bold uppercase tracking-wider text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <span id="adminToggleRegistrationsText">Cerrar Inscripciones (Ya no permitir registros)</span>
+          </button>
+
+          <p id="adminRegStatusFeedback" class="hidden text-center text-[11px] font-semibold"></p>
+        </div>
+
+        <!-- SECCIÓN 0.5: SEGURIDAD · CAMBIAR CONTRASEÑA DE ADMINISTRADOR -->
+        <div class="bg-army-900/80 border border-army-800 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-stone-200">Seguridad · Cambiar Contraseña</span>
+            <span class="text-[10px] text-gold-400 font-mono">Acceso Admin</span>
+          </div>
+
+          <form id="adminChangePasswordForm" class="space-y-2.5">
+            <div>
+              <input
+                type="password"
+                id="adminCurrentPassInput"
+                placeholder="Contraseña actual"
+                required
+                class="w-full bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold-500"
+              />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input
+                type="password"
+                id="adminNewPassInput"
+                placeholder="Nueva contraseña (mín. 4)"
+                minlength="4"
+                required
+                class="w-full bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold-500"
+              />
+              <input
+                type="password"
+                id="adminConfirmPassInput"
+                placeholder="Confirmar nueva contraseña"
+                minlength="4"
+                required
+                class="w-full bg-army-950 border border-army-700 rounded-lg px-3 py-2 text-xs text-white placeholder-stone-500 focus:outline-none focus:border-gold-500"
+              />
+            </div>
+            <button
+              type="submit"
+              id="adminChangePassBtn"
+              class="w-full py-2.5 px-4 rounded-lg bg-army-950 hover:bg-army-800 border border-gold-500/50 text-gold-300 text-xs font-bold uppercase tracking-wider transition cursor-pointer disabled:opacity-60"
+            >
+              Actualizar Contraseña de Administrador
+            </button>
+            <p id="adminChangePassFeedback" class="hidden text-center text-[11px] font-semibold"></p>
+          </form>
         </div>
 
         <!-- SECCIÓN 1: SUBIR IMAGEN DE FONDO -->
@@ -2279,6 +2383,44 @@
 
       // Política dinámica de fotografía de cédula: 'optional' | 'required_10k' | 'required_all'
       let currentCedulaPolicy = 'optional';
+      // Control global de cierre / apertura de inscripciones desde el Panel de Control
+      let currentRegistrationsClosed = false;
+      let currentClosedMessage = 'Las inscripciones para la Carrera Pedestre 10 KM ECEME han finalizado. Muchas gracias por su participación.';
+
+      const updateRegistrationStatusUI = () => {
+        const closedBanner = document.getElementById('registrationsClosedBanner');
+        const closedMessageEl = document.getElementById('registrationsClosedMessageText');
+        const qrSection = document.getElementById('qrPaymentSection');
+        const formSection = document.getElementById('inscriptionFormSection');
+
+        if (closedMessageEl) {
+          closedMessageEl.textContent = currentClosedMessage;
+        }
+
+        if (currentRegistrationsClosed) {
+          if (closedBanner) closedBanner.classList.remove('hidden');
+          if (qrSection) qrSection.classList.add('hidden');
+          if (formSection) formSection.classList.add('hidden');
+          if (form) {
+            form.querySelectorAll('input, select, button').forEach((el) => {
+              el.disabled = true;
+            });
+          }
+          if (submitBtn) submitBtn.disabled = true;
+          if (btnText) btnText.textContent = 'Inscripciones Cerradas';
+        } else {
+          if (closedBanner) closedBanner.classList.add('hidden');
+          if (qrSection) qrSection.classList.remove('hidden');
+          if (formSection) formSection.classList.remove('hidden');
+          if (form) {
+            form.querySelectorAll('input, select, button').forEach((el) => {
+              el.disabled = false;
+            });
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          if (btnText) btnText.textContent = 'Registrar Inscripción';
+        }
+      };
 
       const isCedulaRequiredForCategory = (catCode) => {
         const REQUIRES_10K_CODES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
@@ -2778,6 +2920,10 @@
           nombreArchivo: fileData.nombre
         };
 
+        if (currentRegistrationsClosed) {
+          throw new Error(currentClosedMessage || 'Las inscripciones están cerradas.');
+        }
+
         let assignedDorsal = '';
         let assignedNumber = '';
         let transmitted = false;
@@ -2790,15 +2936,22 @@
             body: JSON.stringify(payload),
             signal: AbortSignal.timeout(60000)
           });
-          if (srvRes.ok) {
-            const srvData = await srvRes.json().catch(() => ({}));
-            if (srvData && srvData.success && srvData.dorsal) {
-              assignedDorsal = String(srvData.dorsal).trim();
-              assignedNumber = srvData.number ? String(srvData.number).trim() : assignedDorsal.replace(/\D/g, '');
-              transmitted = true;
-            }
+          const srvData = await srvRes.json().catch(() => ({}));
+          if (srvRes.status === 403 || (srvData && srvData.registrationsClosed)) {
+            currentRegistrationsClosed = true;
+            if (srvData && srvData.error) currentClosedMessage = srvData.error;
+            updateRegistrationStatusUI();
+            throw new Error(currentClosedMessage);
+          }
+          if (srvRes.ok && srvData && srvData.success && srvData.dorsal) {
+            assignedDorsal = String(srvData.dorsal).trim();
+            assignedNumber = srvData.number ? String(srvData.number).trim() : assignedDorsal.replace(/\D/g, '');
+            transmitted = true;
           }
         } catch (srvErr) {
+          if (currentRegistrationsClosed) {
+            throw srvErr;
+          }
           console.warn('[Aviso conexión backend]', srvErr);
         }
 
@@ -2887,6 +3040,12 @@
       if (form) {
         form.addEventListener('submit', async (e) => {
           e.preventDefault();
+          if (currentRegistrationsClosed) {
+            updateRegistrationStatusUI();
+            const closedBanner = document.getElementById('registrationsClosedBanner');
+            if (closedBanner) closedBanner.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+          }
           if (isSubmittingForm) return;
 
           // Validación de campos requeridos
@@ -3120,6 +3279,13 @@
 
             // Desplaza la vista suavemente al dorsal
             dorsalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (submitErr) {
+              console.warn('[Inscripción detenida]', submitErr);
+              updateRegistrationStatusUI();
+              if (!currentRegistrationsClosed) {
+                submitBtn.disabled = false;
+                btnText.textContent = "Registrar Inscripción";
+              }
             } finally {
               isSubmittingForm = false;
             }
@@ -3457,8 +3623,8 @@
         });
       };
 
-      // 3. Sistema Dinámico de Aplicación Visual
-      function applyVisualState(bg, op, bl, dark, icon, cedulaPolicy) {
+      // 3. Sistema Dinámico de Aplicación Visual y Estado de Inscripciones
+      function applyVisualState(bg, op, bl, dark, icon, cedulaPolicy, registrationsClosed, closedMessage) {
         currentBgSource = bg || currentBgSource;
         currentBgOpacity = typeof op === 'number' ? op : currentBgOpacity;
         currentBgBlur = typeof bl === 'number' ? bl : currentBgBlur;
@@ -3467,7 +3633,14 @@
         if (cedulaPolicy === 'optional' || cedulaPolicy === 'required_10k' || cedulaPolicy === 'required_all') {
           currentCedulaPolicy = cedulaPolicy;
         }
+        if (typeof registrationsClosed === 'boolean') {
+          currentRegistrationsClosed = registrationsClosed;
+        }
+        if (typeof closedMessage === 'string' && closedMessage.trim()) {
+          currentClosedMessage = closedMessage.trim();
+        }
         updateCedulaPolicyUI();
+        updateRegistrationStatusUI();
 
         if (appBackgroundLayer) {
           appBackgroundLayer.style.backgroundImage = `url("${currentBgSource}")`;
@@ -3535,6 +3708,33 @@
         const cedulaPolicySelect = document.getElementById('adminCedulaPolicySelect');
         if (cedulaPolicySelect) {
           cedulaPolicySelect.value = currentCedulaPolicy;
+        }
+
+        const adminRegStatusBadge = document.getElementById('adminRegStatusBadge');
+        const adminClosedMessageInput = document.getElementById('adminClosedMessageInput');
+        const adminToggleRegistrationsBtn = document.getElementById('adminToggleRegistrationsBtn');
+        const adminToggleRegistrationsText = document.getElementById('adminToggleRegistrationsText');
+
+        if (adminClosedMessageInput && document.activeElement !== adminClosedMessageInput) {
+          adminClosedMessageInput.value = currentClosedMessage;
+        }
+        if (adminRegStatusBadge) {
+          if (currentRegistrationsClosed) {
+            adminRegStatusBadge.textContent = 'Inscripciones Cerradas';
+            adminRegStatusBadge.className = 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-rose-950 text-rose-300 border border-rose-500/60';
+          } else {
+            adminRegStatusBadge.textContent = 'Inscripciones Abiertas';
+            adminRegStatusBadge.className = 'text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-500/50';
+          }
+        }
+        if (adminToggleRegistrationsBtn && adminToggleRegistrationsText) {
+          if (currentRegistrationsClosed) {
+            adminToggleRegistrationsBtn.className = 'w-full py-3 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-display font-bold uppercase tracking-wider text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60';
+            adminToggleRegistrationsText.textContent = 'Reabrir Inscripciones (Habilitar registros)';
+          } else {
+            adminToggleRegistrationsBtn.className = 'w-full py-3 px-4 rounded-lg bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-display font-bold uppercase tracking-wider text-xs sm:text-sm transition shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60';
+            adminToggleRegistrationsText.textContent = 'Cerrar Inscripciones (Ya no permitir registros)';
+          }
         }
 
         if (typeof cargarMonitorDorsales === 'function') {
@@ -3622,17 +3822,155 @@
               }
             }
           } catch (err) {
-            // Verificación de respaldo local en caso de desconexión
-            if (pass === 'ECEME2026') {
-              sessionStorage.setItem('eceme_admin_authed', 'true');
-              sessionStorage.setItem('eceme_admin_pass', pass);
-              adminAuthScreen.classList.add('hidden');
-              adminPanelScreen.classList.remove('hidden');
-              syncAdminModalUI();
-            } else if (adminAuthError) {
-              adminAuthError.textContent = 'Contraseña incorrecta.';
+            if (adminAuthError) {
+              adminAuthError.textContent = 'No se pudo conectar con el servidor para validar la contraseña.';
               adminAuthError.classList.remove('hidden');
             }
+          }
+        });
+      }
+
+      // Cerrar / Reabrir Inscripciones desde el Panel de Control
+      const adminToggleRegistrationsBtn = document.getElementById('adminToggleRegistrationsBtn');
+      const adminClosedMessageInput = document.getElementById('adminClosedMessageInput');
+      const adminRegStatusFeedback = document.getElementById('adminRegStatusFeedback');
+
+      if (adminToggleRegistrationsBtn) {
+        adminToggleRegistrationsBtn.addEventListener('click', async () => {
+          const pass = sessionStorage.getItem('eceme_admin_pass') || '';
+          const targetClosed = !currentRegistrationsClosed;
+          const customMessage = adminClosedMessageInput ? adminClosedMessageInput.value.trim() : currentClosedMessage;
+
+          adminToggleRegistrationsBtn.disabled = true;
+          if (adminRegStatusFeedback) adminRegStatusFeedback.classList.add('hidden');
+
+          try {
+            const res = await fetch('/api/admin/registration-status', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-admin-password': pass
+              },
+              body: JSON.stringify({
+                registrationsClosed: targetClosed,
+                closedMessage: customMessage,
+                adminPassword: pass
+              })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+              applyVisualState(
+                currentBgSource,
+                currentBgOpacity,
+                currentBgBlur,
+                currentOverlayDarkness,
+                currentIconSource,
+                currentCedulaPolicy,
+                Boolean(data.registrationsClosed),
+                data.closedMessage || customMessage
+              );
+              if (adminRegStatusFeedback) {
+                adminRegStatusFeedback.textContent = data.message || (targetClosed ? '✓ Inscripciones cerradas.' : '✓ Inscripciones reabiertas.');
+                adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
+                adminRegStatusFeedback.classList.remove('hidden');
+              }
+            } else {
+              if (res.status === 401) {
+                sessionStorage.removeItem('eceme_admin_authed');
+                sessionStorage.removeItem('eceme_admin_pass');
+                adminPanelScreen.classList.add('hidden');
+                adminAuthScreen.classList.remove('hidden');
+              }
+              if (adminRegStatusFeedback) {
+                adminRegStatusFeedback.textContent = data.error || 'No se pudo actualizar el estado de inscripciones.';
+                adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+                adminRegStatusFeedback.classList.remove('hidden');
+              }
+            }
+          } catch (err) {
+            if (adminRegStatusFeedback) {
+              adminRegStatusFeedback.textContent = 'Error de conexión con el servidor.';
+              adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+              adminRegStatusFeedback.classList.remove('hidden');
+            }
+          } finally {
+            adminToggleRegistrationsBtn.disabled = false;
+          }
+        });
+      }
+
+      // Cambiar Contraseña de Administrador
+      const adminChangePasswordForm = document.getElementById('adminChangePasswordForm');
+      const adminCurrentPassInput = document.getElementById('adminCurrentPassInput');
+      const adminNewPassInput = document.getElementById('adminNewPassInput');
+      const adminConfirmPassInput = document.getElementById('adminConfirmPassInput');
+      const adminChangePassBtn = document.getElementById('adminChangePassBtn');
+      const adminChangePassFeedback = document.getElementById('adminChangePassFeedback');
+
+      if (adminChangePasswordForm) {
+        adminChangePasswordForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const currentPassword = adminCurrentPassInput ? adminCurrentPassInput.value.trim() : '';
+          const newPassword = adminNewPassInput ? adminNewPassInput.value.trim() : '';
+          const confirmPassword = adminConfirmPassInput ? adminConfirmPassInput.value.trim() : '';
+
+          if (!currentPassword || newPassword.length < 4) {
+            if (adminChangePassFeedback) {
+              adminChangePassFeedback.textContent = 'La nueva contraseña debe tener al menos 4 caracteres.';
+              adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+              adminChangePassFeedback.classList.remove('hidden');
+            }
+            return;
+          }
+
+          if (newPassword !== confirmPassword) {
+            if (adminChangePassFeedback) {
+              adminChangePassFeedback.textContent = 'Las nuevas contraseñas no coinciden.';
+              adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+              adminChangePassFeedback.classList.remove('hidden');
+            }
+            return;
+          }
+
+          if (adminChangePassBtn) adminChangePassBtn.disabled = true;
+          if (adminChangePassFeedback) adminChangePassFeedback.classList.add('hidden');
+
+          try {
+            const res = await fetch('/api/admin/change-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                currentPassword,
+                newPassword,
+                confirmPassword
+              })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.ok && data.success) {
+              sessionStorage.setItem('eceme_admin_pass', newPassword);
+              if (adminCurrentPassInput) adminCurrentPassInput.value = '';
+              if (adminNewPassInput) adminNewPassInput.value = '';
+              if (adminConfirmPassInput) adminConfirmPassInput.value = '';
+              if (adminChangePassFeedback) {
+                adminChangePassFeedback.textContent = '✓ ' + (data.message || 'Contraseña actualizada correctamente.');
+                adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-emerald-400';
+                adminChangePassFeedback.classList.remove('hidden');
+              }
+            } else {
+              if (adminChangePassFeedback) {
+                adminChangePassFeedback.textContent = data.error || 'No se pudo cambiar la contraseña.';
+                adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+                adminChangePassFeedback.classList.remove('hidden');
+              }
+            }
+          } catch (err) {
+            if (adminChangePassFeedback) {
+              adminChangePassFeedback.textContent = 'Error de conexión al intentar actualizar la contraseña.';
+              adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+              adminChangePassFeedback.classList.remove('hidden');
+            }
+          } finally {
+            if (adminChangePassBtn) adminChangePassBtn.disabled = false;
           }
         });
       }
@@ -3645,6 +3983,8 @@
           adminPanelScreen.classList.add('hidden');
           adminAuthScreen.classList.remove('hidden');
           if (adminPasswordInput) adminPasswordInput.value = '';
+          if (adminRegStatusFeedback) adminRegStatusFeedback.classList.add('hidden');
+          if (adminChangePassFeedback) adminChangePassFeedback.classList.add('hidden');
         });
       }
 
@@ -3740,7 +4080,7 @@
       // Guardar y Publicar en el Servidor (con Contraseña)
       if (adminSaveVisualsBtn) {
         adminSaveVisualsBtn.addEventListener('click', async () => {
-          const pass = sessionStorage.getItem('eceme_admin_pass') || 'ECEME2026';
+          const pass = sessionStorage.getItem('eceme_admin_pass') || '';
           adminSaveVisualsBtn.disabled = true;
           const origText = adminSaveVisualsBtn.innerHTML;
           adminSaveVisualsBtn.innerHTML = `
@@ -3751,13 +4091,20 @@
             <span>Guardando en el servidor...</span>
           `;
 
+          const closedMessageInputEl = document.getElementById('adminClosedMessageInput');
+          const closedMsgToSave = closedMessageInputEl && closedMessageInputEl.value.trim()
+            ? closedMessageInputEl.value.trim()
+            : currentClosedMessage;
+
           const payload = {
             bgSource: currentBgSource,
             bgOpacity: currentBgOpacity,
             bgBlur: currentBgBlur,
             overlayDarkness: currentOverlayDarkness,
             iconSource: currentIconSource,
-            cedulaPolicy: currentCedulaPolicy
+            cedulaPolicy: currentCedulaPolicy,
+            registrationsClosed: currentRegistrationsClosed,
+            closedMessage: closedMsgToSave
           };
 
           try {
@@ -3774,6 +4121,18 @@
               })
             });
 
+            if (res.status === 401) {
+              sessionStorage.removeItem('eceme_admin_authed');
+              sessionStorage.removeItem('eceme_admin_pass');
+              adminPanelScreen.classList.add('hidden');
+              adminAuthScreen.classList.remove('hidden');
+              if (adminAuthError) {
+                adminAuthError.textContent = 'Su sesión expiró o la contraseña cambió. Ingrese nuevamente.';
+                adminAuthError.classList.remove('hidden');
+              }
+              return;
+            }
+
             // Guardar localmente en IndexedDB y localStorage para disponibilidad inmediata
             try {
               await EcemeDB.set('eceme_visual_settings', payload);
@@ -3786,6 +4145,7 @@
             } catch (e) {}
 
             if (adminSaveFeedback) {
+              adminSaveFeedback.textContent = '✓ ¡Configuración guardada y sincronizada en tiempo real con móviles y PC!';
               adminSaveFeedback.classList.remove('hidden');
               setTimeout(() => adminSaveFeedback.classList.add('hidden'), 5000);
             }
@@ -3904,7 +4264,9 @@
                 serverSettings.bgBlur || 0,
                 typeof serverSettings.overlayDarkness === 'number' ? serverSettings.overlayDarkness : LOCKED_OVERLAY_DARKNESS,
                 serverSettings.iconSource || LOCKED_ICON_SOURCE,
-                serverSettings.cedulaPolicy || 'optional'
+                serverSettings.cedulaPolicy || 'optional',
+                Boolean(serverSettings.registrationsClosed),
+                serverSettings.closedMessage
               );
             }
           }
@@ -3928,7 +4290,9 @@
                     streamData.bgBlur,
                     streamData.overlayDarkness,
                     streamData.iconSource,
-                    streamData.cedulaPolicy
+                    streamData.cedulaPolicy,
+                    streamData.registrationsClosed,
+                    streamData.closedMessage
                   );
                 }
               } catch (parseErr) {}
