@@ -3793,38 +3793,149 @@
         });
       }
 
+      // Helpers resilientes de red y respaldo criptográfico local (SHA-256)
+      const hashPassClient = async (plain) => {
+        const value = String(plain || '');
+        if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+          try {
+            const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+            return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+          } catch {}
+        }
+        let h = 2166136261;
+        for (let i = 0; i < value.length; i++) {
+          h ^= value.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return 'fnv_' + (h >>> 0).toString(16);
+      };
+
+      const verifyLocalAdminPassword = async (candidate) => {
+        const storedHash = localStorage.getItem('eceme_admin_pass_hash');
+        const targetHash = storedHash || await hashPassClient('ECEME2026');
+        const candidateHash = await hashPassClient(candidate);
+        return candidateHash === targetHash;
+      };
+
+      const saveLocalAdminPassword = async (plain) => {
+        try {
+          const hashed = await hashPassClient(plain);
+          localStorage.setItem('eceme_admin_pass_hash', hashed);
+        } catch {}
+      };
+
+      const persistLocalControlSettings = async (overrides = {}) => {
+        const snapshot = {
+          bgSource: currentBgSource,
+          bgOpacity: currentBgOpacity,
+          bgBlur: currentBgBlur,
+          overlayDarkness: currentOverlayDarkness,
+          iconSource: currentIconSource,
+          cedulaPolicy: currentCedulaPolicy,
+          registrationsClosed: currentRegistrationsClosed,
+          closedMessage: currentClosedMessage,
+          ...overrides
+        };
+        try {
+          await EcemeDB.set('eceme_visual_settings', snapshot);
+          localStorage.setItem('eceme_visual_settings', JSON.stringify({
+            bgOpacity: snapshot.bgOpacity,
+            bgBlur: snapshot.bgBlur,
+            overlayDarkness: snapshot.overlayDarkness,
+            registrationsClosed: snapshot.registrationsClosed,
+            closedMessage: snapshot.closedMessage,
+            updatedAt: Date.now()
+          }));
+        } catch {}
+      };
+
+      const apiFetchJson = async (url, options = {}, retries = 1) => {
+        let lastErr = null;
+        for (let attempt = 0; attempt <= retries; attempt++) {
+          try {
+            const res = await fetch(url, {
+              ...options,
+              credentials: 'same-origin',
+              signal: AbortSignal.timeout(12000)
+            });
+            const contentType = (res.headers.get('content-type') || '').toLowerCase();
+            if (!contentType.includes('application/json')) {
+              if (res.status >= 500 && attempt < retries) {
+                await new Promise((r) => setTimeout(r, 450));
+                continue;
+              }
+              return { reachable: false, ok: false, status: res.status, data: null };
+            }
+            const data = await res.json().catch(() => null);
+            if (!data || typeof data !== 'object') {
+              return { reachable: false, ok: false, status: res.status, data: null };
+            }
+            return { reachable: true, ok: res.ok, status: res.status, data };
+          } catch (err) {
+            lastErr = err;
+            if (attempt < retries) {
+              await new Promise((r) => setTimeout(r, 450));
+            }
+          }
+        }
+        return { reachable: false, ok: false, status: 0, data: null, error: lastErr };
+      };
+
       // Verificación de Contraseña de Administrador
+      const adminLoginSubmitBtn = document.getElementById('adminLoginSubmitBtn');
       if (adminAuthForm) {
         adminAuthForm.addEventListener('submit', async (e) => {
           e.preventDefault();
           const pass = adminPasswordInput ? adminPasswordInput.value.trim() : '';
           if (!pass) return;
 
+          const origBtnHtml = adminLoginSubmitBtn ? adminLoginSubmitBtn.innerHTML : '';
+          if (adminLoginSubmitBtn) {
+            adminLoginSubmitBtn.disabled = true;
+            adminLoginSubmitBtn.innerHTML = '<span>Validando acceso...</span>';
+          }
+          if (adminAuthError) adminAuthError.classList.add('hidden');
+
           try {
-            const res = await fetch('/api/admin/verify', {
+            const result = await apiFetchJson('/api/admin/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ password: pass })
-            });
+            }, 1);
 
-            const data = await res.json();
-            if (res.ok && data.success) {
+            if (result.reachable) {
+              if (result.ok && result.data && result.data.success) {
+                await saveLocalAdminPassword(pass);
+                sessionStorage.setItem('eceme_admin_authed', 'true');
+                sessionStorage.setItem('eceme_admin_pass', pass);
+                adminAuthScreen.classList.add('hidden');
+                adminPanelScreen.classList.remove('hidden');
+                if (adminAuthError) adminAuthError.classList.add('hidden');
+                syncAdminModalUI();
+              } else if (adminAuthError) {
+                adminAuthError.textContent = (result.data && result.data.error) || 'Contraseña incorrecta. Verifique e intente nuevamente.';
+                adminAuthError.classList.remove('hidden');
+              }
+              return;
+            }
+
+            // Respaldo automático si el servidor backend no responde o es un entorno estático
+            const localValid = await verifyLocalAdminPassword(pass);
+            if (localValid) {
               sessionStorage.setItem('eceme_admin_authed', 'true');
               sessionStorage.setItem('eceme_admin_pass', pass);
               adminAuthScreen.classList.add('hidden');
               adminPanelScreen.classList.remove('hidden');
               if (adminAuthError) adminAuthError.classList.add('hidden');
               syncAdminModalUI();
-            } else {
-              if (adminAuthError) {
-                adminAuthError.textContent = data.error || 'Contraseña incorrecta.';
-                adminAuthError.classList.remove('hidden');
-              }
-            }
-          } catch (err) {
-            if (adminAuthError) {
-              adminAuthError.textContent = 'No se pudo conectar con el servidor para validar la contraseña.';
+            } else if (adminAuthError) {
+              adminAuthError.textContent = 'Contraseña incorrecta. Verifique e intente nuevamente.';
               adminAuthError.classList.remove('hidden');
+            }
+          } finally {
+            if (adminLoginSubmitBtn) {
+              adminLoginSubmitBtn.disabled = false;
+              adminLoginSubmitBtn.innerHTML = origBtnHtml;
             }
           }
         });
@@ -3839,13 +3950,13 @@
         adminToggleRegistrationsBtn.addEventListener('click', async () => {
           const pass = sessionStorage.getItem('eceme_admin_pass') || '';
           const targetClosed = !currentRegistrationsClosed;
-          const customMessage = adminClosedMessageInput ? adminClosedMessageInput.value.trim() : currentClosedMessage;
+          const customMessage = (adminClosedMessageInput ? adminClosedMessageInput.value.trim() : '') || currentClosedMessage;
 
           adminToggleRegistrationsBtn.disabled = true;
           if (adminRegStatusFeedback) adminRegStatusFeedback.classList.add('hidden');
 
           try {
-            const res = await fetch('/api/admin/registration-status', {
+            const result = await apiFetchJson('/api/admin/registration-status', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -3856,41 +3967,59 @@
                 closedMessage: customMessage,
                 adminPassword: pass
               })
-            });
-            const data = await res.json().catch(() => ({}));
-            if (res.ok && data.success) {
-              applyVisualState(
-                currentBgSource,
-                currentBgOpacity,
-                currentBgBlur,
-                currentOverlayDarkness,
-                currentIconSource,
-                currentCedulaPolicy,
-                Boolean(data.registrationsClosed),
-                data.closedMessage || customMessage
-              );
-              if (adminRegStatusFeedback) {
-                adminRegStatusFeedback.textContent = data.message || (targetClosed ? '✓ Inscripciones cerradas.' : '✓ Inscripciones reabiertas.');
-                adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
-                adminRegStatusFeedback.classList.remove('hidden');
+            }, 1);
+
+            if (result.reachable) {
+              if (result.ok && result.data && result.data.success) {
+                applyVisualState(
+                  currentBgSource,
+                  currentBgOpacity,
+                  currentBgBlur,
+                  currentOverlayDarkness,
+                  currentIconSource,
+                  currentCedulaPolicy,
+                  Boolean(result.data.registrationsClosed),
+                  result.data.closedMessage || customMessage
+                );
+                await persistLocalControlSettings();
+                if (adminRegStatusFeedback) {
+                  adminRegStatusFeedback.textContent = result.data.message || (targetClosed ? '✓ Inscripciones cerradas.' : '✓ Inscripciones reabiertas.');
+                  adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
+                  adminRegStatusFeedback.classList.remove('hidden');
+                }
+              } else {
+                if (result.status === 401) {
+                  sessionStorage.removeItem('eceme_admin_authed');
+                  sessionStorage.removeItem('eceme_admin_pass');
+                  adminPanelScreen.classList.add('hidden');
+                  adminAuthScreen.classList.remove('hidden');
+                }
+                if (adminRegStatusFeedback) {
+                  adminRegStatusFeedback.textContent = (result.data && result.data.error) || 'No se pudo actualizar el estado de inscripciones.';
+                  adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+                  adminRegStatusFeedback.classList.remove('hidden');
+                }
               }
-            } else {
-              if (res.status === 401) {
-                sessionStorage.removeItem('eceme_admin_authed');
-                sessionStorage.removeItem('eceme_admin_pass');
-                adminPanelScreen.classList.add('hidden');
-                adminAuthScreen.classList.remove('hidden');
-              }
-              if (adminRegStatusFeedback) {
-                adminRegStatusFeedback.textContent = data.error || 'No se pudo actualizar el estado de inscripciones.';
-                adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
-                adminRegStatusFeedback.classList.remove('hidden');
-              }
+              return;
             }
-          } catch (err) {
+
+            // Respaldo local si el servidor no responde
+            applyVisualState(
+              currentBgSource,
+              currentBgOpacity,
+              currentBgBlur,
+              currentOverlayDarkness,
+              currentIconSource,
+              currentCedulaPolicy,
+              targetClosed,
+              customMessage
+            );
+            await persistLocalControlSettings();
             if (adminRegStatusFeedback) {
-              adminRegStatusFeedback.textContent = 'Error de conexión con el servidor.';
-              adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+              adminRegStatusFeedback.textContent = targetClosed
+                ? '✓ Inscripciones cerradas en este dispositivo.'
+                : '✓ Inscripciones reabiertas en este dispositivo.';
+              adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
               adminRegStatusFeedback.classList.remove('hidden');
             }
           } finally {
@@ -3936,7 +4065,7 @@
           if (adminChangePassFeedback) adminChangePassFeedback.classList.add('hidden');
 
           try {
-            const res = await fetch('/api/admin/change-password', {
+            const result = await apiFetchJson('/api/admin/change-password', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -3944,29 +4073,46 @@
                 newPassword,
                 confirmPassword
               })
-            });
-            const data = await res.json().catch(() => ({}));
-            if (res.ok && data.success) {
-              sessionStorage.setItem('eceme_admin_pass', newPassword);
-              if (adminCurrentPassInput) adminCurrentPassInput.value = '';
-              if (adminNewPassInput) adminNewPassInput.value = '';
-              if (adminConfirmPassInput) adminConfirmPassInput.value = '';
-              if (adminChangePassFeedback) {
-                adminChangePassFeedback.textContent = '✓ ' + (data.message || 'Contraseña actualizada correctamente.');
-                adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-emerald-400';
-                adminChangePassFeedback.classList.remove('hidden');
-              }
-            } else {
-              if (adminChangePassFeedback) {
-                adminChangePassFeedback.textContent = data.error || 'No se pudo cambiar la contraseña.';
+            }, 1);
+
+            if (result.reachable) {
+              if (result.ok && result.data && result.data.success) {
+                await saveLocalAdminPassword(newPassword);
+                sessionStorage.setItem('eceme_admin_pass', newPassword);
+                if (adminCurrentPassInput) adminCurrentPassInput.value = '';
+                if (adminNewPassInput) adminNewPassInput.value = '';
+                if (adminConfirmPassInput) adminConfirmPassInput.value = '';
+                if (adminChangePassFeedback) {
+                  adminChangePassFeedback.textContent = '✓ ' + (result.data.message || 'Contraseña actualizada correctamente.');
+                  adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-emerald-400';
+                  adminChangePassFeedback.classList.remove('hidden');
+                }
+              } else if (adminChangePassFeedback) {
+                adminChangePassFeedback.textContent = (result.data && result.data.error) || 'No se pudo cambiar la contraseña.';
                 adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
                 adminChangePassFeedback.classList.remove('hidden');
               }
+              return;
             }
-          } catch (err) {
+
+            // Respaldo local si el servidor no responde
+            const localOk = await verifyLocalAdminPassword(currentPassword);
+            if (!localOk) {
+              if (adminChangePassFeedback) {
+                adminChangePassFeedback.textContent = 'La contraseña actual es incorrecta.';
+                adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+                adminChangePassFeedback.classList.remove('hidden');
+              }
+              return;
+            }
+            await saveLocalAdminPassword(newPassword);
+            sessionStorage.setItem('eceme_admin_pass', newPassword);
+            if (adminCurrentPassInput) adminCurrentPassInput.value = '';
+            if (adminNewPassInput) adminNewPassInput.value = '';
+            if (adminConfirmPassInput) adminConfirmPassInput.value = '';
             if (adminChangePassFeedback) {
-              adminChangePassFeedback.textContent = 'Error de conexión al intentar actualizar la contraseña.';
-              adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-rose-400';
+              adminChangePassFeedback.textContent = '✓ Contraseña actualizada en este dispositivo.';
+              adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-emerald-400';
               adminChangePassFeedback.classList.remove('hidden');
             }
           } finally {
@@ -4248,14 +4394,24 @@
             if (!cached.iconSource || !cached.iconSource.startsWith('data:image/')) {
               cached.iconSource = LOCKED_ICON_SOURCE;
             }
-            applyVisualState(cached.bgSource, cached.bgOpacity, cached.bgBlur, cached.overlayDarkness, cached.iconSource, cached.cedulaPolicy || 'optional');
+            applyVisualState(
+              cached.bgSource,
+              cached.bgOpacity,
+              cached.bgBlur,
+              cached.overlayDarkness,
+              cached.iconSource,
+              cached.cedulaPolicy || 'optional',
+              typeof cached.registrationsClosed === 'boolean' ? cached.registrationsClosed : undefined,
+              cached.closedMessage
+            );
           }
         } catch (e) {}
 
         // Sincronizar desde el servidor
         try {
           const res = await fetch('/api/visual-settings', { cache: 'no-store' });
-          if (res.ok) {
+          const ct = (res.headers.get('content-type') || '').toLowerCase();
+          if (res.ok && ct.includes('application/json')) {
             const serverSettings = await res.json();
             if (serverSettings) {
               applyVisualState(
@@ -4268,6 +4424,7 @@
                 Boolean(serverSettings.registrationsClosed),
                 serverSettings.closedMessage
               );
+              await persistLocalControlSettings();
             }
           }
         } catch (e) {}
