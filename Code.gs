@@ -388,14 +388,14 @@ function doPost(e) {
       data = e.parameter;
     }
 
-    // 2. Comprobar si es una petición para guardar configuración visual en la nube
+    // 2. Comprobar si es una petición para guardar configuración visual / cierre global en la nube
     if (data.action === "save_visuals" && data.visualSettings) {
       try {
         var strSettings = typeof data.visualSettings === "string" ? data.visualSettings : JSON.stringify(data.visualSettings);
         PropertiesService.getScriptProperties().setProperty("eceme_visual_settings", strSettings);
         return ContentService.createTextOutput(JSON.stringify({
           status: "success",
-          message: "Configuración visual sincronizada en Google Apps Script",
+          message: "Configuración global sincronizada en Google Apps Script",
           timestamp: new Date()
         })).setMimeType(ContentService.MimeType.JSON);
       } catch (errProp) {
@@ -405,6 +405,21 @@ function doPost(e) {
         })).setMimeType(ContentService.MimeType.JSON);
       }
     }
+
+    // 2.5 Verificar cierre general de inscripciones antes de registrar al participante
+    try {
+      var savedSettingsRaw = PropertiesService.getScriptProperties().getProperty("eceme_visual_settings");
+      if (savedSettingsRaw) {
+        var savedCfg = JSON.parse(savedSettingsRaw);
+        if (savedCfg && savedCfg.registrationsClosed === true) {
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "closed",
+            registrationsClosed: true,
+            message: savedCfg.closedMessage || "Las inscripciones para la Carrera Pedestre 10 KM ECEME han finalizado. Muchas gracias por su participación."
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    } catch (errClosedCheck) {}
 
     // 3. Extracción de los campos del formulario de inscripción
     var nombres = data.nombres || "Sin Nombre";

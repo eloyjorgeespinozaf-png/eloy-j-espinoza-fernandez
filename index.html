@@ -2966,6 +2966,12 @@
             });
             if (directRes.ok) {
               const directData = await directRes.json().catch(() => ({}));
+              if (directData && (directData.status === 'closed' || directData.registrationsClosed)) {
+                currentRegistrationsClosed = true;
+                if (directData.message) currentClosedMessage = directData.message;
+                updateRegistrationStatusUI();
+                throw new Error(currentClosedMessage);
+              }
               if (directData && directData.status === 'success' && directData.dorsal) {
                 assignedDorsal = String(directData.dorsal).trim();
                 assignedNumber = directData.number ? String(directData.number).trim() : assignedDorsal.replace(/\D/g, '');
@@ -2973,6 +2979,9 @@
               }
             }
           } catch (e) {
+            if (currentRegistrationsClosed) {
+              throw e;
+            }
             console.warn('[GAS Direct Transmission Fallback]', e);
             // Último recurso: asignar número único local/atómico y enviarlo con submissionId en modo no-cors
             try {
@@ -3115,7 +3124,7 @@
           if (isValid) {
             isSubmittingForm = true;
             submitBtn.disabled = true;
-            btnText.textContent = "Registrando en Google Sheets y asignando dorsal...";
+            btnText.textContent = "Verificando disponibilidad y registrando...";
             btnIcon.innerHTML = `
               <svg class="animate-spin h-5 w-5 text-army-950" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -3124,6 +3133,21 @@
             `;
 
             try {
+            // 0. Verificación en vivo antes de registrar (bloquea si el administrador acaba de cerrar)
+            if (typeof sincronizarEstadoGlobalDesdeNube === 'function') {
+              await Promise.race([
+                sincronizarEstadoGlobalDesdeNube(),
+                new Promise((resolve) => setTimeout(resolve, 4500))
+              ]).catch(() => {});
+            }
+            if (currentRegistrationsClosed) {
+              updateRegistrationStatusUI();
+              const closedBannerEl = document.getElementById('registrationsClosedBanner');
+              if (closedBannerEl) closedBannerEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            }
+
+            btnText.textContent = "Registrando en Google Sheets y asignando dorsal...";
             // 1. Extraer configuración y rango de la categoría seleccionada
             const catPrefix = selectedOption ? (selectedOption.dataset.prefix || `${catCode}-`) : 'A-';
             const catRange = selectedOption ? (selectedOption.dataset.rango || '1001 - 1999') : '1001 - 1999';
@@ -3941,7 +3965,133 @@
         });
       }
 
-      // Cerrar / Reabrir Inscripciones desde el Panel de Control
+      let lastAppliedGlobalUpdatedAt = 0;
+      let hasServerApiBackend = false;
+
+      const buildCloudControlPayload = (overrides = {}) => {
+        const nextTs = Math.max(Date.now(), lastAppliedGlobalUpdatedAt + 1);
+        const payload = {
+          registrationsClosed: currentRegistrationsClosed,
+          closedMessage: currentClosedMessage,
+          cedulaPolicy: currentCedulaPolicy,
+          bgOpacity: currentBgOpacity,
+          bgBlur: currentBgBlur,
+          overlayDarkness: currentOverlayDarkness,
+          updatedAt: nextTs,
+          ...overrides
+        };
+        if (typeof currentBgSource === 'string' && currentBgSource.length < 500 && !currentBgSource.startsWith('data:')) {
+          payload.bgSource = currentBgSource;
+        }
+        if (typeof currentIconSource === 'string' && currentIconSource.length < 500 && !currentIconSource.startsWith('data:')) {
+          payload.iconSource = currentIconSource;
+        }
+        const savedPassHash = localStorage.getItem('eceme_admin_pass_hash');
+        if (savedPassHash && !payload.adminPassHash) {
+          payload.adminPassHash = savedPassHash;
+        }
+        return payload;
+      };
+
+      const pushGlobalSettingsToCloud = async (overrides = {}) => {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) return false;
+        try {
+          const compactSettings = buildCloudControlPayload(overrides);
+          const res = await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'save_visuals',
+              visualSettings: compactSettings
+            }),
+            signal: AbortSignal.timeout(15000)
+          });
+          if (res.ok) {
+            const data = await res.json().catch(() => ({}));
+            if (data && data.status === 'success') {
+              lastAppliedGlobalUpdatedAt = Math.max(lastAppliedGlobalUpdatedAt, Number(compactSettings.updatedAt || 0));
+              return true;
+            }
+          }
+        } catch (err) {
+          console.warn('[CloudSync] Error al guardar estado global en la nube:', err);
+        }
+        return false;
+      };
+
+      const fetchGlobalSettingsFromCloud = async () => {
+        if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes("SU_URL_DE_APPS_SCRIPT_AQUI")) return null;
+        try {
+          const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_visuals&_t=${Date.now()}`, {
+            cache: 'no-store',
+            signal: AbortSignal.timeout(10000)
+          });
+          if (!res.ok) return null;
+          const data = await res.json().catch(() => null);
+          if (!data || data.status === 'not_found' || typeof data !== 'object') return null;
+          return data;
+        } catch {
+          return null;
+        }
+      };
+
+      const applyRemoteControlObject = async (remoteObj) => {
+        if (!remoteObj || typeof remoteObj !== 'object') return;
+        const remoteTs = Number(remoteObj.updatedAt || 0);
+        if (remoteTs > 0 && remoteTs < lastAppliedGlobalUpdatedAt) {
+          return;
+        }
+        if (remoteTs > lastAppliedGlobalUpdatedAt) {
+          lastAppliedGlobalUpdatedAt = remoteTs;
+        }
+        if (typeof remoteObj.adminPassHash === 'string' && remoteObj.adminPassHash.length >= 16) {
+          try {
+            localStorage.setItem('eceme_admin_pass_hash', remoteObj.adminPassHash);
+          } catch {}
+        }
+        applyVisualState(
+          remoteObj.bgSource || currentBgSource || LOCKED_BG_SOURCE,
+          typeof remoteObj.bgOpacity === 'number' ? remoteObj.bgOpacity : currentBgOpacity,
+          typeof remoteObj.bgBlur === 'number' ? remoteObj.bgBlur : currentBgBlur,
+          typeof remoteObj.overlayDarkness === 'number' ? remoteObj.overlayDarkness : currentOverlayDarkness,
+          remoteObj.iconSource || currentIconSource || LOCKED_ICON_SOURCE,
+          remoteObj.cedulaPolicy || currentCedulaPolicy || 'optional',
+          typeof remoteObj.registrationsClosed === 'boolean' ? remoteObj.registrationsClosed : currentRegistrationsClosed,
+          remoteObj.closedMessage || currentClosedMessage
+        );
+        await persistLocalControlSettings();
+      };
+
+      const sincronizarEstadoGlobalDesdeNube = async () => {
+        const [serverRes, cloudObj] = await Promise.all([
+          apiFetchJson(`/api/visual-settings?_t=${Date.now()}`, { cache: 'no-store' }, 0),
+          fetchGlobalSettingsFromCloud()
+        ]);
+
+        const serverObj = (serverRes.reachable && serverRes.ok && serverRes.data) ? serverRes.data : null;
+        if (serverObj) {
+          hasServerApiBackend = true;
+        }
+
+        const serverTs = Number(serverObj?.updatedAt || 0);
+        const cloudTs = Number(cloudObj?.updatedAt || 0);
+
+        // Elegir la fuente global más reciente entre el servidor y Google Apps Script
+        if (cloudObj && typeof cloudObj.registrationsClosed === 'boolean' && (!serverObj || cloudTs >= serverTs)) {
+          await applyRemoteControlObject({
+            ...(serverObj || {}),
+            ...cloudObj
+          });
+          return true;
+        }
+        if (serverObj) {
+          await applyRemoteControlObject(serverObj);
+          return true;
+        }
+        return false;
+      };
+
+      // Cerrar / Reabrir Inscripciones desde el Panel de Control (GLOBAL EN TODOS LOS DISPOSITIVOS)
       const adminToggleRegistrationsBtn = document.getElementById('adminToggleRegistrationsBtn');
       const adminClosedMessageInput = document.getElementById('adminClosedMessageInput');
       const adminRegStatusFeedback = document.getElementById('adminRegStatusFeedback');
@@ -3951,9 +4101,14 @@
           const pass = sessionStorage.getItem('eceme_admin_pass') || '';
           const targetClosed = !currentRegistrationsClosed;
           const customMessage = (adminClosedMessageInput ? adminClosedMessageInput.value.trim() : '') || currentClosedMessage;
+          const actionTs = Math.max(Date.now(), lastAppliedGlobalUpdatedAt + 1);
 
           adminToggleRegistrationsBtn.disabled = true;
-          if (adminRegStatusFeedback) adminRegStatusFeedback.classList.add('hidden');
+          if (adminRegStatusFeedback) {
+            adminRegStatusFeedback.textContent = 'Sincronizando estado global en todos los dispositivos...';
+            adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-gold-300';
+            adminRegStatusFeedback.classList.remove('hidden');
+          }
 
           try {
             const result = await apiFetchJson('/api/admin/registration-status', {
@@ -3971,6 +4126,7 @@
 
             if (result.reachable) {
               if (result.ok && result.data && result.data.success) {
+                lastAppliedGlobalUpdatedAt = Math.max(lastAppliedGlobalUpdatedAt, Number(result.data.updatedAt || actionTs));
                 applyVisualState(
                   currentBgSource,
                   currentBgOpacity,
@@ -3982,8 +4138,18 @@
                   result.data.closedMessage || customMessage
                 );
                 await persistLocalControlSettings();
+                let syncedCloud = Boolean(result.data.cloudSynced);
+                if (!syncedCloud) {
+                  syncedCloud = await pushGlobalSettingsToCloud({
+                    registrationsClosed: Boolean(result.data.registrationsClosed),
+                    closedMessage: result.data.closedMessage || customMessage,
+                    updatedAt: lastAppliedGlobalUpdatedAt
+                  });
+                }
                 if (adminRegStatusFeedback) {
-                  adminRegStatusFeedback.textContent = result.data.message || (targetClosed ? '✓ Inscripciones cerradas.' : '✓ Inscripciones reabiertas.');
+                  adminRegStatusFeedback.textContent = targetClosed
+                    ? '✓ Inscripciones cerradas de manera general en todos los dispositivos.'
+                    : '✓ Inscripciones habilitadas nuevamente en todos los dispositivos.';
                   adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
                   adminRegStatusFeedback.classList.remove('hidden');
                 }
@@ -4003,7 +4169,8 @@
               return;
             }
 
-            // Respaldo local si el servidor no responde
+            // Entorno sin backend Node local (ej. hosting estático): publicar directamente en la nube global (Google Apps Script)
+            lastAppliedGlobalUpdatedAt = actionTs;
             applyVisualState(
               currentBgSource,
               currentBgOpacity,
@@ -4015,11 +4182,21 @@
               customMessage
             );
             await persistLocalControlSettings();
+            const cloudSaved = await pushGlobalSettingsToCloud({
+              registrationsClosed: targetClosed,
+              closedMessage: customMessage,
+              updatedAt: actionTs
+            });
             if (adminRegStatusFeedback) {
-              adminRegStatusFeedback.textContent = targetClosed
-                ? '✓ Inscripciones cerradas en este dispositivo.'
-                : '✓ Inscripciones reabiertas en este dispositivo.';
-              adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
+              if (cloudSaved) {
+                adminRegStatusFeedback.textContent = targetClosed
+                  ? '✓ Inscripciones cerradas de manera general en todos los dispositivos.'
+                  : '✓ Inscripciones habilitadas nuevamente en todos los dispositivos.';
+                adminRegStatusFeedback.className = `text-center text-[11px] font-semibold ${targetClosed ? 'text-rose-300' : 'text-emerald-400'}`;
+              } else {
+                adminRegStatusFeedback.textContent = '⚠ Aplicado en este dispositivo, pero no hubo conexión con la nube. Reintente con internet.';
+                adminRegStatusFeedback.className = 'text-center text-[11px] font-semibold text-amber-300';
+              }
               adminRegStatusFeedback.classList.remove('hidden');
             }
           } finally {
@@ -4078,6 +4255,8 @@
             if (result.reachable) {
               if (result.ok && result.data && result.data.success) {
                 await saveLocalAdminPassword(newPassword);
+                const newHash = await hashPassClient(newPassword);
+                pushGlobalSettingsToCloud({ adminPassHash: newHash }).catch(() => {});
                 sessionStorage.setItem('eceme_admin_pass', newPassword);
                 if (adminCurrentPassInput) adminCurrentPassInput.value = '';
                 if (adminNewPassInput) adminNewPassInput.value = '';
@@ -4095,7 +4274,7 @@
               return;
             }
 
-            // Respaldo local si el servidor no responde
+            // Respaldo global en la nube si no hay backend Node local
             const localOk = await verifyLocalAdminPassword(currentPassword);
             if (!localOk) {
               if (adminChangePassFeedback) {
@@ -4106,12 +4285,16 @@
               return;
             }
             await saveLocalAdminPassword(newPassword);
+            const newHash = await hashPassClient(newPassword);
+            const cloudSyncedPass = await pushGlobalSettingsToCloud({ adminPassHash: newHash });
             sessionStorage.setItem('eceme_admin_pass', newPassword);
             if (adminCurrentPassInput) adminCurrentPassInput.value = '';
             if (adminNewPassInput) adminNewPassInput.value = '';
             if (adminConfirmPassInput) adminConfirmPassInput.value = '';
             if (adminChangePassFeedback) {
-              adminChangePassFeedback.textContent = '✓ Contraseña actualizada en este dispositivo.';
+              adminChangePassFeedback.textContent = cloudSyncedPass
+                ? '✓ Contraseña actualizada globalmente en todos los dispositivos.'
+                : '✓ Contraseña actualizada en este dispositivo.';
               adminChangePassFeedback.className = 'text-center text-[11px] font-semibold text-emerald-400';
               adminChangePassFeedback.classList.remove('hidden');
             }
@@ -4254,8 +4437,12 @@
           };
 
           try {
-            // Guardar en el servidor Node.js
-            const res = await fetch('/api/visual-settings', {
+            currentClosedMessage = closedMsgToSave;
+            const saveTs = Math.max(Date.now(), lastAppliedGlobalUpdatedAt + 1);
+            lastAppliedGlobalUpdatedAt = saveTs;
+
+            // Guardar en el servidor Node.js si está disponible
+            const result = await apiFetchJson('/api/visual-settings', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -4265,9 +4452,9 @@
                 ...payload,
                 adminPassword: pass
               })
-            });
+            }, 1);
 
-            if (res.status === 401) {
+            if (result.reachable && result.status === 401) {
               sessionStorage.removeItem('eceme_admin_authed');
               sessionStorage.removeItem('eceme_admin_pass');
               adminPanelScreen.classList.add('hidden');
@@ -4279,26 +4466,22 @@
               return;
             }
 
-            // Guardar localmente en IndexedDB y localStorage para disponibilidad inmediata
-            try {
-              await EcemeDB.set('eceme_visual_settings', payload);
-              localStorage.setItem('eceme_visual_settings', JSON.stringify({
-                bgOpacity: currentBgOpacity,
-                bgBlur: currentBgBlur,
-                overlayDarkness: currentOverlayDarkness,
-                updatedAt: Date.now()
-              }));
-            } catch (e) {}
+            let cloudOk = Boolean(result.reachable && result.ok && result.data && result.data.cloudSynced);
+            if (!cloudOk) {
+              cloudOk = await pushGlobalSettingsToCloud({
+                cedulaPolicy: currentCedulaPolicy,
+                registrationsClosed: currentRegistrationsClosed,
+                closedMessage: closedMsgToSave,
+                updatedAt: saveTs
+              });
+            }
+
+            await persistLocalControlSettings({ closedMessage: closedMsgToSave });
 
             if (adminSaveFeedback) {
-              adminSaveFeedback.textContent = '✓ ¡Configuración guardada y sincronizada en tiempo real con móviles y PC!';
-              adminSaveFeedback.classList.remove('hidden');
-              setTimeout(() => adminSaveFeedback.classList.add('hidden'), 5000);
-            }
-          } catch (err) {
-            console.warn('Guardado local efectuado:', err);
-            if (adminSaveFeedback) {
-              adminSaveFeedback.textContent = '✓ ¡Configuración guardada en este dispositivo!';
+              adminSaveFeedback.textContent = (cloudOk || (result.reachable && result.ok))
+                ? '✓ ¡Configuración guardada y sincronizada globalmente en todos los dispositivos!'
+                : '✓ ¡Configuración guardada en este dispositivo!';
               adminSaveFeedback.classList.remove('hidden');
               setTimeout(() => adminSaveFeedback.classList.add('hidden'), 5000);
             }
@@ -4407,57 +4590,58 @@
           }
         } catch (e) {}
 
-        // Sincronizar desde el servidor
-        try {
-          const res = await fetch('/api/visual-settings', { cache: 'no-store' });
-          const ct = (res.headers.get('content-type') || '').toLowerCase();
-          if (res.ok && ct.includes('application/json')) {
-            const serverSettings = await res.json();
-            if (serverSettings) {
-              applyVisualState(
-                serverSettings.bgSource || LOCKED_BG_SOURCE,
-                typeof serverSettings.bgOpacity === 'number' ? serverSettings.bgOpacity : LOCKED_BG_OPACITY,
-                serverSettings.bgBlur || 0,
-                typeof serverSettings.overlayDarkness === 'number' ? serverSettings.overlayDarkness : LOCKED_OVERLAY_DARKNESS,
-                serverSettings.iconSource || LOCKED_ICON_SOURCE,
-                serverSettings.cedulaPolicy || 'optional',
-                Boolean(serverSettings.registrationsClosed),
-                serverSettings.closedMessage
-              );
-              await persistLocalControlSettings();
-            }
-          }
-        } catch (e) {}
+        // Sincronizar desde el servidor y desde la nube global (Google Apps Script)
+        await sincronizarEstadoGlobalDesdeNube();
+
+        // Conectar SSE en tiempo real con reconexión automática si existe backend Node
+        if (window.EventSource && hasServerApiBackend) {
+          let sseInstance = null;
+          let sseReconnectTimer = null;
+          const connectSse = () => {
+            try {
+              if (sseInstance) {
+                try { sseInstance.close(); } catch {}
+              }
+              sseInstance = new EventSource('/api/visual-settings/stream');
+              sseInstance.onmessage = (event) => {
+                if (event && event.data) {
+                  try {
+                    const streamData = JSON.parse(event.data);
+                    if (streamData) {
+                      applyRemoteControlObject(streamData);
+                    }
+                  } catch (parseErr) {}
+                }
+              };
+              sseInstance.onerror = () => {
+                try { sseInstance.close(); } catch {}
+                if (sseReconnectTimer) clearTimeout(sseReconnectTimer);
+                sseReconnectTimer = setTimeout(connectSse, 8000);
+              };
+            } catch (e) {}
+          };
+          connectSse();
+        }
       }
 
       inicializarVisuales();
 
-      // Sincronización SSE en tiempo real para todos los clientes (Móvil y PC)
-      if (window.EventSource) {
-        try {
-          const sse = new EventSource('/api/visual-settings/stream');
-          sse.onmessage = (event) => {
-            if (event && event.data) {
-              try {
-                const streamData = JSON.parse(event.data);
-                if (streamData) {
-                  applyVisualState(
-                    streamData.bgSource,
-                    streamData.bgOpacity,
-                    streamData.bgBlur,
-                    streamData.overlayDarkness,
-                    streamData.iconSource,
-                    streamData.cedulaPolicy,
-                    streamData.registrationsClosed,
-                    streamData.closedMessage
-                  );
-                }
-              } catch (parseErr) {}
-            }
-          };
-          sse.onerror = () => sse.close();
-        } catch (e) {}
-      }
+      // Sincronización periódica global (cada 12s) y al volver a la pestaña en todos los dispositivos
+      setInterval(() => {
+        if (document.visibilityState !== 'hidden') {
+          sincronizarEstadoGlobalDesdeNube().catch(() => {});
+        }
+      }, 12000);
+
+      window.addEventListener('focus', () => {
+        sincronizarEstadoGlobalDesdeNube().catch(() => {});
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          sincronizarEstadoGlobalDesdeNube().catch(() => {});
+        }
+      });
 
     });
   </script>

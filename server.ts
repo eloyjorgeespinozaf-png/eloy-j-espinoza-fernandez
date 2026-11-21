@@ -173,6 +173,8 @@ async function startServer() {
   // Clientes SSE (Server-Sent Events) conectados simultáneamente (Móviles y PCs)
   let sseClients: express.Response[] = [];
 
+  const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
+
   const broadcastSettings = (settings: any) => {
     const payload = `data: ${JSON.stringify(settings)}\n\n`;
     sseClients.forEach((client) => {
@@ -181,6 +183,100 @@ async function startServer() {
       } catch {}
     });
   };
+
+  // Construye un objeto compacto (<2 KB) compatible con PropertiesService de Google Apps Script
+  const buildCompactCloudSettings = (settings: any) => {
+    const compact: Record<string, any> = {
+      registrationsClosed: Boolean(settings.registrationsClosed),
+      closedMessage: settings.closedMessage || DEFAULT_CLOSED_MESSAGE,
+      cedulaPolicy: settings.cedulaPolicy || 'optional',
+      bgOpacity: typeof settings.bgOpacity === 'number' ? settings.bgOpacity : 88,
+      bgBlur: typeof settings.bgBlur === 'number' ? settings.bgBlur : 0,
+      overlayDarkness: typeof settings.overlayDarkness === 'number' ? settings.overlayDarkness : 28,
+      updatedAt: typeof settings.updatedAt === 'number' ? settings.updatedAt : Date.now()
+    };
+    if (typeof settings.bgSource === 'string' && settings.bgSource.length < 500 && !settings.bgSource.startsWith('data:')) {
+      compact.bgSource = settings.bgSource;
+    }
+    if (typeof settings.iconSource === 'string' && settings.iconSource.length < 500 && !settings.iconSource.startsWith('data:')) {
+      compact.iconSource = settings.iconSource;
+    }
+    return compact;
+  };
+
+  const pushSettingsToCloudGAS = async (settings: any): Promise<boolean> => {
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) return false;
+    try {
+      const compact = buildCompactCloudSettings(settings);
+      const res = await fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'save_visuals',
+          visualSettings: compact
+        }),
+        signal: AbortSignal.timeout(15000)
+      });
+      if (res.ok) {
+        const data: any = await res.json().catch(() => ({}));
+        if (data && data.status === 'success') {
+          console.log('[CloudSync] Estado global sincronizado en Google Apps Script:', {
+            registrationsClosed: compact.registrationsClosed,
+            updatedAt: compact.updatedAt
+          });
+          return true;
+        }
+      }
+    } catch (err: any) {
+      console.warn('[CloudSync] No se pudo empujar estado a GAS:', err?.message || err);
+    }
+    return false;
+  };
+
+  let lastCloudPullAt = 0;
+  const pullSettingsFromCloudGAS = async (force = false): Promise<any | null> => {
+    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) return null;
+    const now = Date.now();
+    if (!force && now - lastCloudPullAt < 10000) return null;
+    lastCloudPullAt = now;
+    try {
+      const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_visuals&_t=${now}`, {
+        signal: AbortSignal.timeout(12000)
+      });
+      if (!res.ok) return null;
+      const cloud: any = await res.json().catch(() => null);
+      if (!cloud || cloud.status === 'not_found' || typeof cloud.registrationsClosed !== 'boolean') {
+        return null;
+      }
+      const local = getVisualSettings();
+      const cloudTs = Number(cloud.updatedAt || 0);
+      const localTs = Number(local.updatedAt || 0);
+      if (cloudTs > localTs) {
+        const merged = {
+          ...local,
+          registrationsClosed: Boolean(cloud.registrationsClosed),
+          closedMessage: (typeof cloud.closedMessage === 'string' && cloud.closedMessage.trim())
+            ? cloud.closedMessage.trim()
+            : (local.closedMessage || DEFAULT_CLOSED_MESSAGE),
+          cedulaPolicy: ['optional', 'required_10k', 'required_all'].includes(cloud.cedulaPolicy)
+            ? cloud.cedulaPolicy
+            : (local.cedulaPolicy || 'optional'),
+          updatedAt: cloudTs
+        };
+        fs.writeFileSync(DATA_FILE, JSON.stringify(merged, null, 2), 'utf-8');
+        broadcastSettings(merged);
+        console.log('[CloudSync] Estado global actualizado desde la nube:', {
+          registrationsClosed: merged.registrationsClosed,
+          updatedAt: merged.updatedAt
+        });
+        return merged;
+      }
+    } catch {}
+    return null;
+  };
+
+  setTimeout(() => { pullSettingsFromCloudGAS(true); }, 1000);
+  setInterval(() => { pullSettingsFromCloudGAS(true); }, 25000);
 
   // 1. Endpoint GET: Obtener la configuración visual activa en el servidor
   app.get('/api/visual-settings', (_req, res) => {
@@ -239,8 +335,8 @@ async function startServer() {
     }
   });
 
-  // 2.2 Endpoint POST: Cerrar o reabrir inscripciones en tiempo real
-  app.post('/api/admin/registration-status', (req, res) => {
+  // 2.2 Endpoint POST: Cerrar o reabrir inscripciones en tiempo real (global en todos los dispositivos)
+  app.post('/api/admin/registration-status', async (req, res) => {
     const providedPassword = (req.headers['x-admin-password'] as string) || req.body?.adminPassword;
     if (!verifyAdminPassword(providedPassword)) {
       return res.status(401).json({
@@ -256,25 +352,30 @@ async function startServer() {
       const nextMessage = typeof closedMessage === 'string' && closedMessage.trim()
         ? closedMessage.trim()
         : (current.closedMessage || DEFAULT_CLOSED_MESSAGE);
+      const nextUpdatedAt = Math.max(Date.now(), Number(current.updatedAt || 0) + 1);
 
       const newSettings = {
         ...current,
         registrationsClosed: nextClosed,
         closedMessage: nextMessage,
-        updatedAt: Date.now()
+        updatedAt: nextUpdatedAt
       };
 
       fs.writeFileSync(DATA_FILE, JSON.stringify(newSettings, null, 2), 'utf-8');
       broadcastSettings(newSettings);
-      console.log(`[Admin] Estado de inscripciones actualizado: ${nextClosed ? 'CERRADAS' : 'ABIERTAS'}`);
+      const cloudSynced = await pushSettingsToCloudGAS(newSettings);
+      console.log(`[Admin] Estado de inscripciones actualizado: ${nextClosed ? 'CERRADAS' : 'ABIERTAS'} (cloudSynced=${cloudSynced})`);
 
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       return res.json({
         success: true,
         registrationsClosed: nextClosed,
         closedMessage: nextMessage,
+        updatedAt: nextUpdatedAt,
+        cloudSynced,
         message: nextClosed
-          ? 'Inscripciones cerradas. El formulario quedó bloqueado en todos los dispositivos.'
-          : 'Inscripciones habilitadas nuevamente.',
+          ? 'Inscripciones cerradas de manera general en todos los dispositivos.'
+          : 'Inscripciones habilitadas nuevamente en todos los dispositivos.',
         settings: newSettings
       });
     } catch (err: any) {
@@ -284,7 +385,7 @@ async function startServer() {
   });
 
   // 3. Endpoint POST: Guardar configuración visual protegida con contraseña
-  app.post('/api/visual-settings', (req, res) => {
+  app.post('/api/visual-settings', async (req, res) => {
     const providedPassword = (req.headers['x-admin-password'] as string) || req.body?.adminPassword;
     if (!verifyAdminPassword(providedPassword)) {
       console.warn('[Security] Intento de modificación no autorizado rechazado');
@@ -330,6 +431,7 @@ async function startServer() {
       const finalCedulaPolicy = validCedulaPolicies.includes(cedulaPolicy)
         ? cedulaPolicy
         : (current.cedulaPolicy || 'optional');
+      const nextUpdatedAt = Math.max(Date.now(), Number(current.updatedAt || 0) + 1);
 
       const newSettings = {
         bgSource: finalBgSource || current.bgSource,
@@ -344,17 +446,19 @@ async function startServer() {
         closedMessage: typeof closedMessage === 'string' && closedMessage.trim()
           ? closedMessage.trim()
           : (current.closedMessage || DEFAULT_CLOSED_MESSAGE),
-        updatedAt: Date.now()
+        updatedAt: nextUpdatedAt
       };
 
       fs.writeFileSync(DATA_FILE, JSON.stringify(newSettings, null, 2), 'utf-8');
       console.log('[Admin] Configuración visual actualizada y transmitida a clientes conectados.');
 
-      // Notificar a todos los dispositivos conectados mediante SSE
+      // Notificar a todos los dispositivos conectados mediante SSE y sincronizar en Google Apps Script
       broadcastSettings(newSettings);
+      const cloudSynced = await pushSettingsToCloudGAS(newSettings);
 
       return res.json({
         success: true,
+        cloudSynced,
         message: 'Configuración visual guardada y transmitida a todos los dispositivos.',
         settings: newSettings
       });
@@ -474,8 +578,6 @@ async function startServer() {
     }
     counters[code] = Math.max(counters[code] ?? (cfg.start - 1), numVal);
   };
-
-  const GOOGLE_SCRIPT_URL = process.env.GOOGLE_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbzVTUS3K8HbkolL0l1kPlQYxyAkkKzb5snKNMCnvhKEBZEgsTaIbz4QH3IMaK0gzbhs_Q/exec";
 
   function extractCatCode(str?: string): string {
     if (!str) return 'A';
