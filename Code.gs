@@ -422,12 +422,13 @@ function doPost(e) {
     } catch (errClosedCheck) {}
 
     // 3. Extracción de los campos del formulario de inscripción
+    var DORSAL_PENDIENTE = "DORSAL POR ASIGNAR";
     var nombres = data.nombres || "Sin Nombre";
     var ci = data.ci || "Sin CI";
     var celular = data.celular || "Sin Celular";
     var unidad = data.inscritoPor || data.unidad || "";
     var categoria = data.categoria || "Sin Categoría";
-    var dorsal = data.dorsal || "0000";
+    var dorsal = DORSAL_PENDIENTE;
     var comprobanteBase64 = data.comprobante || "";
     var fileUrl = "Sin comprobante adjunto";
     var cedulaBase64 = data.capturaCedula || "";
@@ -597,8 +598,8 @@ function doPost(e) {
           asegurarColumnaInscritoPor(sheet);
         }
 
-        // Garantizar número de dorsal oficial correlativo e irrepetible según la hoja y marca persistente
-        dorsal = asignarDorsalCorrelativoOficial(sheet, categoria, dorsal, true);
+        // Sin asignación automática de número: registrar siempre "DORSAL POR ASIGNAR"
+        dorsal = DORSAL_PENDIENTE;
 
         var timestamp = new Date();
         sheet.appendRow([
@@ -617,16 +618,12 @@ function doPost(e) {
       }
 
       // 5. Retorno de respuesta JSON de éxito usando ContentService
-      var cfgCode = extraerCodigoCategoria(categoria);
-      var cfgFound = CATEGORIAS_CONTROL[cfgCode] || CATEGORIAS_CONTROL["A"];
-      var cleanNumber = dorsal ? dorsal.replace(cfgFound.prefix, "").replace(/^[A-M]-?/, "") : "";
-
       var resultJson = JSON.stringify({
         status: "success",
         message: "Inscripción registrada correctamente en el sistema.",
-        dorsal: dorsal,
-        number: cleanNumber,
-        prefix: cfgFound.prefix,
+        dorsal: DORSAL_PENDIENTE,
+        number: "",
+        prefix: "",
         categoria: categoria,
         genero: genero,
         fileCedulaUrl: fileCedulaUrl,
@@ -660,53 +657,46 @@ function doPost(e) {
 function doGet(e) {
   var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "";
 
-  // 1. Consultar el próximo dorsal correlativo oficial para una categoría
+  var DORSAL_PENDIENTE_GET = "DORSAL POR ASIGNAR";
+
+  // 1. Consultar estado de dorsal para una categoría
   if (action === "get_next_dorsal") {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    if (ss) {
-      var sheet = ss.getActiveSheet();
-      var catParam = (e && e.parameter && (e.parameter.category || e.parameter.categoria)) ? (e.parameter.category || e.parameter.categoria) : "A";
-      var code = extraerCodigoCategoria(catParam);
-      var cfg = CATEGORIAS_CONTROL[code] || CATEGORIAS_CONTROL["A"];
-      var nextD = asignarDorsalCorrelativoOficial(sheet, code, "", false);
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "success",
-        dorsal: nextD,
-        prefix: cfg.prefix,
-        number: nextD.replace(cfg.prefix, ""),
-        categoryCode: code,
-        range: ("0000" + cfg.start).slice(-4) + " - " + ("0000" + cfg.end).slice(-4)
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
+    var catParam = (e && e.parameter && (e.parameter.category || e.parameter.categoria)) ? (e.parameter.category || e.parameter.categoria) : "A";
+    var code = extraerCodigoCategoria(catParam);
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      dorsal: DORSAL_PENDIENTE_GET,
+      prefix: "",
+      number: "",
+      categoryCode: code,
+      range: DORSAL_PENDIENTE_GET
+    })).setMimeType(ContentService.MimeType.JSON);
   }
 
-  // 1.1 Consultar todos los contadores actuales de las categorías A a M
+  // 1.1 Consultar estado de las categorías A a M
   if (action === "get_counters") {
     var ssAll = SpreadsheetApp.getActiveSpreadsheet();
-    if (ssAll) {
-      var sheetAll = ssAll.getActiveSheet();
-      var countersObj = {};
-      var codes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"];
-      for (var cIdx = 0; cIdx < codes.length; cIdx++) {
-        var cCode = codes[cIdx];
-        var cCfg = CATEGORIAS_CONTROL[cCode];
-        var cNext = asignarDorsalCorrelativoOficial(sheetAll, cCode, "", false);
-        countersObj[cCode] = {
-          code: cCode,
-          name: cCfg.name,
-          prefix: cCfg.prefix,
-          start: cCfg.start,
-          end: cCfg.end,
-          nextDorsal: cNext,
-          nextNumber: parseInt(cNext.replace(cCfg.prefix, ""), 10)
-        };
-      }
-      return ContentService.createTextOutput(JSON.stringify({
-        status: "success",
-        categories: countersObj,
-        totalRows: sheetAll.getLastRow()
-      })).setMimeType(ContentService.MimeType.JSON);
+    var totalRowsCount = ssAll ? ssAll.getActiveSheet().getLastRow() : 0;
+    var countersObj = {};
+    var codes = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M"];
+    for (var cIdx = 0; cIdx < codes.length; cIdx++) {
+      var cCode = codes[cIdx];
+      var cCfg = CATEGORIAS_CONTROL[cCode];
+      countersObj[cCode] = {
+        code: cCode,
+        name: cCfg.name,
+        prefix: "",
+        start: cCfg.start,
+        end: cCfg.end,
+        nextDorsal: DORSAL_PENDIENTE_GET,
+        nextNumber: null
+      };
     }
+    return ContentService.createTextOutput(JSON.stringify({
+      status: "success",
+      categories: countersObj,
+      totalRows: totalRowsCount
+    })).setMimeType(ContentService.MimeType.JSON);
   }
 
   // 2. Consultar configuración visual

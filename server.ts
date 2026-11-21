@@ -596,27 +596,26 @@ async function startServer() {
     return 'A';
   }
 
-  // Endpoint para consultar contadores y rangos por categoría
+  const PENDING_DORSAL_LABEL = 'DORSAL POR ASIGNAR';
+
+  // Endpoint para consultar estado de dorsales por categoría (asignación automática desactivada)
   app.get('/api/dorsal/stats', (_req, res) => {
     const counters = getCounters();
-    const registry = getRegistry();
     const stats: Record<string, any> = {};
     for (const [code, cfg] of Object.entries(CATEGORY_CONFIG)) {
-      const nextNum = getNextAvailableNumber(code, counters, registry);
-      const cur = nextNum - 1;
       stats[code] = {
         code,
         name: cfg.name,
-        prefix: cfg.prefix,
+        prefix: '',
         start: cfg.start,
         end: cfg.end,
-        range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
-        currentNumber: cur,
-        nextNumber: nextNum,
-        nextDorsal: `${cfg.prefix}${String(nextNum).padStart(4, '0')}`
+        range: PENDING_DORSAL_LABEL,
+        currentNumber: null,
+        nextNumber: null,
+        nextDorsal: PENDING_DORSAL_LABEL
       };
     }
-    res.json({ success: true, counters, stats, config: CATEGORY_CONFIG });
+    res.json({ success: true, counters, stats, config: CATEGORY_CONFIG, pendingDorsalMode: true });
   });
 
   // Endpoint para obtener el código backend actualizado de Google Apps Script (Code.gs)
@@ -675,7 +674,7 @@ async function startServer() {
   setTimeout(syncCountersWithGoogleSheets, 1500);
   setInterval(syncCountersWithGoogleSheets, 30000);
 
-  // Endpoint atómico para reservar el siguiente dorsal único según la categoría (nunca repite números)
+  // Endpoint de dorsal (asignación automática desactivada: siempre retorna DORSAL POR ASIGNAR)
   app.post('/api/dorsal/next', async (req, res) => {
     try {
       const currentSettings = getVisualSettings();
@@ -690,56 +689,22 @@ async function startServer() {
       const code = extractCatCode(categoryCode);
       const cfg = CATEGORY_CONFIG[code] || CATEGORY_CONFIG['A'];
 
-      const result = await withDorsalLock(code, async () => {
-        const counters = getCounters();
-        const registry = getRegistry();
-        let remoteFloor = counters[code] ?? (cfg.start - 1);
-
-        // Consultar el próximo dorsal directamente de Google Sheets si está disponible
-        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
-          try {
-            const gasRes = await fetch(`${GOOGLE_SCRIPT_URL}?action=get_next_dorsal&category=${code}`, {
-              signal: AbortSignal.timeout(20000)
-            });
-            if (gasRes.ok) {
-              const gasData: any = await gasRes.json();
-              if (gasData && gasData.status === 'success' && gasData.dorsal) {
-                const gasNumStr = String(gasData.number || gasData.dorsal.replace(/\D/g, ''));
-                const remoteNext = parseInt(gasNumStr, 10);
-                if (!isNaN(remoteNext) && remoteNext >= cfg.start) {
-                  remoteFloor = Math.max(remoteFloor, remoteNext - 1);
-                }
-              }
-            }
-          } catch {}
-        }
-
-        const allocatedNum = getNextAvailableNumber(code, counters, registry, remoteFloor);
-        markNumberIssued(code, allocatedNum, counters, registry);
-        saveCountersAndRegistry(counters, registry);
-
-        const paddedNumber = String(allocatedNum).padStart(4, '0');
-        const dorsal = `${cfg.prefix}${paddedNumber}`;
-
-        return {
-          success: true,
-          dorsal,
-          prefix: cfg.prefix,
-          number: paddedNumber,
-          categoryCode: code,
-          range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
-          categoryName: cfg.name
-        };
+      return res.json({
+        success: true,
+        dorsal: PENDING_DORSAL_LABEL,
+        prefix: '',
+        number: '',
+        categoryCode: code,
+        range: PENDING_DORSAL_LABEL,
+        categoryName: cfg.name
       });
-
-      return res.json(result);
     } catch (err: any) {
-      console.error('Error asignando dorsal:', err);
+      console.error('Error en estado de dorsal:', err);
       return res.status(500).json({ success: false, error: err.message });
     }
   });
 
-  // Endpoint principal de registro e inscripción sincronizado DIRECTAMENTE con Google Sheets
+  // Endpoint principal de registro e inscripción sincronizado DIRECTAMENTE con Google Sheets (sin asignar número de dorsal)
   app.post('/api/inscribir', async (req, res) => {
     try {
       const currentSettings = getVisualSettings();
@@ -759,18 +724,11 @@ async function startServer() {
         const counters = getCounters();
         const registry = getRegistry();
 
-        // 0. Idempotencia: si esta inscripción ya fue procesada (ej. doble clic / reintento), devolver el mismo dorsal
+        // 0. Idempotencia: si esta inscripción ya fue procesada (ej. doble clic / reintento), devolver la misma respuesta
         if (submissionId && registry.submissions[submissionId]) {
           return registry.submissions[submissionId].response;
         }
 
-        // Calcular candidato local único e irrepetible como piso mínimo garantizado
-        const localNextNum = getNextAvailableNumber(catCode, counters, registry);
-        const reservedDorsal = `${cfg.prefix}${String(localNextNum).padStart(4, '0')}`;
-
-        // Preparar payload hacia Google Apps Script
-        // Si localNextNum está dentro del rango inicial, lo enviamos como propuesta mínima para evitar retrocesos;
-        // Google Apps Script bajo LockService verificará la hoja y garantizará un dorsal único >= maxSheet + 1.
         const gasPayload = {
           submissionId,
           nombres: payload.nombres || '',
@@ -780,22 +738,21 @@ async function startServer() {
           inscritoPor: payload.inscritoPor || payload.unidad || '',
           categoria: payload.categoria || cfg.name,
           genero: payload.genero || 'NO APLICA',
-          dorsal: localNextNum <= cfg.end ? reservedDorsal : '',
+          dorsal: PENDING_DORSAL_LABEL,
           capturaCedula: payload.capturaCedula || '',
           nombreArchivoCedula: payload.nombreArchivoCedula || '',
           comprobante: payload.comprobante || '',
           nombreArchivo: payload.nombreArchivo || ''
         };
 
-        let assignedDorsal = '';
-        let paddedNumber = '';
         let fileUrl = '';
         let fileCedulaUrl = '';
+        let sentToSheets = false;
 
-        // 1. TRANSMISIÓN PRIMARIA Y AUTORITATIVA A GOOGLE APPS SCRIPT (Fuente Oficial)
+        // 1. TRANSMISIÓN PRIMARIA A GOOGLE APPS SCRIPT
         if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
           try {
-            console.log(`[Google Sheets] Transmitiendo inscripción oficial (${payload.nombres} - Cat ${catCode})...`);
+            console.log(`[Google Sheets] Transmitiendo inscripción oficial (${payload.nombres} - Cat ${catCode} - ${PENDING_DORSAL_LABEL})...`);
             const gasRes = await fetch(GOOGLE_SCRIPT_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -806,43 +763,17 @@ async function startServer() {
             if (gasRes.ok) {
               const gasData: any = await gasRes.json().catch(() => ({}));
               console.log(`[Google Sheets REGISTRADO] Confirmado en Google Sheets:`, gasData);
-              if (gasData && gasData.status === 'success' && gasData.dorsal) {
-                const rawGasDorsal = String(gasData.dorsal).trim();
-                const numMatch = rawGasDorsal.match(/\d+/);
-                const parsedNum = numMatch ? parseInt(numMatch[0], 10) : parseInt(String(gasData.number || ''), 10);
-                const issuedSet = new Set<number>(registry.issuedNumbers[catCode] || []);
-
-                let finalNum = !isNaN(parsedNum) ? parsedNum : localNextNum;
-                if (issuedSet.has(finalNum)) {
-                  // Salvaguarda absoluta: si por algún desfase remoto llegara un número ya emitido en este servidor,
-                  // avanzar al siguiente libre para garantizar no repetición en la respuesta del cliente
-                  finalNum = getNextAvailableNumber(catCode, counters, registry, finalNum);
-                }
-
-                paddedNumber = String(finalNum).padStart(4, '0');
-                assignedDorsal = `${cfg.prefix}${paddedNumber}`;
-                markNumberIssued(catCode, finalNum, counters, registry);
-
+              if (gasData && (gasData.status === 'closed' || gasData.registrationsClosed)) {
+                return {
+                  success: false,
+                  registrationsClosed: true,
+                  error: gasData.message || DEFAULT_CLOSED_MESSAGE
+                };
+              }
+              if (gasData && gasData.status === 'success') {
                 fileUrl = gasData.fileUrl || '';
                 fileCedulaUrl = gasData.fileCedulaUrl || '';
-
-                const resObj = {
-                  success: true,
-                  dorsal: assignedDorsal,
-                  number: paddedNumber,
-                  prefix: cfg.prefix,
-                  categoryCode: catCode,
-                  categoryName: cfg.name,
-                  range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
-                  fileUrl,
-                  fileCedulaUrl
-                };
-
-                if (submissionId) {
-                  registry.submissions[submissionId] = { response: resObj, createdAt: Date.now() };
-                }
-                saveCountersAndRegistry(counters, registry);
-                return resObj;
+                sentToSheets = true;
               }
             }
           } catch (gasErr) {
@@ -850,42 +781,38 @@ async function startServer() {
           }
         }
 
-        // 2. CONTINGENCIA LOCAL (Solo en caso de desconexión total con Google Apps Script)
-        console.warn('[Inscribir] Activando contingencia local por falta de respuesta remota');
-        const assignedNum = getNextAvailableNumber(catCode, counters, registry);
-        markNumberIssued(catCode, assignedNum, counters, registry);
-
-        paddedNumber = String(assignedNum).padStart(4, '0');
-        assignedDorsal = `${cfg.prefix}${paddedNumber}`;
-
-        const fallbackObj = {
+        const resObj = {
           success: true,
-          dorsal: assignedDorsal,
-          number: paddedNumber,
-          prefix: cfg.prefix,
+          dorsal: PENDING_DORSAL_LABEL,
+          number: '',
+          prefix: '',
           categoryCode: catCode,
           categoryName: cfg.name,
-          range: `${String(cfg.start).padStart(4, '0')} - ${String(cfg.end).padStart(4, '0')}`,
+          range: PENDING_DORSAL_LABEL,
           fileUrl,
           fileCedulaUrl
         };
 
         if (submissionId) {
-          registry.submissions[submissionId] = { response: fallbackObj, createdAt: Date.now() };
+          registry.submissions[submissionId] = { response: resObj, createdAt: Date.now() };
         }
         saveCountersAndRegistry(counters, registry);
 
-        // Enviar en background a Google Sheets usando el mismo submissionId para que sea idempotente
-        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
+        // Reintento en segundo plano solo si Google Sheets no respondió en el primer intento
+        if (!sentToSheets && GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('SU_URL_DE_APPS_SCRIPT_AQUI')) {
           fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ ...gasPayload, dorsal: assignedDorsal })
+            body: JSON.stringify(gasPayload)
           }).catch(() => {});
         }
 
-        return fallbackObj;
+        return resObj;
       });
+
+      if (responseBody && responseBody.registrationsClosed) {
+        return res.status(403).json(responseBody);
+      }
 
       return res.json(responseBody);
     } catch (err: any) {
